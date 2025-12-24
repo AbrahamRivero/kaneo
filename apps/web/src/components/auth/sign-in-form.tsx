@@ -48,16 +48,18 @@ export function SignInForm() {
       });
 
       if (result.error) {
-        toast.error(result.error.message || "Failed to sign in");
+        toast.error(result.error.message || "No se pudo iniciar sesión.");
         return;
       }
 
-      toast.success("Signed in successfully");
+      toast.success("Sesión iniciada correctamente");
       setTimeout(() => {
         history.push("/dashboard");
       }, 500);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to sign in");
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo iniciar sesión.",
+      );
     } finally {
       setIsPending(false);
     }
@@ -91,7 +93,9 @@ export function SignInForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Password</FormLabel>
+                <FormLabel className="text-sm font-medium">
+                  Contraseña
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
@@ -105,7 +109,9 @@ export function SignInForm() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       aria-label={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword
+                          ? "Ocultar contraseña"
+                          : "Mostrar contraseña"
                       }
                       aria-pressed={showPassword}
                     >
@@ -120,7 +126,7 @@ export function SignInForm() {
         </div>
 
         <Button type="submit" disabled={isPending} className="w-full mt-4">
-          {isPending ? "Signing In..." : "Sign In"}
+          {isPending ? "Accediendo..." : "Acceder"}
         </Button>
       </form>
     </Form>

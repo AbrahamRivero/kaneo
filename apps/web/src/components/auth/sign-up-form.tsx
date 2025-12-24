@@ -25,7 +25,7 @@ export type SignUpFormValues = {
 
 const signUpSchema = z.object({
   email: z.email(),
-  password: z.string().min(8, { message: "Password is too short" }),
+  password: z.string().min(8, { message: "La contraseña es demasiado corta." }),
   name: z.string(),
 });
 
@@ -52,16 +52,18 @@ export function SignUpForm() {
       });
 
       if (result.error) {
-        toast.error(result.error.message || "Failed to sign up");
+        toast.error(result.error.message || "No se pudo registrar.");
         return;
       }
 
-      toast.success("Account created successfully");
+      toast.success("Cuenta creada con éxito");
       setTimeout(() => {
         history.push("/dashboard");
       }, 500);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to sign up");
+      toast.error(
+        error instanceof Error ? error.message : "No se pudo registrar.",
+      );
     } finally {
       setIsPending(false);
     }
@@ -76,7 +78,9 @@ export function SignUpForm() {
             name="name"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Full Name</FormLabel>
+                <FormLabel className="text-sm font-medium">
+                  Nombre y Apellidos
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="John Doe"
@@ -114,7 +118,9 @@ export function SignUpForm() {
             name="password"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Password</FormLabel>
+                <FormLabel className="text-sm font-medium">
+                  Contraseña
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
@@ -128,7 +134,9 @@ export function SignUpForm() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       aria-label={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword
+                          ? "Ocultar contraseña"
+                          : "Mostrar contraseña"
                       }
                       aria-pressed={showPassword}
                     >
@@ -143,7 +151,7 @@ export function SignUpForm() {
         </div>
 
         <Button type="submit" disabled={isPending} className="w-full mt-4">
-          {isPending ? "Creating Account..." : "Create Account"}
+          {isPending ? "Creando cuenta..." : "Crear una cuenta"}
         </Button>
       </form>
     </Form>

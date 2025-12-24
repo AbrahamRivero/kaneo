@@ -1,2 +1,0 @@
-pnpm dlx @biomejs/biome@1.9.4 ci .
-pnpm run build

@@ -5,29 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1750083630484,
-			"tag": "0000_confused_pixie",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1750504871903,
-			"tag": "0001_natural_robin_chapel",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1752666410349,
-			"tag": "0002_easy_miek",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1755016234993,
-			"tag": "0003_round_human_fly",
+			"when": 1766544550839,
+			"tag": "0000_third_blink",
 			"breakpoints": true
 		}
 	]

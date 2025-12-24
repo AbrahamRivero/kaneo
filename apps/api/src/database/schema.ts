@@ -2,10 +2,33 @@ import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
   integer,
+  pgEnum,
   pgTable,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
+
+export const taskPriority = pgEnum("task_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent",
+  "no-priority",
+]);
+export const taskStatus = pgEnum("task_status", [
+  "backlog",
+  "to-do",
+  "in-progress",
+  "technical-review",
+  "paused",
+  "completed",
+]);
+export const workspaceMemberRole = pgEnum("workspace_member_role", [
+  "admin",
+  "owner",
+  "member",
+]);
 
 export const userTable = pgTable("user", {
   id: text("id")
@@ -94,7 +117,7 @@ export const workspaceUserTable = pgTable("workspace_member", {
     .references(() => userTable.id, {
       onDelete: "cascade",
     }),
-  role: text("role").default("member").notNull(),
+  role: workspaceMemberRole().default("member").notNull(),
   joinedAt: timestamp("joined_at", { mode: "date" }).defaultNow().notNull(),
   status: text("status").default("pending").notNull(),
 });
@@ -135,8 +158,10 @@ export const taskTable = pgTable("task", {
   }),
   title: text("title").notNull(),
   description: text("description"),
-  status: text("status").notNull().default("to-do"),
-  priority: text("priority").default("low"),
+  status: taskStatus().default("to-do").notNull(),
+  priority: taskPriority().default("low").notNull(),
+  commentsCount: integer("commentsCount").default(0),
+  linksCount: integer("linksCount").default(0),
   dueDate: timestamp("due_date", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });

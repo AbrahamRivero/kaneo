@@ -74,10 +74,10 @@ function MembersTable({ users }: { users: WorkspaceUser[] }) {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-5 w-5">
                     <AvatarFallback className="bg-muted text-muted-foreground font-medium text-xs">
-                      {member.userId?.charAt(0).toUpperCase()}
+                      {member.userName?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="font-medium">{member.userId}</span>
+                  <span className="font-medium">{member.userName}</span>
                 </div>
               </TableCell>
               <TableCell className="py-3">

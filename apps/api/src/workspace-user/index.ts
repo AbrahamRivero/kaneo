@@ -15,13 +15,17 @@ const workspaceUser = new Hono<{
     userId: string;
   };
 }>()
-  .get("/:id", zValidator("param", z.object({ id: z.string() })), async (c) => {
-    const { id } = c.req.valid("param");
+  .get(
+    "/user/:id",
+    zValidator("param", z.object({ id: z.string() })),
+    async (c) => {
+      const { id } = c.req.valid("param");
 
-    const workspaceUser = await getWorkspaceUser(id);
+      const workspaceUser = await getWorkspaceUser(id);
 
-    return c.json(workspaceUser);
-  })
+      return c.json(workspaceUser);
+    },
+  )
   .post(
     "/root",
     zValidator(
