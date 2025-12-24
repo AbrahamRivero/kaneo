@@ -179,8 +179,8 @@ function TaskLabels({
             <Badge
               key={label.id}
               badgeColor={label.color as LabelColor}
-              variant="outline"
-              className="flex items-center gap-1 pl-3 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0.5 font-medium"
               onClick={() => toggleLabel(label.id)}
               tabIndex={0}
               onKeyDown={(e) => {
