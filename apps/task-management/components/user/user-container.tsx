@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@/lib/types/user";
+import type { User } from "@/lib/types/user";
 import { Button } from "../ui/button";
 import { Plus } from "lucide-react";
 import { UsersTable } from "./user-data-table";

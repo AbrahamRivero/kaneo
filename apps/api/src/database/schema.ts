@@ -6,7 +6,6 @@ import {
   pgTable,
   text,
   timestamp,
-  unique,
 } from "drizzle-orm/pg-core";
 
 export const taskPriority = pgEnum("task_priority", [

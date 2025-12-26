@@ -6,6 +6,11 @@ export type Project = Extract<
   { id: string }
 >;
 
+export type ProjectWithStatistics = Extract<
+  InferResponseType<(typeof client)["project"]["$get"], 200>[number],
+  { id: string }
+>;
+
 export type ProjectWithTasks = Extract<
   InferResponseType<
     (typeof client)["task"]["tasks"][":projectId"]["$get"],
