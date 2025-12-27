@@ -97,12 +97,12 @@ const workspaceUser = new Hono<{
   .post(
     "/:workspaceId/invite",
     zValidator("param", z.object({ workspaceId: z.string() })),
-    zValidator("json", z.object({ userId: z.string() })),
+    zValidator("json", z.object({ email: z.string().email() })),
     async (c) => {
       const { workspaceId } = c.req.valid("param");
-      const { userId } = c.req.valid("json");
+      const { email } = c.req.valid("json");
 
-      const workspaceUser = await inviteWorkspaceUser(workspaceId, userId);
+      const workspaceUser = await inviteWorkspaceUser(workspaceId, email);
 
       return c.json(workspaceUser);
     },
