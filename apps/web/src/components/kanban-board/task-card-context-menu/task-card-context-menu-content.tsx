@@ -365,7 +365,7 @@ export default function TaskCardContextMenuContent({
           )}
         </ContextMenuSub>
         <ContextMenuItem
-          onClick={() => handleChange("status", "archived")}
+          onClick={() => handleChange("status", "paused")}
           className="flex items-center transition-all duration-200 gap-2  cursor-pointer"
         >
           <Archive className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />

@@ -46,7 +46,7 @@ function ListView({ project }: ListViewProps) {
   >({
     "to-do": true,
     "in-progress": true,
-    "in-review": true,
+    "technical-review": true,
     done: true,
   });
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -164,20 +164,20 @@ function ListView({ project }: ListViewProps) {
   };
 
   const handleArchiveTasks = (column: ProjectWithTasks["columns"][number]) => {
-    if (column.id !== "done" || column.tasks.length === 0) return;
+    if (column.id !== "completed" || column.tasks.length === 0) return;
 
     if (!confirm(`Archive all ${column.tasks.length} completed tasks?`)) {
       return;
     }
 
     const updatedProject = produce(project, (draft) => {
-      const doneColumn = draft?.columns?.find((col) => col.id === "done");
+      const doneColumn = draft?.columns?.find((col) => col.id === "completed");
       if (!doneColumn) return;
 
       for (const task of doneColumn.tasks) {
         updateTask({
           ...task,
-          status: "archived",
+          status: "paused",
         });
       }
 
@@ -252,7 +252,7 @@ function ListView({ project }: ListViewProps) {
               <Plus className="w-3 h-3" />
             </button>
 
-            {column.id === "done" && column.tasks.length > 0 && (
+            {column.id === "completed" && column.tasks.length > 0 && (
               <button
                 type="button"
                 onClick={() => handleArchiveTasks(column)}
@@ -351,7 +351,7 @@ function ListView({ project }: ListViewProps) {
       <CreateTaskModal
         open={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        status={toKebabCase(activeColumn ?? "done")}
+        status={toKebabCase(activeColumn ?? "completed")}
       />
     </DndContext>
   );

@@ -71,7 +71,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
       return;
     }
 
-    if (over.id === "planned" || over.id === "archived") {
+    if (over.id === "technical-review" || over.id === "paused") {
       setOverColumnId(over.id.toString());
       return;
     }
@@ -83,7 +83,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
     if (plannedTasks.some((task) => task.id === taskId)) {
       setOverColumnId("planned");
     } else if (archivedTasks.some((task) => task.id === taskId)) {
-      setOverColumnId("archived");
+      setOverColumnId("paused");
     } else {
       setOverColumnId(null);
     }
@@ -108,11 +108,11 @@ function BacklogListView({ project }: BacklogListViewProps) {
     if (!activeTask) return;
 
     let targetSection = overId;
-    if (overId !== "planned" && overId !== "archived") {
+    if (overId !== "technical-review" && overId !== "paused") {
       if (plannedTasks.some((task) => task.id === overId)) {
-        targetSection = "planned";
+        targetSection = "technical-review";
       } else if (archivedTasks.some((task) => task.id === overId)) {
-        targetSection = "archived";
+        targetSection = "paused";
       } else {
         return;
       }
@@ -261,8 +261,8 @@ function BacklogListView({ project }: BacklogListViewProps) {
           />
 
           <BacklogSection
-            sectionId="archived"
-            title="Archived"
+            sectionId="paused"
+            title="paused"
             icon={Archive}
             tasks={archivedTasks}
           />

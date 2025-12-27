@@ -150,7 +150,10 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
       }
 
       const updatedProject = produce(project, (draft) => {
-        if (newTask.status !== "planned" && newTask.status !== "archived") {
+        if (
+          newTask.status !== "technical-review" &&
+          newTask.status !== "paused"
+        ) {
           const targetColumn = draft.columns?.find(
             (col) => col.id === newTask.status,
           );

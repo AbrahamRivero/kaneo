@@ -1,7 +1,7 @@
 type GitHubLabel = string | { name?: string };
 
 export function extractIssuePriority(
-  labels: GitHubLabel[] | undefined,
+  labels: GitHubLabel[] | undefined
 ): string {
   if (!labels) return "medium";
 
@@ -26,6 +26,13 @@ export function extractIssueStatus(labels: GitHubLabel[] | undefined): string {
   const firstStatusLabel = statusLabels[0];
   const status = firstStatusLabel?.replace("status:", "") || "to-do";
 
-  const validStatuses = ["to-do", "in-progress", "done", "planned", "archived"];
+  const validStatuses = [
+    "backlog",
+    "to-do",
+    "in-progress",
+    "technical-review",
+    "paused",
+    "completed",
+  ];
   return validStatuses.includes(status) ? status : "to-do";
 }

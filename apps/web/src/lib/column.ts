@@ -1,15 +1,26 @@
-import { CheckCircle, Circle, Clock, Eye } from "lucide-react";
+import {
+  Circle,
+  CircleCheck,
+  CircleDashed,
+  CirclePause,
+  Clock2,
+  Radar,
+} from "lucide-react";
 
 export const getColumnIcon = (columnId: string) => {
   switch (columnId) {
+    case "backlog":
+      return CircleDashed;
     case "to-do":
       return Circle;
     case "in-progress":
-      return Clock;
-    case "in-review":
-      return Eye;
-    case "done":
-      return CheckCircle;
+      return Clock2;
+    case "technical-review":
+      return Radar;
+    case "paused":
+      return CirclePause;
+    case "completed":
+      return CircleCheck;
     default:
       return Circle;
   }
@@ -17,14 +28,18 @@ export const getColumnIcon = (columnId: string) => {
 
 export const getColumnIconColor = (columnId: string) => {
   switch (columnId) {
+    case "backlog":
+      return "text-abbey-600 dark:text-abbey-400";
     case "to-do":
       return "text-zinc-400 dark:text-zinc-500";
     case "in-progress":
       return "text-yellow-500 dark:text-yellow-400";
-    case "in-review":
-      return "text-blue-500 dark:text-blue-400";
-    case "done":
-      return "text-green-500 dark:text-green-400";
+    case "technical-review":
+      return "text-emerald-500 dark:text-emerald-400";
+    case "paused":
+      return "text-picton-blue-500 dark:text-picton-blue-600";
+    case "completed":
+      return "text-medium-purple-500 dark:text-medium-purple-400";
     default:
       return "text-zinc-400 dark:text-zinc-500";
   }

@@ -15,7 +15,7 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
   const { mutate: updateTask } = useUpdateTask();
 
   const handleArchiveTasks = () => {
-    if (column.id !== "done") return;
+    if (column.id !== "completed") return;
 
     if (column.tasks.length === 0) {
       toast.info("No tasks to archive");
@@ -27,13 +27,13 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
     }
 
     const updatedProject = produce(project, (draft) => {
-      const doneColumn = draft?.columns?.find((col) => col.id === "done");
+      const doneColumn = draft?.columns?.find((col) => col.id === "completed");
       if (!doneColumn) return;
 
       for (const task of doneColumn.tasks) {
         updateTask({
           ...task,
-          status: "archived",
+          status: "paused",
         });
       }
 
@@ -63,7 +63,7 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
         </span>
       </div>
 
-      {column.id === "done" && column.tasks.length > 0 && (
+      {column.id === "completed" && column.tasks.length > 0 && (
         <button
           type="button"
           onClick={handleArchiveTasks}
