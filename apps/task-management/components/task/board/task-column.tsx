@@ -5,15 +5,16 @@ import { TaskCard } from "./task-card";
 import { Plus, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ITask } from "@/mock-data/tasks";
+import type Task from "@/lib/types/task";
 
 interface TaskColumnProps {
   status: Status;
-  tasks: ITask[];
+  tasks: Task[];
 }
 
 export function TaskColumn({ status, tasks }: TaskColumnProps) {
   const StatusIcon = status.icon;
+  const columnTasks = tasks ?? [];
 
   return (
     <div className="shrink-0 w-[300px] lg:w-[360px] flex flex-col h-full flex-1">
@@ -36,7 +37,7 @@ export function TaskColumn({ status, tasks }: TaskColumnProps) {
         </div>
 
         <div className="flex flex-col gap-3 overflow-y-auto h-full">
-          {tasks.map((task) => (
+          {columnTasks.map((task) => (
             <TaskCard key={task.id} task={task} />
           ))}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import Image from "next/image";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -106,52 +107,7 @@ export function TaskSidebar({
       <SidebarHeader className="pb-0">
         <div className="px-4 pt-4 pb-0">
           <div className="flex items-center justify-between">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-3 h-auto p-0! hover:bg-transparent"
-                >
-                  <div className="size-6 bg-linear-to-br from-purple-500 to-pink-600 rounded-sm shadow flex items-center justify-center text-white text-xs font-semibold">
-                    CC
-                  </div>
-                  <span className="font-semibold">Cuarto Control</span>
-                  <ChevronDown className="size-3 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="start">
-                <DropdownMenuItem>
-                  <div className="flex items-center gap-3 w-full">
-                    <div className="size-6 bg-linear-to-br from-purple-500 to-pink-600 rounded-sm shadow flex items-center justify-center text-white text-xs font-semibold">
-                      SU
-                    </div>
-                    <span className="font-semibold">Square UI</span>
-                    <Check className="size-4 ml-auto" />
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <div className="flex items-center gap-3 w-full">
-                    <div className="size-6 bg-linear-to-br from-blue-500 to-cyan-600 rounded-sm shadow flex items-center justify-center text-white text-xs font-semibold">
-                      CI
-                    </div>
-                    <span>Circle</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <div className="flex items-center gap-3 w-full">
-                    <div className="size-6 bg-linear-to-br from-orange-500 to-red-600 rounded-sm shadow flex items-center justify-center text-white text-xs font-semibold">
-                      LN
-                    </div>
-                    <span>lndev-ui</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Plus className="size-4" />
-                  <span>Añadir departamento</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <WorkspaceSwitcher />
             <Image
               src="/ln.png"
               alt="lndev.me"
@@ -193,7 +149,7 @@ export function TaskSidebar({
           />
           <SidebarItem
             icon={<Star className="size-4" />}
-            label="Tareas"
+            label="Proyectos"
             href="/tasks"
           />
           <SidebarItem

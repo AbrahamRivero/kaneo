@@ -1,7 +1,13 @@
-import { ProjectWithTasks } from "@/lib/types/project";
-import Task from "@/lib/types/task";
+import type { ProjectWithTasks } from "@/lib/types/project";
+import type Task from "@/lib/types/task";
 import { addWeeks, endOfWeek, isWithinInterval, startOfWeek } from "date-fns";
 import { useState } from "react";
+
+interface ColumnWithTasks {
+  id: string;
+  name: string;
+  tasks: Task[];
+}
 
 export interface BoardFilters {
   status: string | null;
@@ -78,10 +84,14 @@ export function useTaskFilters(project: ProjectWithTasks | null | undefined) {
     ? {
         ...project,
         columns:
-          project.columns?.map((column) => ({
-            ...column,
-            tasks: filterTasks(column.tasks),
-          })) ?? [],
+          (project.columns && Array.isArray(project.columns)
+            ? (project.columns as unknown as ColumnWithTasks[]).map(
+                (column) => ({
+                  ...column,
+                  tasks: filterTasks(column.tasks),
+                })
+              )
+            : []) ?? [],
       }
     : null;
 

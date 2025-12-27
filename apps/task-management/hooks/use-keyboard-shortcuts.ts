@@ -5,6 +5,7 @@ import React, {
   useContext,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -284,16 +285,22 @@ export function useRegisterShortcuts(shortcutsConfig: {
     unregisterModifierShortcut,
   } = useKeyboardShortcuts();
 
+  // Usar useRef para almacenar la configuración y evitar re-renders infinitos
+  const configRef = useRef(shortcutsConfig);
+  configRef.current = shortcutsConfig;
+
   useEffect(() => {
-    if (shortcutsConfig.shortcuts) {
-      for (const [key, handler] of Object.entries(shortcutsConfig.shortcuts)) {
+    const config = configRef.current;
+
+    if (config.shortcuts) {
+      for (const [key, handler] of Object.entries(config.shortcuts)) {
         registerShortcut(key, handler);
       }
     }
 
-    if (shortcutsConfig.sequentialShortcuts) {
+    if (config.sequentialShortcuts) {
       for (const [prefix, prefixMap] of Object.entries(
-        shortcutsConfig.sequentialShortcuts
+        config.sequentialShortcuts
       )) {
         for (const [key, handler] of Object.entries(prefixMap)) {
           registerSequentialShortcut(prefix, key, handler);
@@ -301,9 +308,9 @@ export function useRegisterShortcuts(shortcutsConfig: {
       }
     }
 
-    if (shortcutsConfig.modifierShortcuts) {
+    if (config.modifierShortcuts) {
       for (const [modifierKey, keyMap] of Object.entries(
-        shortcutsConfig.modifierShortcuts
+        config.modifierShortcuts
       )) {
         for (const [key, handler] of Object.entries(keyMap)) {
           registerModifierShortcut(modifierKey, key, handler);
@@ -312,15 +319,17 @@ export function useRegisterShortcuts(shortcutsConfig: {
     }
 
     return () => {
-      if (shortcutsConfig.shortcuts) {
-        for (const key of Object.keys(shortcutsConfig.shortcuts)) {
+      const cleanupConfig = configRef.current;
+      
+      if (cleanupConfig.shortcuts) {
+        for (const key of Object.keys(cleanupConfig.shortcuts)) {
           unregisterShortcut(key);
         }
       }
 
-      if (shortcutsConfig.sequentialShortcuts) {
+      if (cleanupConfig.sequentialShortcuts) {
         for (const [prefix, prefixMap] of Object.entries(
-          shortcutsConfig.sequentialShortcuts
+          cleanupConfig.sequentialShortcuts
         )) {
           for (const key of Object.keys(prefixMap)) {
             unregisterSequentialShortcut(prefix, key);
@@ -328,9 +337,9 @@ export function useRegisterShortcuts(shortcutsConfig: {
         }
       }
 
-      if (shortcutsConfig.modifierShortcuts) {
+      if (cleanupConfig.modifierShortcuts) {
         for (const [modifierKey, keyMap] of Object.entries(
-          shortcutsConfig.modifierShortcuts
+          cleanupConfig.modifierShortcuts
         )) {
           for (const key of Object.keys(keyMap)) {
             unregisterModifierShortcut(modifierKey, key);
@@ -338,6 +347,8 @@ export function useRegisterShortcuts(shortcutsConfig: {
         }
       }
     };
+    // Solo dependemos de las funciones de registro, que son estables
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     registerShortcut,
     registerSequentialShortcut,
@@ -345,6 +356,5 @@ export function useRegisterShortcuts(shortcutsConfig: {
     unregisterShortcut,
     unregisterSequentialShortcut,
     unregisterModifierShortcut,
-    shortcutsConfig,
   ]);
 }

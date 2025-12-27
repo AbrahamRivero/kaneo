@@ -133,7 +133,7 @@ function RouteComponent() {
     return {
       ...project,
       plannedTasks: filterTasks(project.plannedTasks || []),
-      archivedTasks: filterTasks(project.archivedTasks || []),
+      archivedTasks: filterTasks(project.pausedTasks || []),
     };
   }, [project, filters]);
 

@@ -10,7 +10,7 @@ import getGithubIntegrationByRepositoryId from "../controllers/get-github-integr
 
 export type HandlerFunction<
   TName extends EmitterWebhookEventName,
-  TTransformed = unknown,
+  TTransformed = unknown
 > = (event: EmitterWebhookEvent<TName> & TTransformed) => void;
 
 export const handleIssueClosed: HandlerFunction<
@@ -25,13 +25,13 @@ export const handleIssueClosed: HandlerFunction<
 
     const integration = await getGithubIntegrationByRepositoryId(
       payload.repository.owner.login,
-      payload.repository.name,
+      payload.repository.name
     );
 
     if (!integration || !integration.isActive) {
       console.log(
         "No active Kaneo integration found for repository:",
-        payload.repository.full_name,
+        payload.repository.full_name
       );
       return;
     }
@@ -42,14 +42,14 @@ export const handleIssueClosed: HandlerFunction<
 
     const kaneoTask = tasks.find((task) =>
       task.description?.includes(
-        `Created from GitHub issue: ${payload.issue.html_url}`,
-      ),
+        `Created from GitHub issue: ${payload.issue.html_url}`
+      )
     );
 
     if (!kaneoTask) {
       console.log(
         "Kaneo task not found for GitHub issue:",
-        payload.issue.html_url,
+        payload.issue.html_url
       );
       return;
     }
@@ -58,11 +58,11 @@ export const handleIssueClosed: HandlerFunction<
       await db
         .update(taskTable)
         .set({
-          status: "done",
+          status: "completed",
         })
         .where(eq(taskTable.id, kaneoTask.id));
 
-      console.log(`Updated Kaneo task ${kaneoTask.id} status to "done"`);
+      console.log(`Updated Kaneo task ${kaneoTask.id} status to "completed"`);
     } catch (error) {
       console.error("Failed to update Kaneo task status:", error);
     }

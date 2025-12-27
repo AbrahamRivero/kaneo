@@ -290,7 +290,7 @@ export function ProjectsTable({
   });
 
   const handleProjectClick = (projectId: string, workspaceId: string) => {
-    push(`/dashboard/workspace/${workspaceId}/project/${projectId}/board`);
+    push(`/workspace/${workspaceId}/project/${projectId}/board`);
   };
 
   return (

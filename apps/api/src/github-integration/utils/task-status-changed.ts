@@ -122,7 +122,7 @@ export async function handleTaskStatusChanged(data: {
       console.error("Failed to add new status label:", error);
     }
 
-    if (newStatus === "done") {
+    if (newStatus === "completed") {
       try {
         await octokit.rest.issues.update({
           owner: repositoryOwner,
@@ -134,7 +134,7 @@ export async function handleTaskStatusChanged(data: {
       } catch (error) {
         console.error("Failed to close GitHub issue:", error);
       }
-    } else if (oldStatus === "done" && newStatus !== "done") {
+    } else if (oldStatus === "completed" && newStatus !== "completed") {
       try {
         await octokit.rest.issues.update({
           owner: repositoryOwner,

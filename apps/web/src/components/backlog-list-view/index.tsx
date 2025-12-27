@@ -78,7 +78,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
 
     const taskId = over.id.toString();
     const plannedTasks = project?.plannedTasks || [];
-    const archivedTasks = project?.archivedTasks || [];
+    const archivedTasks = project?.pausedTasks || [];
 
     if (plannedTasks.some((task) => task.id === taskId)) {
       setOverColumnId("planned");
@@ -100,7 +100,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
     const overId = over.id.toString();
 
     const plannedTasks = project.plannedTasks || [];
-    const archivedTasks = project.archivedTasks || [];
+    const archivedTasks = project.pausedTasks || [];
     const activeTask = [...plannedTasks, ...archivedTasks].find(
       (task) => task.id === activeTaskId,
     );
@@ -235,11 +235,11 @@ function BacklogListView({ project }: BacklogListViewProps) {
   }
 
   const plannedTasks = project.plannedTasks || [];
-  const archivedTasks = project.archivedTasks || [];
+  const archivedTasks = project.pausedTasks || [];
 
   const activeTask =
     project.plannedTasks.find((task) => task.id === activeId) ||
-    project.archivedTasks.find((task) => task.id === activeId);
+    project.pausedTasks.find((task) => task.id === activeId);
 
   return (
     <DndContext

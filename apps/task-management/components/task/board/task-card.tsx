@@ -1,38 +1,24 @@
 "use client";
 
-import type { ITask } from "@/mock-data/tasks";
-import {
-  Calendar,
-  MessageSquare,
-  FileText,
-  Link,
-  CheckCircle,
-  InfoIcon,
-  Hexagon,
-  Stars,
-} from "lucide-react";
+import { Calendar, CheckCircle, InfoIcon, Hexagon, Stars } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import type Task from "@/lib/types/task";
+import { StatusIcon } from "@/mock-data/statuses";
 
 interface TaskCardProps {
-  task: ITask;
+  task: Task;
 }
 
 export function TaskCard({ task }: TaskCardProps) {
-  const StatusIcon = task.status.icon;
-  const hasProgress = task.progress.total > 0;
-  const isCompleted =
-    task.progress.completed === task.progress.total && hasProgress;
+  const isCompleted = task.status === "completed";
 
   return (
     <div className="bg-background shrink-0 rounded-lg overflow-hidden border border-border">
       <div className="px-3 py-2.5">
         <div className="flex items-center gap-2 mb-2">
           <div className="size-5 mt-0.5 shrink-0 flex items-center justify-center bg-muted rounded-sm p-1">
-            <StatusIcon />
+            <StatusIcon statusId={task.status} />
           </div>
           <h3 className="text-sm font-medium leading-tight flex-1">
             {task.title}
@@ -55,7 +41,7 @@ export function TaskCard({ task }: TaskCardProps) {
           {task.description}
         </p>
 
-        {task.labels.length > 0 && (
+        {/*   {task.labels.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {task.labels.map((label) => (
               <Badge
@@ -70,19 +56,19 @@ export function TaskCard({ task }: TaskCardProps) {
               </Badge>
             ))}
           </div>
-        )}
+        )} */}
       </div>
 
       <div className="px-3 py-2.5 border-t border-border border-dashed">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-            {task.date && (
+            {task.dueDate && (
               <div className="flex items-center gap-1.5 border border-border rounded-sm py-1 px-2">
                 <Calendar className="size-3" />
-                <span>{task.date}</span>
+                <span>{task.dueDate}</span>
               </div>
             )}
-            {task.comments > 0 && (
+            {/* {task.comments > 0 && (
               <div className="flex items-center gap-1.5 border border-border rounded-sm py-1 px-2">
                 <MessageSquare className="size-3" />
                 <span>{task.comments}</span>
@@ -99,50 +85,24 @@ export function TaskCard({ task }: TaskCardProps) {
                 <Link className="size-3" />
                 <span>{task.links}</span>
               </div>
-            )}
-            {hasProgress && (
-              <div className="flex items-center gap-1.5 border border-border rounded-sm py-1 px-2">
-                {isCompleted ? (
-                  <CheckCircle className="size-3 text-green-500" />
-                ) : (
-                  <div className="size-3">
-                    <CircularProgressbar
-                      value={
-                        (task.progress.completed / task.progress.total) * 100
-                      }
-                      strokeWidth={12}
-                      styles={buildStyles({
-                        pathColor: "#10b981",
-                        trailColor: "#EDEDED",
-                        strokeLinecap: "round",
-                      })}
-                    />
-                  </div>
-                )}
-                <span>
-                  {task.progress.completed}/{task.progress.total}
-                </span>
-              </div>
-            )}
+            )} */}
           </div>
 
-          {task.assignees.length > 0 && (
-            <div className="flex -space-x-2">
-              {task.assignees.map((user) => (
-                <Avatar
-                  key={user.id}
-                  className="size-5 border-2 border-background"
-                >
-                  <AvatarFallback className="text-[10px]">
-                    {user?.name
+          <div className="flex -space-x-2">
+            <Avatar key={task.id} className="size-5 border-2 border-background">
+              <AvatarFallback className="text-[10px]">
+                {task.assigneeName
+                  ? task.assigneeName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                  : "Usuario Desconocido"
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-          )}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         </div>
       </div>
     </div>

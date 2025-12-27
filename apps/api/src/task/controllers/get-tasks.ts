@@ -3,11 +3,28 @@ import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import { projectTable, taskTable, userTable } from "../../database/schema";
 
-const DEFAULT_COLUMNS = [
-  { id: "to-do", name: "To Do" },
-  { id: "in-progress", name: "In Progress" },
-  { id: "in-review", name: "In Review" },
-  { id: "done", name: "Done" },
+export const DEFAULT_COLUMNS = [
+  {
+    id: "backlog",
+    name: "Reserva",
+  },
+  { id: "to-do", name: "Por hacer" },
+  {
+    id: "in-progress",
+    name: "En curso",
+  },
+  {
+    id: "technical-review",
+    name: "Revisión",
+  },
+  {
+    id: "paused",
+    name: "Pausadas",
+  },
+  {
+    id: "completed",
+    name: "Completadas",
+  },
 ] as const;
 
 async function getTasks(projectId: string) {
@@ -53,8 +70,8 @@ async function getTasks(projectId: string) {
       })),
   }));
 
-  const archivedTasks = tasks.filter((task) => task.status === "archived");
-  const plannedTasks = tasks.filter((task) => task.status === "planned");
+  const pausedTasks = tasks.filter((task) => task.status === "paused");
+  const plannedTasks = tasks.filter((task) => task.status === "backlog");
 
   return {
     id: project.id,
@@ -65,7 +82,7 @@ async function getTasks(projectId: string) {
     isPublic: project.isPublic,
     workspaceId: project.workspaceId,
     columns,
-    archivedTasks,
+    pausedTasks,
     plannedTasks,
   };
 }
