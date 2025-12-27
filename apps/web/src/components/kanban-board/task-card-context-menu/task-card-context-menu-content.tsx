@@ -89,24 +89,34 @@ export default function TaskCardContextMenuContent({
 
   const statusOptions = [
     {
-      label: "To Do",
+      label: "Reserva",
+      value: "backlog",
+      icon: DEFAULT_COLUMNS[0].icon,
+    },
+    {
+      label: "Por hacer",
       value: "to-do",
-      icon: DEFAULT_COLUMNS[0],
+      icon: DEFAULT_COLUMNS[1].icon,
     },
     {
-      label: "In Progress",
+      label: "En curso",
       value: "in-progress",
-      icon: DEFAULT_COLUMNS[1],
+      icon: DEFAULT_COLUMNS[2].icon,
     },
     {
-      label: "In Review",
-      value: "in-review",
-      icon: DEFAULT_COLUMNS[2],
+      label: "Revisión",
+      value: "technical-review",
+      icon: DEFAULT_COLUMNS[3].icon,
     },
     {
-      label: "Done",
-      value: "done",
-      icon: DEFAULT_COLUMNS[3],
+      label: "Pausadas",
+      value: "paused",
+      icon: DEFAULT_COLUMNS[4].icon,
+    },
+    {
+      label: "Completadas",
+      value: "completed",
+      icon: DEFAULT_COLUMNS[5].icon,
     },
   ];
 

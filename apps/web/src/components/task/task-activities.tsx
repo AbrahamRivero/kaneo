@@ -33,7 +33,7 @@ function TaskActivities() {
           <div className="relative">
             <Avatar className="w-8 h-8">
               <AvatarFallback>
-                {activity.userId?.charAt(0) || "U"}
+                {activity.userName?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div
@@ -60,7 +60,7 @@ function TaskActivities() {
           <div className="flex-1 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-400">
-                {activity.userId}
+                {activity.userName || "Usuario"}
               </span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 {formatDistanceToNow(activity.createdAt)} ago

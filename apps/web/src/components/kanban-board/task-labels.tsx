@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/badge";
 import useGetLabelsByTask from "@/hooks/queries/label/use-get-labels-by-task";
 
@@ -43,8 +44,8 @@ function TaskCardLabels({ taskId }: { taskId: string }) {
         <Badge
           key={label.id}
           badgeColor={label.color as LabelColor}
-          variant="outline"
-          className="px-2 py-0.5 text-[10px] flex items-center"
+          variant="secondary"
+          className={cn("text-[10px] px-1.5 py-0.5 font-medium", label.color)}
         >
           <span
             className="inline-block w-1.5 h-1.5 mr-1 rounded-full"
