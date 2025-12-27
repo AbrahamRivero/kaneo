@@ -1,7 +1,11 @@
+import { eq } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import db from "../database";
+import { userTable } from "../database/schema";
 import { subscribeToEvent } from "../events";
+import activatePendingWorkspaceUsers from "./controllers/activate-pending-workspace-users";
 import createRootWorkspaceUser from "./controllers/create-root-workspace-user";
 import deleteWorkspaceUser from "./controllers/delete-workspace-user";
 import getActiveWorkspaceUsers from "./controllers/get-active-workspace-users";
@@ -130,7 +134,16 @@ subscribeToEvent("user.signed_up", async ({ email }: { email: string }) => {
     return;
   }
 
-  await updateWorkspaceUser(email, "active");
+  // Buscar el userId por email y activar todos los workspace users pendientes
+  const [user] = await db
+    .select({ id: userTable.id })
+    .from(userTable)
+    .where(eq(userTable.email, email))
+    .limit(1);
+
+  if (user) {
+    await activatePendingWorkspaceUsers(user.id);
+  }
 });
 
 subscribeToEvent(

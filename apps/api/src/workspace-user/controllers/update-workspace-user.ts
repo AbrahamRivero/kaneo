@@ -1,8 +1,28 @@
 import { eq } from "drizzle-orm";
 import db from "../../database";
-import { workspaceUserTable } from "../../database/schema";
+import { userTable, workspaceUserTable } from "../../database/schema";
 
-async function updateWorkspaceUser(userId: string, status: string) {
+async function updateWorkspaceUser(
+  identifier: string,
+  status: string,
+  isEmail = false,
+) {
+  let userId = identifier;
+
+  if (isEmail) {
+    const [user] = await db
+      .select({ id: userTable.id })
+      .from(userTable)
+      .where(eq(userTable.email, identifier))
+      .limit(1);
+
+    if (!user) {
+      return null;
+    }
+
+    userId = user.id;
+  }
+
   const [updatedWorkspaceUser] = await db
     .update(workspaceUserTable)
     .set({ status })
