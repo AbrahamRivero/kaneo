@@ -1,9 +1,9 @@
 import { AuthLayout } from "@/components/auth/layout";
 import { SignUpForm } from "@/components/auth/sign-up-form";
 import { AuthToggle } from "@/components/auth/toggle";
-import PageTitle from "@/components/page-title";
-import { getConfig } from "@/fetchers/config/get-config";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getConfig } from "@/fetchers/config/get-config";
+import PageTitle from "@/components/page-title";
 
 export const Route = createFileRoute("/auth/sign-up")({
   component: SignUp,
@@ -19,16 +19,16 @@ export const Route = createFileRoute("/auth/sign-up")({
 function SignUp() {
   return (
     <>
-      <PageTitle title="Crear Cuenta" />
+      <PageTitle title="Create Account" />
       <AuthLayout
-        title="Crear cuenta"
-        subtitle="Comienza a usar tu espacio de trabajo"
+        title="Create account"
+        subtitle="Get started with your workspace"
       >
         <div className="space-y-4 mt-6">
           <SignUpForm />
           <AuthToggle
-            message="¿Ya tienes una cuenta?"
-            linkText="Iniciar sesión"
+            message="Already have an account?"
+            linkText="Sign in"
             linkTo="/auth/sign-in"
           />
         </div>
