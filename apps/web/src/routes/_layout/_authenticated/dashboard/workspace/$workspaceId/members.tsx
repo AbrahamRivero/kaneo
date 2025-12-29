@@ -34,7 +34,7 @@ function RouteComponent() {
         </Button>
       }
     >
-      <MembersTable users={users ?? []} />
+      <MembersTable users={users ?? []} workspaceId={workspaceId} />
 
       <InviteTeamMemberModal
         open={isInviteTeamMemberModalOpen}

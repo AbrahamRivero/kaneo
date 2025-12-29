@@ -1,7 +1,7 @@
 import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import { getStatusIcon, getStatusText } from "@/lib/status";
 import type WorkspaceUser from "@/types/workspace-user";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Key } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
@@ -19,13 +19,22 @@ import {
   TableRow,
 } from "../ui/table";
 import DeleteTeamMemberModal from "./delete-team-member-modal";
+import ResetMemberPasswordModal from "./reset-member-password-modal";
 
-function MembersTable({ users }: { users: WorkspaceUser[] }) {
+function MembersTable({
+  users,
+  workspaceId,
+}: {
+  users: WorkspaceUser[];
+  workspaceId: string;
+}) {
   const { isOwner } = useWorkspacePermission();
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<WorkspaceUser | null>(
-    null,
+    null
   );
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+    useState(false);
 
   if (users?.length === 0) {
     return (
@@ -123,12 +132,21 @@ function MembersTable({ users }: { users: WorkspaceUser[] }) {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
+                            setSelectedMember(member);
+                            setIsResetPasswordModalOpen(true);
+                          }}
+                        >
+                          <Key className="size-4" />
+                          Reset password
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
                             setIsRemoveMemberModalOpen(true);
                             setSelectedMember(member);
                           }}
                           variant="destructive"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="size-4" />
                           Remove member
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -147,6 +165,18 @@ function MembersTable({ users }: { users: WorkspaceUser[] }) {
           open={isRemoveMemberModalOpen}
           onClose={() => {
             setIsRemoveMemberModalOpen(false);
+            setSelectedMember(null);
+          }}
+        />
+      )}
+
+      {selectedMember && (
+        <ResetMemberPasswordModal
+          workspaceId={workspaceId}
+          userId={selectedMember.userId ?? ""}
+          open={isResetPasswordModalOpen}
+          onClose={() => {
+            setIsResetPasswordModalOpen(false);
             setSelectedMember(null);
           }}
         />

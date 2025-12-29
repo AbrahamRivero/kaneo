@@ -1,4 +1,6 @@
 import { SettingsLayout, SettingsSection } from "@/components/settings-layout";
+import React from "react";
+import ChangePasswordModal from "@/components/user/change-password-modal";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
@@ -223,6 +225,39 @@ function UserSettings() {
           ))}
         </div>
       </SettingsSection>
+      <SettingsSection
+        title="Security"
+        description="Manage your account security"
+        icon={<Flag className="w-4 h-4" />}
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg border bg-card p-6 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Flag className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Password</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Change your account password</p>
+            </div>
+            <ChangePasswordButton />
+          </div>
+        </div>
+      </SettingsSection>
+
+      
     </SettingsLayout>
+  );
+}
+
+function ChangePasswordButton(){
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="px-3 py-2 rounded bg-zinc-100 dark:bg-zinc-800">Change password</button>
+      <React.Suspense>
+        <ChangePasswordModal open={open} onClose={() => setOpen(false)} />
+      </React.Suspense>
+    </>
   );
 }

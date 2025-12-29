@@ -12,6 +12,7 @@ import getActiveWorkspaceUsers from "./controllers/get-active-workspace-users";
 import getWorkspaceUser from "./controllers/get-workspace-user";
 import getWorkspaceUsers from "./controllers/get-workspace-users";
 import inviteWorkspaceUser from "./controllers/invite-workspace-user";
+import resetMemberPassword from "./controllers/reset-member-password";
 import updateWorkspaceUser from "./controllers/update-workspace-user";
 
 const workspaceUser = new Hono<{
@@ -109,6 +110,24 @@ const workspaceUser = new Hono<{
       const workspaceUser = await inviteWorkspaceUser(workspaceId, email);
 
       return c.json(workspaceUser);
+    },
+  )
+  .post(
+    "/:workspaceId/reset-password",
+    zValidator("param", z.object({ workspaceId: z.string() })),
+    zValidator("json", z.object({ userId: z.string(), password: z.string().min(8) })),
+    async (c) => {
+      const { workspaceId } = c.req.valid("param");
+      const { userId, password } = c.req.valid("json");
+
+      const requesterId = c.get("userId") as string;
+
+      try {
+        const res = await resetMemberPassword(workspaceId, requesterId, { userId, password });
+        return c.json(res);
+      } catch (error) {
+        return c.json({ message: error instanceof Error ? error.message : "" }, 400);
+      }
     },
   )
   .delete(

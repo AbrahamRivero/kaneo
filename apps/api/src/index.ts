@@ -125,6 +125,7 @@ if (isDemoMode) {
 
 const workspaceRoute = app.route("/workspace", workspace);
 const workspaceUserRoute = app.route("/workspace-user", workspaceUser);
+await app.route("/user", (await import("./user")).default);
 const projectRoute = app.route("/project", project);
 const taskRoute = app.route("/task", task);
 const activityRoute = app.route("/activity", activity);
