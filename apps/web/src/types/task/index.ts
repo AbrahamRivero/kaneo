@@ -8,4 +8,14 @@ type Task = Extract<
   { id: string }
 >;
 
+export type Status =
+  | "backlog"
+  | "to-do"
+  | "in-progress"
+  | "technical-review"
+  | "archived"
+  | "completed";
+
+export type Priority = "low" | "medium" | "high" | "urgent" | "no-priority";
+
 export default Task;

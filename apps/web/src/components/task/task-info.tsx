@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import TaskCalendar from "./task-calendar";
 import TaskLabels from "./task-labels";
+import type { Priority, Status } from "@/types/task";
 
 export const taskInfoSchema = z.object({
   status: z.string(),
@@ -72,15 +73,15 @@ function TaskInfo({
       await updateTask({
         ...task,
         userId: data.userId,
-        status: data.status || "",
-        priority: data.priority || "",
+        status: (data.status as Status) || "",
+        priority: (data.priority as Priority) || "",
         dueDate: data.dueDate.toISOString(),
         projectId: project?.id || "",
       });
       toast.success("Task updated successfully");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update task",
+        error instanceof Error ? error.message : "Failed to update task"
       );
     } finally {
       setIsSaving(false);
@@ -105,7 +106,7 @@ function TaskInfo({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete task",
+        error instanceof Error ? error.message : "Failed to delete task"
       );
     }
   };

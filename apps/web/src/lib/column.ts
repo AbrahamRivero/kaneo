@@ -17,7 +17,7 @@ export const getColumnIcon = (columnId: string) => {
       return Clock2;
     case "technical-review":
       return Radar;
-    case "paused":
+    case "archived":
       return CirclePause;
     case "completed":
       return CircleCheck;
@@ -36,7 +36,7 @@ export const getColumnIconColor = (columnId: string) => {
       return "text-yellow-500 dark:text-yellow-400";
     case "technical-review":
       return "text-emerald-500 dark:text-emerald-400";
-    case "paused":
+    case "archived":
       return "text-picton-blue-500 dark:text-picton-blue-600";
     case "completed":
       return "text-medium-purple-500 dark:text-medium-purple-400";

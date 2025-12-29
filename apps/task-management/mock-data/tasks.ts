@@ -202,7 +202,7 @@ export const tasks: ITask[] = [
     id: "13",
     title: "Third-party API upgrade",
     description: "Waiting for vendor to release new API version",
-    status: DEFAULT_COLUMNS[4], // paused
+    status: DEFAULT_COLUMNS[4], // archived
     assignees: [mockUsers[1], mockUsers[2]],
     labels: [labels[2]],
     date: "Jan 18",
@@ -216,7 +216,7 @@ export const tasks: ITask[] = [
     id: "14",
     title: "Database migration",
     description: "Paused pending infrastructure team approval",
-    status: DEFAULT_COLUMNS[4], // paused
+    status: DEFAULT_COLUMNS[4], // archived
     assignees: [mockUsers[3]],
     labels: [labels[2], labels[1]],
     date: "Jan 15",
@@ -230,7 +230,7 @@ export const tasks: ITask[] = [
     id: "15",
     title: "Server upgrade",
     description: "Waiting for budget approval from management",
-    status: DEFAULT_COLUMNS[4], // paused
+    status: DEFAULT_COLUMNS[4], // archived
     assignees: [mockUsers[0], mockUsers[3]],
     labels: [labels[2]],
     date: "Jan 12",
@@ -244,7 +244,7 @@ export const tasks: ITask[] = [
     id: "16",
     title: "Legal compliance review",
     description: "Paused pending legal team review and approval",
-    status: DEFAULT_COLUMNS[4], // paused
+    status: DEFAULT_COLUMNS[4], // archived
     assignees: [mockUsers[1]],
     labels: [labels[1]],
     date: "Jan 10",
@@ -258,7 +258,7 @@ export const tasks: ITask[] = [
     id: "17",
     title: "Cloud migration",
     description: "Waiting for vendor contract negotiations to complete",
-    status: DEFAULT_COLUMNS[4], // paused
+    status: DEFAULT_COLUMNS[4], // archived
     assignees: [mockUsers[2], mockUsers[3]],
     labels: [labels[2], labels[3]],
     date: "Jan 8",

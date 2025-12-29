@@ -150,12 +150,9 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
       }
 
       const updatedProject = produce(project, (draft) => {
-        if (
-          newTask.status !== "technical-review" &&
-          newTask.status !== "paused"
-        ) {
+        if (newTask.status !== "backlog" && newTask.status !== "archived") {
           const targetColumn = draft.columns?.find(
-            (col) => col.id === newTask.status,
+            (col) => col.id === newTask.status
           );
           if (targetColumn) {
             targetColumn.tasks.push({
@@ -187,7 +184,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create task",
+        error instanceof Error ? error.message : "Failed to create task"
       );
     }
   };
@@ -227,13 +224,13 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
   const selectedUser = users?.find((u) => u.userId === assigneeId);
 
   const filteredLabels = labels.filter((label: Label) =>
-    label.name.toLowerCase().includes(searchValue.toLowerCase()),
+    label.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
   const isCreatingNewLabel =
     searchValue &&
     !labels.some(
-      (label: Label) => label.name.toLowerCase() === searchValue.toLowerCase(),
+      (label: Label) => label.name.toLowerCase() === searchValue.toLowerCase()
     );
 
   useEffect(() => {
@@ -271,7 +268,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
     if (!searchValue.trim()) return;
 
     const labelExists = labels.some(
-      (label) => label.name.toLowerCase() === searchValue.trim().toLowerCase(),
+      (label) => label.name.toLowerCase() === searchValue.trim().toLowerCase()
     );
 
     if (labelExists) {
@@ -374,7 +371,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                       "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 hover:scale-105 border",
                       selectedPriority && priority !== "low"
                         ? `${selectedPriority.color} ${selectedPriority.bg} ${selectedPriority.border}`
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50",
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50"
                     )}
                   >
                     <Target className="w-3.5 h-3.5" />
@@ -393,7 +390,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                           "w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 hover:scale-[1.02]",
                           option.color,
                           option.bg,
-                          `hover:${option.bg}`,
+                          `hover:${option.bg}`
                         )}
                         onClick={() => setPriority(option.value as Priority)}
                       >
@@ -413,7 +410,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                       "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 hover:scale-105 border",
                       selectedUser
                         ? "text-indigo-300 bg-indigo-500/10 border-indigo-500/30"
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50",
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50"
                     )}
                   >
                     {selectedUser ? (
@@ -467,7 +464,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                       "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 hover:scale-105 border",
                       dueDate
                         ? "text-emerald-300 bg-emerald-500/10 border-emerald-500/30"
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50",
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50"
                     )}
                   >
                     <CalendarIcon className="w-3.5 h-3.5" />
@@ -508,7 +505,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                       "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 hover:scale-105 border",
                       labels.length > 0
                         ? "text-violet-300 bg-violet-500/10 border-violet-500/30"
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50",
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700/50"
                     )}
                   >
                     <Tag className="w-3.5 h-3.5" />
@@ -551,7 +548,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                               style={{
                                 backgroundColor:
                                   labelColors.find(
-                                    (c) => c.value === label.color,
+                                    (c) => c.value === label.color
                                   )?.color || "#94a3b8",
                               }}
                             />
@@ -576,7 +573,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                             style={{
                               backgroundColor:
                                 labelColors.find(
-                                  (c) => c.value === selectedColor,
+                                  (c) => c.value === selectedColor
                                 )?.color || "#94a3b8",
                             }}
                           />
@@ -609,7 +606,7 @@ function CreateTaskModal({ open, onClose, status }: CreateTaskModalProps) {
                                   className={cn(
                                     "flex items-center px-3 py-2 text-sm text-left text-zinc-900 dark:text-zinc-200 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800",
                                     selectedColor === color.value &&
-                                      "bg-zinc-100 dark:bg-zinc-800",
+                                      "bg-zinc-100 dark:bg-zinc-800"
                                   )}
                                   onClick={() => {
                                     setSelectedColor(color.value);

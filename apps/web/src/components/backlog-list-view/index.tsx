@@ -29,6 +29,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import CreateTaskModal from "../shared/modals/create-task-modal";
 import BacklogTaskRow from "./backlog-task-row";
+import type { Status } from "@/types/task";
 
 interface BacklogListViewProps {
   project?: ProjectWithTasks;
@@ -41,7 +42,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
-    planned: true,
+    backlog: true,
     archived: true,
   });
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -57,7 +58,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
         tolerance: 8,
       },
     }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor)
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -71,7 +72,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
       return;
     }
 
-    if (over.id === "technical-review" || over.id === "paused") {
+    if (over.id === "backlog" || over.id === "archived") {
       setOverColumnId(over.id.toString());
       return;
     }
@@ -81,9 +82,9 @@ function BacklogListView({ project }: BacklogListViewProps) {
     const archivedTasks = project?.pausedTasks || [];
 
     if (plannedTasks.some((task) => task.id === taskId)) {
-      setOverColumnId("planned");
+      setOverColumnId("backlog");
     } else if (archivedTasks.some((task) => task.id === taskId)) {
-      setOverColumnId("paused");
+      setOverColumnId("archived");
     } else {
       setOverColumnId(null);
     }
@@ -102,17 +103,17 @@ function BacklogListView({ project }: BacklogListViewProps) {
     const plannedTasks = project.plannedTasks || [];
     const archivedTasks = project.pausedTasks || [];
     const activeTask = [...plannedTasks, ...archivedTasks].find(
-      (task) => task.id === activeTaskId,
+      (task) => task.id === activeTaskId
     );
 
     if (!activeTask) return;
 
     let targetSection = overId;
-    if (overId !== "technical-review" && overId !== "paused") {
+    if (overId !== "backlog" && overId !== "archived") {
       if (plannedTasks.some((task) => task.id === overId)) {
-        targetSection = "technical-review";
+        targetSection = "backlog";
       } else if (archivedTasks.some((task) => task.id === overId)) {
-        targetSection = "paused";
+        targetSection = "archived";
       } else {
         return;
       }
@@ -122,7 +123,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
 
     updateTask({
       ...activeTask,
-      status: targetSection,
+      status: targetSection as Status,
     });
 
     toast.success(`Task moved to ${targetSection}`);
@@ -163,7 +164,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
         className={cn(
           "border-b border-zinc-200 dark:border-zinc-800/50 transition-all duration-200 overflow-auto",
           showDropIndicator &&
-            "border-l-4 border-l-indigo-500 dark:border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10",
+            "border-l-4 border-l-indigo-500 dark:border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10"
         )}
       >
         {/* Header */}
@@ -176,7 +177,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
             <ChevronRight
               className={cn(
                 "w-3 h-3 transition-transform",
-                expandedSections[sectionId] && "rotate-90",
+                expandedSections[sectionId] && "rotate-90"
               )}
             />
             <div className="flex items-center gap-2 h-4">
@@ -196,7 +197,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
                 type="button"
                 onClick={() => {
                   setIsTaskModalOpen(true);
-                  setActiveColumn("planned");
+                  setActiveColumn("backlog");
                 }}
                 className="p-1 hover:bg-zinc-200/70 dark:hover:bg-zinc-700 rounded text-zinc-600 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
                 title="Add task"
@@ -253,16 +254,16 @@ function BacklogListView({ project }: BacklogListViewProps) {
       <div className="w-full h-full overflow-auto bg-zinc-50/30 dark:bg-transparent">
         <div className="divide-y divide-zinc-200 dark:divide-zinc-800/50">
           <BacklogSection
-            sectionId="planned"
-            title="Planned"
+            sectionId="backlog"
+            title="Backlog"
             icon={Clock}
             tasks={plannedTasks}
             showAddButton={true}
           />
 
           <BacklogSection
-            sectionId="paused"
-            title="paused"
+            sectionId="archived"
+            title="Archived"
             icon={Archive}
             tasks={archivedTasks}
           />
@@ -279,7 +280,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
                     "w-3 h-3",
                     priorityColorsTaskCard[
                       activeTask.priority as keyof typeof priorityColorsTaskCard
-                    ],
+                    ]
                   )}
                 />
               </div>
@@ -302,7 +303,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
       <CreateTaskModal
         open={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        status={toKebabCase(activeColumn ?? "planned")}
+        status={toKebabCase(activeColumn ?? "backlog")}
       />
     </DndContext>
   );

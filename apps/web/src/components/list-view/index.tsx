@@ -44,10 +44,9 @@ function ListView({ project }: ListViewProps) {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
+    backlog: true,
     "to-do": true,
     "in-progress": true,
-    "technical-review": true,
-    done: true,
   });
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
@@ -62,7 +61,7 @@ function ListView({ project }: ListViewProps) {
         tolerance: 8,
       },
     }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor)
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -83,7 +82,7 @@ function ListView({ project }: ListViewProps) {
 
     const taskId = over.id.toString();
     const columnWithTask = project?.columns?.find((col) =>
-      col.tasks.some((task) => task.id === taskId),
+      col.tasks.some((task) => task.id === taskId)
     );
 
     if (columnWithTask) {
@@ -105,27 +104,27 @@ function ListView({ project }: ListViewProps) {
 
     const updatedProject = produce(project, (draft) => {
       const sourceColumn = draft?.columns?.find((col) =>
-        col.tasks.some((task) => task.id === activeTaskId),
+        col.tasks.some((task) => task.id === activeTaskId)
       );
       const destinationColumn = draft?.columns?.find(
         (col) =>
-          col.id === overId || col.tasks.some((task) => task.id === overId),
+          col.id === overId || col.tasks.some((task) => task.id === overId)
       );
 
       if (!sourceColumn || !destinationColumn) return;
 
       const sourceTaskIndex = sourceColumn.tasks.findIndex(
-        (task) => task.id === activeTaskId,
+        (task) => task.id === activeTaskId
       );
       const task = sourceColumn.tasks[sourceTaskIndex];
 
       sourceColumn.tasks = sourceColumn.tasks.filter(
-        (t) => t.id !== activeTaskId,
+        (t) => t.id !== activeTaskId
       );
 
       if (sourceColumn.id === destinationColumn.id) {
         let destinationIndex = destinationColumn.tasks.findIndex(
-          (t) => t.id === overId,
+          (t) => t.id === overId
         );
         if (sourceTaskIndex <= destinationIndex) {
           destinationIndex += 1;
@@ -177,7 +176,7 @@ function ListView({ project }: ListViewProps) {
       for (const task of doneColumn.tasks) {
         updateTask({
           ...task,
-          status: "paused",
+          status: "archived",
         });
       }
 
@@ -190,7 +189,9 @@ function ListView({ project }: ListViewProps) {
 
   function ColumnSection({
     column,
-  }: { column: ProjectWithTasks["columns"][number] }) {
+  }: {
+    column: ProjectWithTasks["columns"][number];
+  }) {
     const { setNodeRef } = useDroppable({
       id: column.id,
       data: {
@@ -206,7 +207,7 @@ function ListView({ project }: ListViewProps) {
         className={cn(
           "border-b border-zinc-200 dark:border-zinc-800/50 transition-all duration-200 overflow-auto",
           showDropIndicator &&
-            "border-l-4 border-l-indigo-500 dark:border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10",
+            "border-l-4 border-l-indigo-500 dark:border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10"
         )}
       >
         <div className="flex items-center justify-between py-2 px-4 bg-zinc-100/60 dark:bg-zinc-800/20 border-b border-zinc-200/50 dark:border-zinc-800/30">
@@ -218,7 +219,7 @@ function ListView({ project }: ListViewProps) {
             <ChevronRight
               className={cn(
                 "w-3 h-3 transition-transform",
-                expandedSections[column.id] && "rotate-90",
+                expandedSections[column.id] && "rotate-90"
               )}
             />
             <div className="flex items-center gap-2 h-4">
@@ -226,7 +227,9 @@ function ListView({ project }: ListViewProps) {
                 const IconComponent = getColumnIcon(column.id);
                 return (
                   <IconComponent
-                    className={`w-4 h-4  flex-shrink-0 ${getColumnIconColor(column.id)}`}
+                    className={`w-4 h-4  flex-shrink-0 ${getColumnIconColor(
+                      column.id
+                    )}`}
                   />
                 );
               })()}
@@ -328,7 +331,7 @@ function ListView({ project }: ListViewProps) {
                     "w-3 h-3",
                     priorityColorsTaskCard[
                       activeTask.priority as keyof typeof priorityColorsTaskCard
-                    ],
+                    ]
                   )}
                 />
               </div>

@@ -31,7 +31,7 @@ export function extractIssueStatus(labels: GitHubLabel[] | undefined): string {
     "to-do",
     "in-progress",
     "technical-review",
-    "paused",
+    "archived",
     "completed",
   ];
   return validStatuses.includes(status) ? status : "to-do";

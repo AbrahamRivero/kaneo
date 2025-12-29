@@ -7,7 +7,7 @@ export const githubLabelColors = {
   "status:to-do": "6B7280", // Gray
   "status:in-progress": "3B82F6", // Blue
   "status:done": "10B981", // Green
-  "status:planned": "8B5CF6", // Purple
+  "status:backlog": "8B5CF6", // Purple
   "status:archived": "6B7280", // Gray
 
   kaneo: "6366F1", // Indigo

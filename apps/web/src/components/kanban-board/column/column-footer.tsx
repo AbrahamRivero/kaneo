@@ -16,7 +16,7 @@ export function ColumnFooter({ column }: ColumnFooterProps) {
       <CreateTaskModal
         open={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        status={toKebabCase(column.name)}
+        status={toKebabCase(column.id)}
       />
       <div className="flex items-center justify-between">
         <button

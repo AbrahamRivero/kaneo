@@ -33,7 +33,7 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
       for (const task of doneColumn.tasks) {
         updateTask({
           ...task,
-          status: "paused",
+          status: "archived",
         });
       }
 

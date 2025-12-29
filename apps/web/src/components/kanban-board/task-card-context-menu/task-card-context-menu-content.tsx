@@ -89,32 +89,32 @@ export default function TaskCardContextMenuContent({
 
   const statusOptions = [
     {
-      label: "Reserva",
+      label: "Backlog",
       value: "backlog",
       icon: DEFAULT_COLUMNS[0].icon,
     },
     {
-      label: "Por hacer",
+      label: "To Do",
       value: "to-do",
       icon: DEFAULT_COLUMNS[1].icon,
     },
     {
-      label: "En curso",
+      label: "In Progress",
       value: "in-progress",
       icon: DEFAULT_COLUMNS[2].icon,
     },
     {
-      label: "Revisión",
+      label: "Technical Review",
       value: "technical-review",
       icon: DEFAULT_COLUMNS[3].icon,
     },
     {
-      label: "Pausadas",
-      value: "paused",
+      label: "Archived",
+      value: "archived",
       icon: DEFAULT_COLUMNS[4].icon,
     },
     {
-      label: "Completadas",
+      label: "Completed",
       value: "completed",
       icon: DEFAULT_COLUMNS[5].icon,
     },
@@ -365,18 +365,18 @@ export default function TaskCardContextMenuContent({
           )}
         </ContextMenuSub>
         <ContextMenuItem
-          onClick={() => handleChange("status", "paused")}
+          onClick={() => handleChange("status", "archived")}
           className="flex items-center transition-all duration-200 gap-2  cursor-pointer"
         >
           <Archive className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
           Archive Task
         </ContextMenuItem>
         <ContextMenuItem
-          onClick={() => handleChange("status", "planned")}
+          onClick={() => handleChange("status", "backlog")}
           className="flex items-center transition-all duration-200 gap-2  cursor-pointer"
         >
           <Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
-          Set as planned
+          Set as backlog
         </ContextMenuItem>
 
         <ContextMenuItem

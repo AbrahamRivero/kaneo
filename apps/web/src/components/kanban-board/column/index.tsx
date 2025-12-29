@@ -25,7 +25,7 @@ function Column({ column }: ColumnProps) {
       <CreateTaskModal
         open={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        status={toKebabCase(column.name)}
+        status={toKebabCase(column.id)}
       />
 
       <div className="p-2 shrink-0">

@@ -20,7 +20,7 @@ export const taskStatus = pgEnum("task_status", [
   "to-do",
   "in-progress",
   "technical-review",
-  "paused",
+  "archived",
   "completed",
 ]);
 export const workspaceMemberRole = pgEnum("workspace_member_role", [

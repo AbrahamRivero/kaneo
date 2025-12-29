@@ -6,24 +6,24 @@ import { projectTable, taskTable, userTable } from "../../database/schema";
 export const DEFAULT_COLUMNS = [
   {
     id: "backlog",
-    name: "Reserva",
+    name: "Backlog",
   },
-  { id: "to-do", name: "Por hacer" },
+  { id: "to-do", name: "To Do" },
   {
     id: "in-progress",
-    name: "En curso",
+    name: "In Progress",
   },
   {
     id: "technical-review",
-    name: "Revisión",
+    name: "Technical Review",
   },
   {
-    id: "paused",
-    name: "Pausadas",
+    id: "archived",
+    name: "Archived",
   },
   {
     id: "completed",
-    name: "Completadas",
+    name: "Completed",
   },
 ] as const;
 
@@ -70,7 +70,7 @@ async function getTasks(projectId: string) {
       })),
   }));
 
-  const pausedTasks = tasks.filter((task) => task.status === "paused");
+  const pausedTasks = tasks.filter((task) => task.status === "archived");
   const plannedTasks = tasks.filter((task) => task.status === "backlog");
 
   return {

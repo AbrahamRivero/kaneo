@@ -3,7 +3,6 @@ import {
   BarChart3,
   Calendar,
   ChevronDown,
-  Clock,
   LayoutDashboard,
   LayoutGrid,
   Search,
@@ -63,15 +62,6 @@ export function NavMain() {
       icon: Search,
       isActive: false,
       isDisabled: false,
-    },
-    {
-      title: "Time Tracking",
-      url: `/dashboard/workspace/${workspace.id}/time`,
-      icon: Clock,
-      isActive:
-        window.location.pathname ===
-        `/dashboard/workspace/${workspace.id}/time`,
-      isDisabled: true,
     },
     {
       title: "Analytics",
@@ -146,7 +136,7 @@ export function NavMain() {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "w-full flex items-center gap-2 justify-between",
+                      "w-full flex items-center gap-2 justify-between"
                     )}
                   >
                     <div className="flex items-center gap-2">
