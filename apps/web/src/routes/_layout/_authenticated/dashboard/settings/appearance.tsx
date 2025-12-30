@@ -19,9 +19,10 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute(
-  "/_layout/_authenticated/dashboard/settings/appearance",
+  "/_layout/_authenticated/dashboard/settings/appearance"
 )({
   component: UserSettings,
 });
@@ -92,7 +93,7 @@ function UserSettings() {
                 "relative overflow-hidden rounded-lg border-2 p-4 text-left transition-all duration-200",
                 selectedTheme === theme.id
                   ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                  : "border-border bg-card hover:border-primary/50 hover:shadow-sm",
+                  : "border-border bg-card hover:border-primary/50 hover:shadow-sm"
               )}
             >
               {selectedTheme === theme.id && (
@@ -237,24 +238,29 @@ function UserSettings() {
                 <Flag className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-sm">Password</span>
               </div>
-              <p className="text-xs text-muted-foreground">Change your account password</p>
+              <p className="text-xs text-muted-foreground">
+                Change your account password
+              </p>
             </div>
             <ChangePasswordButton />
           </div>
         </div>
       </SettingsSection>
-
-      
     </SettingsLayout>
   );
 }
 
-function ChangePasswordButton(){
+function ChangePasswordButton() {
   const [open, setOpen] = React.useState(false);
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="px-3 py-2 rounded bg-zinc-100 dark:bg-zinc-800">Change password</button>
+      <Button
+        onClick={() => setOpen(true)}
+        className="bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+      >
+        Change password
+      </Button>
       <React.Suspense>
         <ChangePasswordModal open={open} onClose={() => setOpen(false)} />
       </React.Suspense>
