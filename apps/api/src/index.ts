@@ -5,16 +5,16 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
-import activity from "./activity";
 import { auth } from "./auth";
+import { getPublicProject } from "./project/controllers/get-public-project";
+import { publishEvent } from "./events";
+import activity from "./activity";
 import config from "./config";
 import db from "./database";
 import githubIntegration from "./github-integration";
 import label from "./label";
-
 import notification from "./notification";
 import project from "./project";
-import { getPublicProject } from "./project/controllers/get-public-project";
 import search from "./search";
 import task from "./task";
 import timeEntry from "./time-entry";
@@ -23,6 +23,7 @@ import purgeDemoData from "./utils/purge-demo-data";
 import workspace from "./workspace";
 import workspaceUser from "./workspace-user";
 import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users";
+import user from "./user";
 
 const app = new Hono<{
   Variables: {
@@ -53,14 +54,14 @@ app.use(
 
       return corsOrigins.includes(origin) ? origin : null;
     },
-  }),
+  })
 );
 
 const configRoute = app.route("/config", config);
 
 const githubIntegrationRoute = app.route(
   "/github-integration",
-  githubIntegration,
+  githubIntegration
 );
 
 const publicProjectRoute = app.get("/public-project/:id", async (c) => {
@@ -70,9 +71,37 @@ const publicProjectRoute = app.get("/public-project/:id", async (c) => {
   return c.json(project);
 });
 
-app.on(["POST", "GET", "PUT", "DELETE"], "/api/auth/*", (c) =>
-  auth.handler(c.req.raw),
-);
+app.on(["POST", "GET", "PUT", "DELETE"], "/api/auth/*", async (c) => {
+  const resp = await auth.handler(c.req.raw);
+
+  // If this was a signup request and the auth handler succeeded, try to publish a signup event
+  try {
+    if (c.req.method === "POST" && resp && resp.ok) {
+      const body = await resp
+        .clone()
+        .json()
+        .catch(() => null);
+      const email = body?.user?.email || body?.email || body?.data?.email;
+
+      if (email) {
+        // notify other parts of the system that a user signed up or signed in
+        if (c.req.path.endsWith("/signup")) {
+          publishEvent("user.signed_up", { email }).catch((err) => {
+            console.error("Failed to publish user.signed_up event:", err);
+          });
+        } else if (c.req.path.includes("/signin")) {
+          publishEvent("user.signed_in", { email }).catch((err) => {
+            console.error("Failed to publish user.signed_in event:", err);
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error while handling signup event publishing:", err);
+  }
+
+  return resp;
+});
 
 // Cache para evitar activar múltiples veces en la misma sesión
 const activatedUsers = new Set<string>();
@@ -87,31 +116,63 @@ app.use("*", async (c, next) => {
     return next();
   }
 
+  // Log request path for debugging activation on login
+  console.log("auth middleware: path=", c.req.path, "method=", c.req.method);
+
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  console.log(
+    "auth middleware: session present=",
+    !!session,
+    "user=",
+    session?.user
+  );
+
   c.set("user", session?.user || null);
   c.set("session", session?.session || null);
   c.set("userId", session?.user?.id || "");
 
   if (!session?.user) {
+    console.log("auth middleware: no session user, throwing 401");
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 
   // Activar todos los workspace users pendientes cuando el usuario inicia sesión
   // Solo se ejecuta una vez por sesión
-  if (session?.user?.id && !activatedUsers.has(session.user.id)) {
-    activatedUsers.add(session.user.id);
-    // Ejecutar de forma asíncrona para no bloquear la respuesta
-    activatePendingWorkspaceUsers(session.user.id)
-      .then(() => {
-        // Remover del cache después de 5 minutos para permitir reactivación si es necesario
-        setTimeout(() => {
-          activatedUsers.delete(session.user.id);
-        }, 5 * 60 * 1000);
-      })
-      .catch((error) => {
-        activatedUsers.delete(session.user.id);
-        console.error("Error activating pending workspace users:", error);
-      });
+  const userId = session.user.id;
+  if (userId) {
+    if (activatedUsers.has(userId)) {
+      console.log(
+        "auth middleware: skip activation, already activated in cache for userId=",
+        userId
+      );
+    } else {
+      console.log("auth middleware: scheduling activation for userId=", userId);
+      activatedUsers.add(userId);
+      // Ejecutar de forma asíncrona para no bloquear la respuesta
+      activatePendingWorkspaceUsers(userId)
+        .then((res) => {
+          console.log(
+            "auth middleware: activation finished for userId=",
+            userId,
+            "resultCount=",
+            Array.isArray(res) ? res.length : String(res)
+          );
+          // Remover del cache después de 5 minutos para permitir reactivación si es necesario
+          setTimeout(() => {
+            activatedUsers.delete(userId);
+            console.log(
+              "auth middleware: removed user from activation cache userId=",
+              userId
+            );
+          }, 5 * 60 * 1000);
+        })
+        .catch((error) => {
+          activatedUsers.delete(userId);
+          console.error("Error activating pending workspace users:", error);
+        });
+    }
+  } else {
+    console.log("auth middleware: session user has no id");
   }
 
   return next();
@@ -125,7 +186,7 @@ if (isDemoMode) {
 
 const workspaceRoute = app.route("/workspace", workspace);
 const workspaceUserRoute = app.route("/workspace-user", workspaceUser);
-await app.route("/user", (await import("./user")).default);
+const userRoute = app.route("/user", user);
 const projectRoute = app.route("/project", project);
 const taskRoute = app.route("/task", task);
 const activityRoute = app.route("/activity", activity);
@@ -150,7 +211,7 @@ serve(
   },
   (info) => {
     console.log(`🏃 Hono API is running at http://localhost:${info.port}`);
-  },
+  }
 );
 
 export type AppType =
@@ -165,6 +226,7 @@ export type AppType =
   | typeof searchRoute
   | typeof publicProjectRoute
   | typeof githubIntegrationRoute
-  | typeof configRoute;
+  | typeof configRoute
+  | typeof userRoute;
 
 export default app;

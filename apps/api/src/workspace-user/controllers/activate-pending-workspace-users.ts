@@ -14,6 +14,11 @@ async function activatePendingWorkspaceUsers(userId: string) {
     )
     .returning();
 
+  console.log(
+    "activatePendingWorkspaceUsers:",
+    `userId=${userId} activated=${updatedWorkspaceUsers.length}`,
+  );
+
   return updatedWorkspaceUsers;
 }
 

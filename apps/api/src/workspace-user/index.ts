@@ -165,6 +165,23 @@ subscribeToEvent("user.signed_up", async ({ email }: { email: string }) => {
   }
 });
 
+// También activar cuando el usuario inicia sesión (signin)
+subscribeToEvent("user.signed_in", async ({ email }: { email: string }) => {
+  if (!email) {
+    return;
+  }
+
+  const [user] = await db
+    .select({ id: userTable.id })
+    .from(userTable)
+    .where(eq(userTable.email, email))
+    .limit(1);
+
+  if (user) {
+    await activatePendingWorkspaceUsers(user.id);
+  }
+});
+
 subscribeToEvent(
   "workspace.created",
   async ({
