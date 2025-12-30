@@ -4,6 +4,16 @@ import db from "../../database";
 import { taskTable } from "../../database/schema";
 import { publishEvent } from "../../events";
 
+export type Status =
+  | "backlog"
+  | "to-do"
+  | "in-progress"
+  | "technical-review"
+  | "archived"
+  | "completed";
+
+export type Priority = "low" | "medium" | "high" | "urgent" | "no-priority";
+
 async function updateTask(
   id: string,
   title: string,
@@ -13,7 +23,7 @@ async function updateTask(
   description: string,
   priority: string,
   position: number,
-  userId?: string,
+  userId?: string
 ) {
   const existingTask = await db.query.taskTable.findFirst({
     where: eq(taskTable.id, id),
@@ -25,15 +35,18 @@ async function updateTask(
     });
   }
 
+  const currentStatus = status as Status;
+  const currentPriority = priority as Priority;
+
   const [updatedTask] = await db
     .update(taskTable)
     .set({
       title,
-      status,
+      status: currentStatus,
       dueDate,
       projectId,
       description,
-      priority,
+      priority: currentPriority,
       position,
       userId: userId || null,
     })
@@ -55,7 +68,7 @@ async function updateTask(
         oldStatus: existingTask.status,
         newStatus: status,
         title: updatedTask.title,
-      }),
+      })
     );
   }
   if (existingTask.priority !== priority) {
@@ -66,7 +79,7 @@ async function updateTask(
         oldPriority: existingTask.priority,
         newPriority: priority,
         title: updatedTask.title,
-      }),
+      })
     );
   }
   if (existingTask.userId !== userId) {
@@ -75,7 +88,7 @@ async function updateTask(
         taskId: updatedTask.id,
         newAssignee: userId,
         title: updatedTask.title,
-      }),
+      })
     );
   }
   if (eventPromises.length > 0) {

@@ -1,3 +1,4 @@
+import type { Priority, Status } from "./update-task";
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
@@ -26,68 +27,50 @@ async function importTasks(projectId: string, tasksToImport: ImportTask[]) {
   }
 
   const nextTaskNumber = await getNextTaskNumber(projectId);
-  let taskNumber = nextTaskNumber;
 
-  const results = [];
+  return await db.transaction(async (tx) => {
+    const tasksToInsert = tasksToImport.map((task, index) => ({
+      projectId,
+      title: task.title,
+      description: task.description || "",
+      status: task.status as Status,
+      priority: (task.priority as Priority) || "low",
+      dueDate: task.dueDate ? new Date(task.dueDate) : null,
+      userId: task.userId || null,
+      number: nextTaskNumber + index + 1,
+    }));
 
-  for (const taskData of tasksToImport) {
-    try {
-      const [createdTask] = await db
-        .insert(taskTable)
-        .values({
-          projectId,
-          userId: taskData.userId || null,
-          title: taskData.title,
-          status: taskData.status,
-          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
-          description: taskData.description || "",
-          priority: taskData.priority || "low",
-          number: ++taskNumber,
-        })
-        .returning();
+    const createdTasks = await tx
+      .insert(taskTable)
+      .values(tasksToInsert)
+      .returning();
 
-      if (createdTask) {
-        await publishEvent("task.created", {
-          taskId: createdTask.id,
-          userId: createdTask.userId ?? "",
+    await Promise.all(
+      createdTasks.map((task) =>
+        publishEvent("task.created", {
+          taskId: task.id,
+          userId: task.userId ?? "",
           type: "create",
           content: "imported the task",
-        });
+        })
+      )
+    );
 
-        results.push({
-          success: true,
-          task: createdTask,
-        });
-      } else {
-        results.push({
-          success: false,
-          error: "Failed to create task",
-          task: taskData,
-        });
-      }
-    } catch (error) {
-      results.push({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        task: taskData,
-      });
-    }
-  }
-
-  return {
-    importedAt: new Date().toISOString(),
-    project: {
-      id: project.id,
-      name: project.name,
-      slug: project.slug,
-    },
-    results: {
-      total: tasksToImport.length,
-      successful: results.filter((r) => r.success).length,
-      failed: results.filter((r) => !r.success).length,
-      tasks: results,
-    },
-  };
+    return {
+      importedAt: new Date().toISOString(),
+      project: {
+        id: project.id,
+        name: project.name,
+        slug: project.slug,
+      },
+      results: {
+        total: tasksToImport.length,
+        successful: createdTasks.length,
+        failed: 0,
+        tasks: createdTasks.map((t) => ({ success: true, task: t })),
+      },
+    };
+  });
 }
 
 export default importTasks;

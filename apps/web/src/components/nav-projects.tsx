@@ -21,7 +21,7 @@ import useDeleteProject from "@/hooks/mutations/project/use-delete-project";
 import useGetProjects from "@/hooks/queries/project/use-get-projects";
 import { cn } from "@/lib/cn";
 import useWorkspaceStore from "@/store/workspace";
-import type { ProjectWithTasks } from "@/types/project";
+import type { ProjectWithStatistics } from "@/types/project";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Folder, Forward, MoreHorizontal, Trash2 } from "lucide-react";
@@ -65,7 +65,7 @@ export function NavProjects() {
   const [isDeleteProjectModalOpen, setIsDeleteProjectModalOpen] =
     useState(false);
   const [projectToDeleteId, setProjectToDeleteID] = useState<string | null>(
-    null,
+    null
   );
 
   const isCurrentProject = (projectId: string) => {
@@ -74,7 +74,7 @@ export function NavProjects() {
     );
   };
 
-  const handleProjectClick = (project: ProjectWithTasks) => {
+  const handleProjectClick = (project: ProjectWithStatistics) => {
     navigate({
       to: "/dashboard/workspace/$workspaceId/project/$projectId/board",
       params: {
@@ -102,7 +102,7 @@ export function NavProjects() {
                   variant="ghost"
                   className={cn(
                     "w-full flex gap-2 justify-start items-start",
-                    isCurrentProject(project.id) && "bg-accent",
+                    isCurrentProject(project.id) && "bg-accent"
                   )}
                 >
                   <IconComponent className="w-4 h-4" />
@@ -133,7 +133,7 @@ export function NavProjects() {
                     className="items-start cursor-pointer"
                     onClick={() => {
                       navigator.clipboard.writeText(
-                        `${window.location.origin}/dashboard/workspace/${workspace?.id}/project/${project.id}`,
+                        `${window.location.origin}/dashboard/workspace/${workspace?.id}/project/${project.id}`
                       );
                       toast.success("Project link copied to clipboard");
                     }}
