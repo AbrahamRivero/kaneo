@@ -70,69 +70,6 @@ export default function Footer() {
                   Documentation
                 </Link>
               </li>
-              <li>
-                <a
-                  href="https://github.com/usekaneo/kaneo"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors text-sm flex items-center"
-                >
-                  <Github className="h-4 w-4 mr-2" />
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://demo.kaneo.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors text-sm flex items-center"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Demo
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-zinc-900 dark:text-white font-medium mb-4">
-              Community
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <a
-                  href="https://x.com/usekaneo"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors text-sm flex items-center"
-                >
-                  <Twitter className="h-4 w-4 mr-2" />
-                  Twitter
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://discord.gg/rU4tSyhXXU"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors text-sm flex items-center"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Discord
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://github.com/orgs/usekaneo/discussions"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors text-sm flex items-center"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Discussions
-                </a>
-              </li>
             </ul>
           </div>
         </div>

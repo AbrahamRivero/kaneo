@@ -59,7 +59,7 @@ export const metadata: Metadata = {
 const docsOptions: DocsLayoutProps = {
   ...baseOptions,
   tree: source.pageTree,
-  githubUrl: "https://github.com/usekaneo/kaneo",
+  githubUrl: "https://github.com/AbrahamRivero/kaneo",
   nav: {
     ...baseOptions.nav,
   },

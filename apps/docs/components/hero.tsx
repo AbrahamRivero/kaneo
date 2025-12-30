@@ -35,36 +35,6 @@ export default function Hero() {
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 text-center lg:pt-32">
         <div id="headline" className="mb-8">
-          <a
-            href="https://cloud.kaneo.app"
-            className="hover:bg-zinc-100 dark:hover:bg-zinc-800 bg-zinc-50 dark:bg-zinc-900 group mx-auto flex w-fit items-center gap-4 rounded-full border border-zinc-200 dark:border-zinc-800 p-1 pl-4 shadow-md shadow-zinc-950/5 transition-all duration-150 hover:scale-[1.02]"
-            aria-label="Try Kaneo Cloud - 100% Free Forever"
-            tabIndex={0}
-            // biome-ignore lint/a11y/useSemanticElements: <explanation>
-            role="button"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                window.location.href = "https://cloud.kaneo.app";
-              }
-            }}
-          >
-            <span className="text-zinc-900 dark:text-zinc-100 text-sm flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-400" />
-              Try Kaneo Cloud - 100% Free Forever
-            </span>
-            <span className="block h-4 w-0.5 border-l border-zinc-300 dark:border-zinc-700" />
-            <div className="bg-white dark:bg-zinc-800 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-700 size-6 overflow-hidden rounded-full duration-200">
-              <div className="flex w-12 -translate-x-1/2 duration-200 ease-in-out group-hover:translate-x-0">
-                <span className="flex size-6">
-                  <ArrowRight className="m-auto size-3 text-zinc-600 dark:text-zinc-400" />
-                </span>
-                <span className="flex size-6">
-                  <ArrowRight className="m-auto size-3 text-zinc-600 dark:text-zinc-400" />
-                </span>
-              </div>
-            </div>
-          </a>
-
           <h1 className="mx-auto mt-8 max-w-4xl font-display text-4xl font-medium tracking-tight text-zinc-900 dark:text-white sm:text-7xl animate-fade-in">
             Project management{" "}
             <span className="relative whitespace-nowrap text-indigo-600 dark:text-indigo-400">
@@ -79,24 +49,6 @@ export default function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4 animate-fade-in-delay-2">
-            <a
-              href="https://demo.kaneo.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow-lg shadow-indigo-500/20 py-2 bg-indigo-600 text-white hover:bg-indigo-500 hover:scale-[1.02] dark:bg-indigo-500 dark:hover:bg-indigo-400 h-12 px-8"
-              aria-label="Try Demo"
-              tabIndex={0}
-              // biome-ignore lint/a11y/useSemanticElements: <explanation>
-              role="button"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  window.open("https://demo.kaneo.app", "_blank");
-                }
-              }}
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Try Demo
-            </a>
             <Link
               href="/docs"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow-lg py-2 bg-white text-zinc-900 hover:bg-zinc-50 hover:scale-[1.02] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 h-12 px-8 border border-zinc-200 dark:border-zinc-700"

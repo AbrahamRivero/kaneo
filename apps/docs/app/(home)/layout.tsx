@@ -71,7 +71,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         },
         {
           type: "icon",
-          url: "https://github.com/usekaneo/kaneo",
+          url: "https://github.com/AbrahamRivero/kaneo",
           text: "GitHub",
           icon: (
             <svg

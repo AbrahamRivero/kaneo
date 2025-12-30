@@ -38,10 +38,10 @@ export default function StructuredData({
           contactPoint: {
             "@type": "ContactPoint",
             contactType: "customer service",
-            url: "https://github.com/usekaneo/kaneo/issues",
+            url: "https://github.com/AbrahamRivero/kaneo/issues",
           },
           sameAs: [
-            "https://github.com/usekaneo/kaneo",
+            "https://github.com/AbrahamRivero/kaneo",
             "https://twitter.com/usekaneo",
             "https://discord.gg/rU4tSyhXXU",
           ],
@@ -55,7 +55,7 @@ export default function StructuredData({
           description:
             "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com with kanban boards, time tracking, and team collaboration.",
           url: "https://kaneo.app",
-          downloadUrl: "https://github.com/usekaneo/kaneo",
+          downloadUrl: "https://github.com/AbrahamRivero/kaneo",
           screenshot: "https://kaneo.app/screenshot.png",
           applicationCategory: "ProjectManagementApplication",
           operatingSystem: "Linux, macOS, Windows",
