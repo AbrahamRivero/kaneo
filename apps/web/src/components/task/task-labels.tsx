@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { FormItem, FormLabel } from "@/components/ui/form";
 import useCreateLabel from "@/hooks/mutations/label/use-create-label";
 import useDeleteLabel from "@/hooks/mutations/label/use-delete-label";
+import useUpdateLabel from "@/hooks/mutations/label/use-update-label";
 import useGetLabelsByTask from "@/hooks/queries/label/use-get-labels-by-task";
 import { cn } from "@/lib/cn";
 import * as Popover from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, PlusIcon, Search, Tag } from "lucide-react";
+import { Check, PlusIcon, Search, Tag, Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -59,8 +60,35 @@ function TaskLabels({
   const queryClient = useQueryClient();
   const { mutateAsync: createLabel } = useCreateLabel();
   const { mutateAsync: deleteLabel } = useDeleteLabel();
+  const { mutateAsync: updateLabel } = useUpdateLabel();
+
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingColor, setEditingColor] = useState<LabelColor>("gray");
 
   const { data: labels = [] } = useGetLabelsByTask(taskId);
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editingName.trim()) {
+      toast.error("Label name cannot be empty");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateLabel({ id, name: editingName.trim(), color: editingColor });
+
+      await queryClient.invalidateQueries({ queryKey: ["labels", taskId] });
+
+      toast.success("Label updated");
+      setEditingLabelId(null);
+    } catch (error) {
+      console.error("Failed to update label:", error);
+      toast.error("Failed to update label");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const [taskLabels, setTaskLabels] = useState<string[]>([]);
 
@@ -246,34 +274,118 @@ function TaskLabels({
               >
                 {filteredLabels.length > 0 ? (
                   <div className="py-1">
-                    {filteredLabels.map((label: Label) => (
-                      <button
-                        key={label.id}
-                        type="button"
-                        className="w-full flex items-center px-3 py-2 text-sm text-left text-zinc-900 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        onClick={() => toggleLabel(label.id)}
-                        aria-selected={taskLabels.includes(label.id)}
-                      >
-                        <div className="flex-shrink-0 w-4 mr-2 text-center">
-                          {taskLabels.includes(label.id) && (
-                            <Check
-                              className="w-4 h-4 text-zinc-500 dark:text-zinc-400"
-                              aria-hidden="true"
-                            />
+                    {filteredLabels.map((label: Label) => {
+                      const isEditing = editingLabelId === label.id;
+
+                      return (
+                        <div key={label.id} className="w-full px-3 py-1">
+                          {isEditing ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    void handleSaveEdit(label.id);
+                                  } else if (e.key === "Escape") {
+                                    setEditingLabelId(null);
+                                  }
+                                }}
+                                className="flex-1 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded px-2 py-1 text-sm"
+                                aria-label={`Edit label name for ${label.name}`}
+                                autoFocus
+                              />
+
+                              <div className="flex gap-1 items-center">
+                                {labelColors.map((c) => (
+                                  <button
+                                    key={c.value}
+                                    type="button"
+                                    className={cn(
+                                      "w-6 h-6 rounded-full border-2 border-transparent",
+                                      editingColor === c.value &&
+                                        "ring-2 ring-offset-1 ring-zinc-200 dark:ring-zinc-800",
+                                    )}
+                                    style={{ backgroundColor: c.color }}
+                                    onClick={() => setEditingColor(c.value as LabelColor)}
+                                    aria-label={`Choose color ${c.label}`}
+                                  />
+                                ))}
+                              </div>
+
+                              <button
+                                type="button"
+                                className="text-sm px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800"
+                                onClick={() => void handleSaveEdit(label.id)}
+                                aria-label="Save label"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                type="button"
+                                className="text-sm px-2 py-1 rounded text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
+                                onClick={() => setEditingLabelId(null)}
+                                aria-label="Cancel editing label"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => toggleLabel(label.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  toggleLabel(label.id);
+                                }
+                              }}
+                              aria-selected={taskLabels.includes(label.id)}
+                              className="w-full flex items-center text-sm text-zinc-900 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-0"
+                            >
+                              <div className="flex-shrink-0 w-4 mr-2 text-center">
+                                {taskLabels.includes(label.id) && (
+                                  <Check
+                                    className="w-4 h-4 text-zinc-500 dark:text-zinc-400"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </div>
+
+                              <span
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{
+                                  backgroundColor:
+                                    labelColors.find((c) => c.value === label.color)
+                                      ?.color || "#94a3b8",
+                                }}
+                                aria-hidden="true"
+                              />
+
+                              <span className="truncate">{label.name}</span>
+
+                              <button
+                                type="button"
+                                className="ml-auto p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingLabelId(label.id);
+                                  setEditingName(label.name);
+                                  setEditingColor(label.color as LabelColor);
+                                }}
+                                aria-label={`Edit label ${label.name}`}
+                              >
+                                <Pencil className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <span
-                          className="w-3 h-3 rounded-full mr-2"
-                          style={{
-                            backgroundColor:
-                              labelColors.find((c) => c.value === label.color)
-                                ?.color || "#94a3b8",
-                          }}
-                          aria-hidden="true"
-                        />
-                        <span>{label.name}</span>
-                      </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : null}
 
