@@ -6,7 +6,7 @@ export type ResetMemberPasswordRequest = {
 
 export default async function resetMemberPassword(body: ResetMemberPasswordRequest) {
   const base = import.meta.env.VITE_API_URL || "";
-  const url = (base ? base : "") + `/workspace-user/${body.workspaceId}/reset-password`;
+  const url = `${base ? base : ""}/workspace-user/${body.workspaceId}/reset-password`;
 
   const res = await fetch(url, {
     method: "POST",
