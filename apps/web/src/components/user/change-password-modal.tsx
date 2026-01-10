@@ -1,19 +1,20 @@
-import { useForm } from "react-hook-form";
-import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { z } from "zod/v4";
+import { Button } from "@/components/ui/button";
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import useChangePassword from "@/hooks/mutations/user/use-change-password";
-import { toast } from "sonner";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod/v4";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Eye, EyeOff } from "lucide-react";
 
 const schema = z
   .object({
@@ -69,7 +69,7 @@ function ChangePasswordModal({
       onClose();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to change password"
+        error instanceof Error ? error.message : "Failed to change password",
       );
     } finally {
       setIsSubmitting(false);

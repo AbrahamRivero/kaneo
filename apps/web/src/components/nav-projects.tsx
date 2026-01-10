@@ -65,7 +65,7 @@ export function NavProjects() {
   const [isDeleteProjectModalOpen, setIsDeleteProjectModalOpen] =
     useState(false);
   const [projectToDeleteId, setProjectToDeleteID] = useState<string | null>(
-    null
+    null,
   );
 
   const isCurrentProject = (projectId: string) => {
@@ -102,7 +102,7 @@ export function NavProjects() {
                   variant="ghost"
                   className={cn(
                     "w-full flex gap-2 justify-start items-start",
-                    isCurrentProject(project.id) && "bg-accent"
+                    isCurrentProject(project.id) && "bg-accent",
                   )}
                 >
                   <IconComponent className="w-4 h-4" />
@@ -133,7 +133,7 @@ export function NavProjects() {
                     className="items-start cursor-pointer"
                     onClick={() => {
                       navigator.clipboard.writeText(
-                        `${window.location.origin}/dashboard/workspace/${workspace?.id}/project/${project.id}`
+                        `${window.location.origin}/dashboard/workspace/${workspace?.id}/project/${project.id}`,
                       );
                       toast.success("Project link copied to clipboard");
                     }}

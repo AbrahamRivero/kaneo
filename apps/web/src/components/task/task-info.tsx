@@ -22,6 +22,7 @@ import useUpdateTask from "@/hooks/mutations/task/use-update-task";
 import useGetActiveWorkspaceUsers from "@/hooks/queries/workspace-users/use-active-workspace-users";
 import useProjectStore from "@/store/project";
 import type Task from "@/types/task";
+import type { Priority, Status } from "@/types/task";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -30,7 +31,6 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import TaskCalendar from "./task-calendar";
 import TaskLabels from "./task-labels";
-import type { Priority, Status } from "@/types/task";
 
 export const taskInfoSchema = z.object({
   status: z.string(),
@@ -81,7 +81,7 @@ function TaskInfo({
       toast.success("Task updated successfully");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update task"
+        error instanceof Error ? error.message : "Failed to update task",
       );
     } finally {
       setIsSaving(false);
@@ -106,7 +106,7 @@ function TaskInfo({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete task"
+        error instanceof Error ? error.message : "Failed to delete task",
       );
     }
   };

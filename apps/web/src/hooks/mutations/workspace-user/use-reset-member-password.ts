@@ -1,5 +1,7 @@
+import resetMemberPassword, {
+  type ResetMemberPasswordRequest,
+} from "@/fetchers/workspace-user/reset-member-password";
 import { useMutation } from "@tanstack/react-query";
-import resetMemberPassword, { type ResetMemberPasswordRequest } from "@/fetchers/workspace-user/reset-member-password";
 
 export default function useResetMemberPassword() {
   return useMutation({

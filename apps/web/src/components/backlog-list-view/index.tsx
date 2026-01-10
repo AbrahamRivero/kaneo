@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import toKebabCase from "@/lib/to-kebab-case";
 import type { ProjectWithTasks } from "@/types/project";
 import type Task from "@/types/task";
+import type { Status } from "@/types/task";
 import {
   DndContext,
   type DragEndEvent,
@@ -29,7 +30,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import CreateTaskModal from "../shared/modals/create-task-modal";
 import BacklogTaskRow from "./backlog-task-row";
-import type { Status } from "@/types/task";
 
 interface BacklogListViewProps {
   project?: ProjectWithTasks;
@@ -58,7 +58,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
         tolerance: 8,
       },
     }),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -103,7 +103,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
     const plannedTasks = project.plannedTasks || [];
     const archivedTasks = project.pausedTasks || [];
     const activeTask = [...plannedTasks, ...archivedTasks].find(
-      (task) => task.id === activeTaskId
+      (task) => task.id === activeTaskId,
     );
 
     if (!activeTask) return;
@@ -164,7 +164,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
         className={cn(
           "border-b border-zinc-200 dark:border-zinc-800/50 transition-all duration-200 overflow-auto",
           showDropIndicator &&
-            "border-l-4 border-l-indigo-500 dark:border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10"
+            "border-l-4 border-l-indigo-500 dark:border-l-indigo-400 bg-indigo-50/30 dark:bg-indigo-950/10",
         )}
       >
         {/* Header */}
@@ -177,7 +177,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
             <ChevronRight
               className={cn(
                 "w-3 h-3 transition-transform",
-                expandedSections[sectionId] && "rotate-90"
+                expandedSections[sectionId] && "rotate-90",
               )}
             />
             <div className="flex items-center gap-2 h-4">
@@ -280,7 +280,7 @@ function BacklogListView({ project }: BacklogListViewProps) {
                     "w-3 h-3",
                     priorityColorsTaskCard[
                       activeTask.priority as keyof typeof priorityColorsTaskCard
-                    ]
+                    ],
                   )}
                 />
               </div>

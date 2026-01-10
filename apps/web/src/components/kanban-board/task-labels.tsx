@@ -1,6 +1,6 @@
-import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/badge";
 import useGetLabelsByTask from "@/hooks/queries/label/use-get-labels-by-task";
+import { cn } from "@/lib/cn";
 
 const labelColors = [
   { value: "gray", label: "Grey", color: "#94a3b8" },

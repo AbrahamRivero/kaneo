@@ -23,10 +23,10 @@ import {
 import { Input } from "@/components/ui/input";
 import useDeleteWorkspace from "@/hooks/mutations/workspace/use-delete-workspace";
 import useUpdateWorkspace from "@/hooks/mutations/workspace/use-update-workspace";
+import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import queryClient from "@/query-client";
 import useWorkspaceStore from "@/store/workspace";
-import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 
 const workspaceFormSchema = z.object({
   name: z.string().min(1, "Workspace name is required"),
@@ -36,7 +36,7 @@ const workspaceFormSchema = z.object({
 type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 
 export const Route = createFileRoute(
-  "/_layout/_authenticated/dashboard/workspace/$workspaceId/settings"
+  "/_layout/_authenticated/dashboard/workspace/$workspaceId/settings",
 )({
   component: SettingsComponent,
 });
@@ -82,7 +82,7 @@ function SettingsComponent() {
       form.reset(values);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update workspace"
+        error instanceof Error ? error.message : "Failed to update workspace",
       );
     }
   };
@@ -96,13 +96,13 @@ function SettingsComponent() {
       navigate({ to: "/dashboard" });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete workspace"
+        error instanceof Error ? error.message : "Failed to delete workspace",
       );
     }
   };
 
   if (isLoading) return <div>Loading workspace settings...</div>;
-  console.log("🚀 ~ SettingsComponent ~ workspace:", workspace)
+  console.log("🚀 ~ SettingsComponent ~ workspace:", workspace);
   if (!workspace) return <div>Workspace not found</div>;
 
   if (!isOwner) {

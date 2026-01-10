@@ -9,6 +9,7 @@ import { auth } from "./auth";
 import { getPublicProject } from "./project/controllers/get-public-project";
 import { publishEvent } from "./events";
 import activity from "./activity";
+import analytics from "./analytics/route";
 import config from "./config";
 import db from "./database";
 import githubIntegration from "./github-integration";
@@ -54,14 +55,14 @@ app.use(
 
       return corsOrigins.includes(origin) ? origin : null;
     },
-  })
+  }),
 );
 
 const configRoute = app.route("/config", config);
 
 const githubIntegrationRoute = app.route(
   "/github-integration",
-  githubIntegration
+  githubIntegration,
 );
 
 const publicProjectRoute = app.get("/public-project/:id", async (c) => {
@@ -124,7 +125,7 @@ app.use("*", async (c, next) => {
     "auth middleware: session present=",
     !!session,
     "user=",
-    session?.user
+    session?.user,
   );
 
   c.set("user", session?.user || null);
@@ -143,7 +144,7 @@ app.use("*", async (c, next) => {
     if (activatedUsers.has(userId)) {
       console.log(
         "auth middleware: skip activation, already activated in cache for userId=",
-        userId
+        userId,
       );
     } else {
       console.log("auth middleware: scheduling activation for userId=", userId);
@@ -155,16 +156,19 @@ app.use("*", async (c, next) => {
             "auth middleware: activation finished for userId=",
             userId,
             "resultCount=",
-            Array.isArray(res) ? res.length : String(res)
+            Array.isArray(res) ? res.length : String(res),
           );
           // Remover del cache después de 5 minutos para permitir reactivación si es necesario
-          setTimeout(() => {
-            activatedUsers.delete(userId);
-            console.log(
-              "auth middleware: removed user from activation cache userId=",
-              userId
-            );
-          }, 5 * 60 * 1000);
+          setTimeout(
+            () => {
+              activatedUsers.delete(userId);
+              console.log(
+                "auth middleware: removed user from activation cache userId=",
+                userId,
+              );
+            },
+            5 * 60 * 1000,
+          );
         })
         .catch((error) => {
           activatedUsers.delete(userId);
@@ -194,6 +198,7 @@ const timeEntryRoute = app.route("/time-entry", timeEntry);
 const labelRoute = app.route("/label", label);
 const notificationRoute = app.route("/notification", notification);
 const searchRoute = app.route("/search", search);
+const analyticsRoute = app.route("/analytics", analytics);
 
 try {
   console.log("Migrating database...");
@@ -211,7 +216,7 @@ serve(
   },
   (info) => {
     console.log(`🏃 Hono API is running at http://localhost:${info.port}`);
-  }
+  },
 );
 
 export type AppType =
@@ -227,6 +232,7 @@ export type AppType =
   | typeof publicProjectRoute
   | typeof githubIntegrationRoute
   | typeof configRoute
-  | typeof userRoute;
+  | typeof userRoute
+  | typeof analyticsRoute;
 
 export default app;

@@ -1,7 +1,7 @@
 import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import { getStatusIcon, getStatusText } from "@/lib/status";
 import type WorkspaceUser from "@/types/workspace-user";
-import { MoreHorizontal, Trash2, Key } from "lucide-react";
+import { Key, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
@@ -31,7 +31,7 @@ function MembersTable({
   const { isOwner } = useWorkspacePermission();
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<WorkspaceUser | null>(
-    null
+    null,
   );
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);

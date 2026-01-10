@@ -1,8 +1,8 @@
+import PageTitle from "@/components/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthLayout } from "../../components/auth/layout";
 import { SignInForm } from "../../components/auth/sign-in-form";
 import { AuthToggle } from "../../components/auth/toggle";
-import PageTitle from "@/components/page-title";
 
 export const Route = createFileRoute("/auth/sign-in")({
   component: SignIn,

@@ -33,7 +33,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute(
-  "/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog"
+  "/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog",
 )({
   component: RouteComponent,
 });
@@ -139,7 +139,7 @@ function RouteComponent() {
   }, [project, filters]);
 
   const hasActiveFilters = Object.values(filters).some(
-    (filter) => filter !== null
+    (filter) => filter !== null,
   );
 
   const clearFilters = () => {
@@ -182,7 +182,7 @@ function RouteComponent() {
           ...draft.plannedTasks.map((task) => ({
             ...task,
             status: "to-do" as Status,
-          }))
+          })),
         );
 
         draft.plannedTasks = [];
@@ -234,7 +234,7 @@ function RouteComponent() {
                         "h-6 px-2 text-xs",
                         hasActiveFilters
                           ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10"
-                          : "text-zinc-600 dark:text-zinc-400"
+                          : "text-zinc-600 dark:text-zinc-400",
                       )}
                     >
                       <Filter className="h-3 w-3 mr-1" />
@@ -305,7 +305,7 @@ function RouteComponent() {
                                   "w-full flex items-center gap-2 px-2 py-1.5 text-xs text-left rounded-md transition-colors",
                                   filters.priority === priority
                                     ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800",
                                 )}
                               >
                                 <Flag
@@ -313,7 +313,7 @@ function RouteComponent() {
                                     "w-3 h-3",
                                     priorityColorsTaskCard[
                                       priority as keyof typeof priorityColorsTaskCard
-                                    ]
+                                    ],
                                   )}
                                 />
                                 <span className="capitalize">{priority}</span>
@@ -321,7 +321,7 @@ function RouteComponent() {
                                   <Check className="h-3 w-3 ml-auto" />
                                 )}
                               </button>
-                            )
+                            ),
                           )}
                         </PopoverContent>
                       </Popover>
@@ -340,7 +340,7 @@ function RouteComponent() {
                               <div className="flex items-center gap-1">
                                 <span className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
                                   {users?.find(
-                                    (u) => u.userId === filters.assignee
+                                    (u) => u.userId === filters.assignee,
                                   )?.userName || "Unknown"}
                                 </span>
                               </div>
@@ -363,7 +363,7 @@ function RouteComponent() {
                                 "w-full flex items-center gap-2 px-2 py-1.5 text-xs text-left rounded-md transition-colors",
                                 filters.assignee === user.userId
                                   ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800",
                               )}
                             >
                               <div className="w-5 h-5 bg-zinc-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -415,7 +415,7 @@ function RouteComponent() {
                                 "w-full flex items-center gap-2 px-2 py-1.5 text-xs text-left rounded-md transition-colors",
                                 filters.dueDate === option
                                   ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800",
                               )}
                             >
                               <Calendar className="w-3 h-3" />

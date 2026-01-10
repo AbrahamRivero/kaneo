@@ -1,9 +1,13 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { useNavigate } from "@tanstack/react-router";
-import { useUserPreferencesStore } from "@/store/user-preferences";
+import { cn } from "@/lib/cn";
 import { dueDateStatusColors, getDueDateStatus } from "@/lib/due-date-status";
-import { format } from "date-fns";
+import useProjectStore from "@/store/project";
+import { useUserPreferencesStore } from "@/store/user-preferences";
+import useWorkspaceStore from "@/store/workspace";
+import type Task from "@/types/task";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
 import {
   Calendar,
   CalendarClock,
@@ -14,13 +18,9 @@ import {
   Stars,
 } from "lucide-react";
 import type { CSSProperties } from "react";
-import { ContextMenu, ContextMenuTrigger } from "../ui/context-menu";
-import { cn } from "@/lib/cn";
-import { StatusIcon } from "./status-icon";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import useProjectStore from "@/store/project";
-import useWorkspaceStore from "@/store/workspace";
-import type Task from "@/types/task";
+import { ContextMenu, ContextMenuTrigger } from "../ui/context-menu";
+import { StatusIcon } from "./status-icon";
 import TaskCardContextMenuContent from "./task-card-context-menu/task-card-context-menu-content";
 import TaskCardLabels from "./task-labels";
 

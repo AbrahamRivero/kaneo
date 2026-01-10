@@ -1,8 +1,8 @@
 import { SettingsLayout, SettingsSection } from "@/components/settings-layout";
-import React from "react";
-import ChangePasswordModal from "@/components/user/change-password-modal";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import ChangePasswordModal from "@/components/user/change-password-modal";
 import { cn } from "@/lib/cn";
 import { useUserPreferencesStore } from "@/store/user-preferences";
 import { createFileRoute } from "@tanstack/react-router";
@@ -19,10 +19,10 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 
 export const Route = createFileRoute(
-  "/_layout/_authenticated/dashboard/settings/appearance"
+  "/_layout/_authenticated/dashboard/settings/appearance",
 )({
   component: UserSettings,
 });
@@ -93,7 +93,7 @@ function UserSettings() {
                 "relative overflow-hidden rounded-lg border-2 p-4 text-left transition-all duration-200",
                 selectedTheme === theme.id
                   ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/20"
-                  : "border-border bg-card hover:border-primary/50 hover:shadow-sm"
+                  : "border-border bg-card hover:border-primary/50 hover:shadow-sm",
               )}
             >
               {selectedTheme === theme.id && (

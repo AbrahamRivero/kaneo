@@ -8,7 +8,7 @@ import useGetLabelsByTask from "@/hooks/queries/label/use-get-labels-by-task";
 import { cn } from "@/lib/cn";
 import * as Popover from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, PlusIcon, Search, Tag, Pencil } from "lucide-react";
+import { Check, Pencil, PlusIcon, Search, Tag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -309,7 +309,9 @@ function TaskLabels({
                                         "ring-2 ring-offset-1 ring-zinc-200 dark:ring-zinc-800",
                                     )}
                                     style={{ backgroundColor: c.color }}
-                                    onClick={() => setEditingColor(c.value as LabelColor)}
+                                    onClick={() =>
+                                      setEditingColor(c.value as LabelColor)
+                                    }
                                     aria-label={`Choose color ${c.label}`}
                                   />
                                 ))}
@@ -360,8 +362,9 @@ function TaskLabels({
                                 className="w-3 h-3 rounded-full mr-2"
                                 style={{
                                   backgroundColor:
-                                    labelColors.find((c) => c.value === label.color)
-                                      ?.color || "#94a3b8",
+                                    labelColors.find(
+                                      (c) => c.value === label.color,
+                                    )?.color || "#94a3b8",
                                 }}
                                 aria-hidden="true"
                               />

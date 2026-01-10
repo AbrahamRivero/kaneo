@@ -4,7 +4,9 @@ export type ResetMemberPasswordRequest = {
   password: string;
 };
 
-export default async function resetMemberPassword(body: ResetMemberPasswordRequest) {
+export default async function resetMemberPassword(
+  body: ResetMemberPasswordRequest,
+) {
   const base = import.meta.env.VITE_API_URL || "";
   const url = `${base ? base : ""}/workspace-user/${body.workspaceId}/reset-password`;
 

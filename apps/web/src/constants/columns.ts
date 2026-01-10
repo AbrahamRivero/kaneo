@@ -1,10 +1,10 @@
 import {
-  CircleDashed,
   Circle,
-  CirclePause,
-  Radar,
-  Clock2,
   CircleCheck,
+  CircleDashed,
+  CirclePause,
+  Clock2,
+  Radar,
 } from "lucide-react";
 
 export const DEFAULT_COLUMNS = [
