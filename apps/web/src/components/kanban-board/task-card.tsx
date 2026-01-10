@@ -74,7 +74,7 @@ function TaskCard({ task }: TaskCardProps) {
           <div
             onClick={handleTaskCardClick}
             className={cn(
-              "group bg-background shrink-0 rounded-lg overflow-hidden border border-border cursor-move",
+              "group w-full bg-background shrink-0 rounded-lg overflow-hidden border border-border cursor-move",
               isDragging
                 ? "border-indigo-300 dark:border-indigo-600/70 shadow-lg shadow-indigo-500/10 dark:shadow-indigo-400/5 bg-white dark:bg-zinc-800/80"
                 : "border-zinc-200 dark:border-zinc-700/50 hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md",
@@ -148,9 +148,9 @@ function TaskCard({ task }: TaskCardProps) {
                   <div className="flex -space-x-2">
                     <Avatar
                       key={task.id}
-                      className="size-5 border-2 border-background"
+                      className="size-6 border-2 border-background"
                     >
-                      <AvatarFallback className="text-[10px] bg-purple-400 text-accent">
+                      <AvatarFallback className="text-xs font-semibold bg-purple-400 text-white leading-none">
                         {task.assigneeName
                           ? task.assigneeName
                               .split(" ")
