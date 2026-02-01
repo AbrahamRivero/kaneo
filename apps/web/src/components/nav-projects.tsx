@@ -11,6 +11,7 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -94,6 +95,10 @@ export function NavProjects() {
           const IconComponent =
             icons[project.icon as keyof typeof icons] || icons.Layout;
 
+          const isProjectCompleted =
+            project.statistics.completionPercentage === 100 &&
+            project.statistics.totalTasks > 0;
+
           return (
             <SidebarMenuItem key={project.id}>
               <SidebarMenuButton asChild>
@@ -101,7 +106,7 @@ export function NavProjects() {
                   onClick={() => handleProjectClick(project)}
                   variant="ghost"
                   className={cn(
-                    "w-full flex gap-2 justify-start items-start",
+                    "w-full flex gap-2 justify-start items-start pr-10",
                     isCurrentProject(project.id) && "bg-accent",
                   )}
                 >
@@ -109,6 +114,12 @@ export function NavProjects() {
                   <span>{project.name}</span>
                 </Button>
               </SidebarMenuButton>
+
+              {!isProjectCompleted && project.statistics.pendingTasks > 0 && (
+                <SidebarMenuBadge className="right-8 bg-red-500 !text-white">
+                  {project.statistics.pendingTasks}
+                </SidebarMenuBadge>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
