@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -101,8 +102,16 @@ export const workspaceTable = pgTable("workspace", {
     .references(() => userTable.id, {
       onDelete: "cascade",
     }),
+  phoneBoardEnabled: boolean("phone_board_enabled").default(false).notNull(),
+  phoneBoardData: jsonb("phone_board_data").$type<PhoneBoardCellMap>(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
+
+/** Map key: "row-col" (e.g. "5-3"). Blocked cells need no extension/type. */
+export type PhoneBoardCellMap = Record<
+  string,
+  { extension?: string; type?: "digital" | "analog"; blocked?: boolean }
+>;
 
 export const workspaceUserTable = pgTable("workspace_member", {
   id: text("id")

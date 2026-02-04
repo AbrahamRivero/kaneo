@@ -5,6 +5,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   LayoutGrid,
+  Phone,
   Search,
   Users,
 } from "lucide-react";
@@ -15,7 +16,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
+import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { cn } from "@/lib/cn";
 import useWorkspaceStore from "@/store/workspace";
 import { useState } from "react";
@@ -37,6 +40,15 @@ export function NavMain() {
     useParams({
       strict: false,
     });
+
+  const { data: workspaceData, isLoading: isWorkspaceLoading } =
+    useGetWorkspace({
+      id: currentWorkspaceId ?? "",
+    });
+  const phoneBoardEnabled = Boolean(
+    (workspaceData as { phoneBoardEnabled?: boolean } | undefined)
+      ?.phoneBoardEnabled,
+  );
 
   if (!workspace) return null;
 
@@ -128,6 +140,38 @@ export function NavMain() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+
+          {currentWorkspaceId && (
+            <SidebarMenuItem>
+              {isWorkspaceLoading ? (
+                <SidebarMenuSkeleton showIcon className="w-full" />
+              ) : phoneBoardEnabled ? (
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Phone Board"
+                  className="w-full flex gap-2 justify-start items-start"
+                >
+                  <Button
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/phone-board`,
+                      )
+                    }
+                    variant="ghost"
+                    className={cn(
+                      "w-full",
+                      window.location.pathname ===
+                        `/dashboard/workspace/${workspace.id}/phone-board` &&
+                        "bg-accent",
+                    )}
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>Phone Board</span>
+                  </Button>
+                </SidebarMenuButton>
+              ) : null}
+            </SidebarMenuItem>
+          )}
 
           {isInProject && (
             <SidebarMenuItem>

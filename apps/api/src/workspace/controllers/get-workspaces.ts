@@ -10,6 +10,8 @@ async function getWorkspaces(userId: string) {
       ownerId: workspaceTable.ownerId,
       createdAt: workspaceTable.createdAt,
       description: workspaceTable.description,
+      phoneBoardEnabled: workspaceTable.phoneBoardEnabled,
+      phoneBoardData: workspaceTable.phoneBoardData,
     })
     .from(workspaceTable)
     .leftJoin(
@@ -27,6 +29,8 @@ async function getWorkspaces(userId: string) {
       workspaceTable.name,
       workspaceTable.ownerId,
       workspaceTable.description,
+      workspaceTable.phoneBoardEnabled,
+      workspaceTable.phoneBoardData,
     );
 
   return workspaces;

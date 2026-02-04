@@ -1,6 +1,6 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Lock, Trash2 } from "lucide-react";
+import { AlertTriangle, Lock, Phone, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -21,6 +21,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import useDeleteWorkspace from "@/hooks/mutations/workspace/use-delete-workspace";
 import useUpdateWorkspace from "@/hooks/mutations/workspace/use-update-workspace";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
@@ -102,8 +104,37 @@ function SettingsComponent() {
   };
 
   if (isLoading) return <div>Loading workspace settings...</div>;
-  console.log("🚀 ~ SettingsComponent ~ workspace:", workspace);
   if (!workspace) return <div>Workspace not found</div>;
+
+  const phoneBoardEnabled = Boolean(
+    (workspace as { phoneBoardEnabled?: boolean }).phoneBoardEnabled,
+  );
+
+  const handlePhoneBoardToggle = async (checked: boolean) => {
+    if (!workspace?.id) return;
+    try {
+      const updatedWorkspace = await updateWorkspace({
+        id: workspace.id,
+        name: workspace.name,
+        description: workspace.description ?? "",
+        phoneBoardEnabled: checked,
+      });
+      setWorkspace(updatedWorkspace);
+      toast.success(
+        checked
+          ? "Pizarra telefónica activada"
+          : "Pizarra telefónica desactivada",
+      );
+      await queryClient.invalidateQueries({
+        queryKey: [`workspace-${workspace.id}`],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update",
+      );
+    }
+  };
 
   if (!isOwner) {
     return (
@@ -197,6 +228,35 @@ function SettingsComponent() {
                 </div>
               </form>
             </Form>
+          </SettingsSection>
+        )}
+
+        {workspace && (
+          <SettingsSection
+            title="Features"
+            description="Enable or disable workspace features for all members"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted/50">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label htmlFor="phone-board" className="text-base font-medium">
+                    Phone Board
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Phone board configuration for the workspace
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="phone-board"
+                checked={phoneBoardEnabled}
+                onCheckedChange={handlePhoneBoardToggle}
+                disabled={isUpdating}
+              />
+            </div>
           </SettingsSection>
         )}
 

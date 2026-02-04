@@ -3,11 +3,20 @@ import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import { workspaceTable } from "../../database/schema";
 
+type UpdateWorkspacePayload = {
+  name: string;
+  description: string;
+  phoneBoardEnabled?: boolean;
+  phoneBoardData?: Record<
+    string,
+    { extension?: string; type?: "digital" | "analog"; blocked?: boolean }
+  > | null;
+};
+
 async function updateWorkspace(
   userId: string,
   workspaceId: string,
-  name: string,
-  description: string,
+  payload: UpdateWorkspacePayload,
 ) {
   const [existingWorkspace] = await db
     .select({
@@ -31,18 +40,28 @@ async function updateWorkspace(
     });
   }
 
+  const setPayload: Record<string, unknown> = {
+    name: payload.name,
+    description: payload.description,
+  };
+  if (payload.phoneBoardEnabled !== undefined) {
+    setPayload.phoneBoardEnabled = payload.phoneBoardEnabled;
+  }
+  if (payload.phoneBoardData !== undefined) {
+    setPayload.phoneBoardData = payload.phoneBoardData;
+  }
+
   const [updatedWorkspace] = await db
     .update(workspaceTable)
-    .set({
-      name,
-      description,
-    })
+    .set(setPayload)
     .where(eq(workspaceTable.id, workspaceId))
     .returning({
       id: workspaceTable.id,
       name: workspaceTable.name,
       ownerId: workspaceTable.ownerId,
       description: workspaceTable.description,
+      phoneBoardEnabled: workspaceTable.phoneBoardEnabled,
+      phoneBoardData: workspaceTable.phoneBoardData,
       createdAt: workspaceTable.createdAt,
     });
 

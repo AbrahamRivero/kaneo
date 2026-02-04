@@ -1,19 +1,24 @@
 import { client } from "@kaneo/libs";
 import type { InferRequestType } from "hono/client";
 
+export type PhoneBoardCell = {
+  extension?: string;
+  type?: "digital" | "analog";
+  blocked?: boolean;
+};
+
+export type PhoneBoardCellMap = Record<string, PhoneBoardCell>;
+
 type UpdateWorkspaceRequest = InferRequestType<
   (typeof client.workspace)[":id"]["$put"]
 >["param"] &
   InferRequestType<(typeof client.workspace)[":id"]["$put"]>["json"];
 
-const updateWorkspace = async ({
-  id,
-  name,
-  description,
-}: UpdateWorkspaceRequest) => {
+const updateWorkspace = async (payload: UpdateWorkspaceRequest) => {
+  const { id, ...json } = payload;
   const response = await client.workspace[":id"].$put({
     param: { id },
-    json: { name, description },
+    json: json as Parameters<typeof client.workspace[":id"]["$put"]>[0]["json"],
   });
 
   if (!response.ok) {

@@ -43,14 +43,37 @@ const workspace = new Hono<{
   )
   .put(
     "/:id",
-    zValidator("json", z.object({ name: z.string(), description: z.string() })),
+    zValidator(
+      "json",
+      z.object({
+        name: z.string(),
+        description: z.string(),
+        phoneBoardEnabled: z.boolean().optional(),
+        phoneBoardData: z
+          .record(
+            z.string(),
+            z.object({
+              extension: z.string().optional(),
+              type: z.enum(["digital", "analog"]).optional(),
+              blocked: z.boolean().optional(),
+            }),
+          )
+          .nullable()
+          .optional(),
+      }),
+    ),
     async (c) => {
       const id = c.req.param("id");
-      const { name, description } = c.req.valid("json");
+      const body = c.req.valid("json");
 
       const userId = c.get("userId");
 
-      const workspace = await updateWorkspace(userId, id, name, description);
+      const workspace = await updateWorkspace(userId, id, {
+        name: body.name,
+        description: body.description,
+        phoneBoardEnabled: body.phoneBoardEnabled,
+        phoneBoardData: body.phoneBoardData,
+      });
 
       return c.json(workspace);
     },
