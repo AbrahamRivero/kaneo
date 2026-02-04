@@ -1,5 +1,5 @@
 CREATE TYPE "public"."task_priority" AS ENUM('low', 'medium', 'high', 'urgent', 'no-priority');--> statement-breakpoint
-CREATE TYPE "public"."task_status" AS ENUM('backlog', 'to-do', 'in-progress', 'technical-review', 'paused', 'completed');--> statement-breakpoint
+CREATE TYPE "public"."task_status" AS ENUM('backlog', 'to-do', 'in-progress', 'technical-review', 'archived', 'completed');--> statement-breakpoint
 CREATE TYPE "public"."workspace_member_role" AS ENUM('admin', 'owner', 'member');--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
@@ -134,6 +134,8 @@ CREATE TABLE "workspace" (
 	"name" text NOT NULL,
 	"description" text,
 	"owner_id" text NOT NULL,
+	"phone_board_enabled" boolean DEFAULT false NOT NULL,
+	"phone_board_data" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint

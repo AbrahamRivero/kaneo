@@ -14,14 +14,13 @@ const pool = new Pool({
 async function fixMigrations() {
   const db = drizzle(pool);
 
-  const migrations = await pool.query(
-    "SELECT * FROM drizzle.__drizzle_migrations",
-  );
-  console.log("Migraciones existentes:", migrations.rows);
+  console.log("Eliminando registros de migraciones existentes...");
+  await pool.query("DELETE FROM drizzle.__drizzle_migrations");
+  console.log("Registros eliminados.");
 
   const hash =
     "c2fd96dadbc144c5d38ad9be13692016dc65f730ee7ef7d60c18ecb336f6a9cb";
-  const createdAt = "1767123456789";
+  const createdAt = Date.now().toString();
 
   await pool.query(
     `
@@ -31,7 +30,7 @@ async function fixMigrations() {
     [hash, createdAt],
   );
 
-  console.log("Migration 0002 marked as applied successfully");
+  console.log("Migración 0000_goofy_jackal marcada como aplicada exitosamente");
 
   const finalMigrations = await pool.query(
     "SELECT * FROM drizzle.__drizzle_migrations",
