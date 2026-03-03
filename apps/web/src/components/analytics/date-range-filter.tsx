@@ -22,7 +22,6 @@ export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
         <SelectItem value="this-week">This Week</SelectItem>
         <SelectItem value="this-month">This Month</SelectItem>
         <SelectItem value="last-month">Last Month</SelectItem>
-        <SelectItem value="last-30-days">Last 30 Days</SelectItem>
         <SelectItem value="this-quarter">This Quarter</SelectItem>
       </SelectContent>
     </Select>

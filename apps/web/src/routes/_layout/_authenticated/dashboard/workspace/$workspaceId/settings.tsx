@@ -130,9 +130,7 @@ function SettingsComponent() {
       });
       await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update",
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update");
     }
   };
 
@@ -242,7 +240,10 @@ function SettingsComponent() {
                   <Phone className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="space-y-0.5">
-                  <Label htmlFor="phone-board" className="text-base font-medium">
+                  <Label
+                    htmlFor="phone-board"
+                    className="text-base font-medium"
+                  >
                     Phone Board
                   </Label>
                   <p className="text-sm text-muted-foreground">

@@ -21,7 +21,6 @@ const analytics = new Hono<{
             .enum([
               "this-month",
               "last-month",
-              "last-30-days",
               "this-quarter",
               "this-week",
             ])
@@ -55,7 +54,6 @@ const analytics = new Hono<{
             .enum([
               "this-month",
               "last-month",
-              "last-30-days",
               "this-quarter",
               "this-week",
             ])

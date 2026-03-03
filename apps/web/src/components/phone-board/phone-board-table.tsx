@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   COLS,
+  type PhoneBoardCellMap,
   ROWS,
   cellKey,
   isInSearchHighlight,
-  type PhoneBoardCellMap,
 } from "@/types/phone-board";
 import type { PhoneBoardCell as PhoneBoardCellType } from "@/types/phone-board";
 import { Search } from "lucide-react";
@@ -102,7 +102,12 @@ export function PhoneBoardTable({
                     const key = cellKey(row, col);
                     const cell = cells[key];
                     const highlight = searchTarget
-                      ? isInSearchHighlight(row, col, searchTarget.row, searchTarget.col)
+                      ? isInSearchHighlight(
+                          row,
+                          col,
+                          searchTarget.row,
+                          searchTarget.col,
+                        )
                       : "none";
                     return (
                       <td

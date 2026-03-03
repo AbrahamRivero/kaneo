@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import db from "../database";
 import { projectTable, taskTable, userTable } from "../database/schema";
 import type { DateRange, QueryParams } from "./index";
@@ -77,7 +77,8 @@ function getDateRange(range: DateRange | undefined): {
   switch (range) {
     case "this-week": {
       const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay());
+      const day = (now.getDay() + 6) % 7; // Monday as first day of week
+      start.setDate(now.getDate() - day);
       start.setHours(0, 0, 0, 0);
       return { start, end: today, label: "This Week" };
     }
@@ -85,12 +86,6 @@ function getDateRange(range: DateRange | undefined): {
       const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
       return { start, end, label: "Last Month" };
-    }
-    case "last-30-days": {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 30);
-      start.setHours(0, 0, 0, 0);
-      return { start, end: today, label: "Last 30 Days" };
     }
     case "this-quarter": {
       const quarter = Math.floor(now.getMonth() / 3);
@@ -136,10 +131,20 @@ async function getProjectAnalytics(
     .leftJoin(userTable, eq(taskTable.userId, userTable.id))
     .where(eq(taskTable.projectId, projectId));
 
-  const tasksInPeriod = tasksInProject.filter(
-    (t) =>
-      t.createdAt && t.createdAt >= period.start && t.createdAt <= period.end,
-  );
+  const tasksInPeriodRaw = tasksInProject.filter((t) => {
+    const effectiveDate = t.dueDate ?? t.createdAt;
+    return (
+      !!effectiveDate &&
+      effectiveDate >= period.start &&
+      effectiveDate <= period.end
+    );
+  });
+
+  const currentPeriodExcludesArchived =
+    query?.dateRange === "this-week" || query?.dateRange === "this-month";
+  const tasksInPeriod = currentPeriodExcludesArchived
+    ? tasksInPeriodRaw.filter((t) => t.status !== "archived")
+    : tasksInPeriodRaw;
 
   const tasksByStatus: ProjectAnalyticsData["tasksByStatus"] = {
     completed: 0,
@@ -199,7 +204,7 @@ async function getProjectAnalytics(
         break;
     }
 
-    if (task.status !== "completed") {
+    if (task.status !== "completed" && task.status !== "archived") {
       if (task.dueDate && task.dueDate < now) overdueTasks++;
       else if (task.dueDate && task.dueDate <= sevenDaysFromNow) dueSoonTasks++;
     }
@@ -245,9 +250,14 @@ async function getProjectAnalytics(
     })
     .from(taskTable)
     .leftJoin(userTable, eq(taskTable.userId, userTable.id))
-    .where(eq(taskTable.projectId, projectId))
-    .orderBy(desc(taskTable.createdAt))
-    .limit(15);
+    .where(
+      and(
+        eq(taskTable.projectId, projectId),
+        gte(taskTable.createdAt, period.start),
+        lte(taskTable.createdAt, period.end),
+      ),
+    )
+    .orderBy(desc(taskTable.createdAt));
 
   for (const task of recentTasksResult) {
     recentTasksData.push({
@@ -259,16 +269,20 @@ async function getProjectAnalytics(
       createdAt: task.createdAt,
       dueDate: task.dueDate,
       isOverdue: task.dueDate
-        ? task.dueDate < now && task.status !== "completed"
+        ? task.dueDate < now &&
+          task.status !== "completed" &&
+          task.status !== "archived"
         : false,
     });
   }
 
   const weekMap = new Map<string, { completed: number; created: number }>();
   for (const task of tasksInProject) {
-    if (!task.createdAt) continue;
-    const weekStart = new Date(task.createdAt);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const effectiveDate = task.dueDate ?? task.createdAt;
+    if (!effectiveDate) continue;
+    const weekStart = new Date(effectiveDate);
+    const day = (weekStart.getDay() + 6) % 7; // Monday as first day of week
+    weekStart.setDate(weekStart.getDate() - day);
     const weekKey = weekStart.toISOString().split("T")[0] ?? "";
     if (!weekMap.has(weekKey))
       weekMap.set(weekKey, { completed: 0, created: 0 });

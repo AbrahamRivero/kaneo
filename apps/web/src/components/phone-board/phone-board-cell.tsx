@@ -12,7 +12,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
-import type { PhoneBoardCell as CellType, PhoneBoardExtensionType } from "@/types/phone-board";
+import type {
+  PhoneBoardCell as CellType,
+  PhoneBoardExtensionType,
+} from "@/types/phone-board";
 import { Lock, Pencil } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../ui/button";
@@ -158,7 +161,12 @@ export function PhoneBoardCell({
       <PopoverContent className="w-80" align="start">
         <div className="space-y-5">
           <div className="flex items-center justify-between">
-            <Label htmlFor={`blocked-${row}-${col}`} className="text-base font-medium">Blocked cell</Label>
+            <Label
+              htmlFor={`blocked-${row}-${col}`}
+              className="text-base font-medium"
+            >
+              Blocked cell
+            </Label>
             <Switch
               id={`blocked-${row}-${col}`}
               checked={blocked}
@@ -168,7 +176,12 @@ export function PhoneBoardCell({
           {!blocked && (
             <>
               <div className="space-y-2.5">
-                <Label htmlFor={`ext-${row}-${col}`} className="text-sm font-medium">Extension (3 digits)</Label>
+                <Label
+                  htmlFor={`ext-${row}-${col}`}
+                  className="text-sm font-medium"
+                >
+                  Extension (3 digits)
+                </Label>
                 <Input
                   id={`ext-${row}-${col}`}
                   value={extension}
@@ -190,7 +203,9 @@ export function PhoneBoardCell({
                 <Label className="text-sm font-medium">Type</Label>
                 <Select
                   value={type}
-                  onValueChange={(v) => setType(v as PhoneBoardExtensionType | "")}
+                  onValueChange={(v) =>
+                    setType(v as PhoneBoardExtensionType | "")
+                  }
                 >
                   <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Select type" />

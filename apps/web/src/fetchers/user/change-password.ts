@@ -5,7 +5,7 @@ export type ChangePasswordRequest = {
 
 export default async function changePassword(body: ChangePasswordRequest) {
   const base = import.meta.env.VITE_API_URL || "";
-  const url = (base ? base : "") + "/user/password";
+  const url = `${base ? base : ""}/user/password`;
 
   const res = await fetch(url, {
     method: "PUT",

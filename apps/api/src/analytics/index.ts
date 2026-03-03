@@ -1,11 +1,10 @@
-import { and, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import db from "../database";
 import { projectTable, taskTable, userTable } from "../database/schema";
 
 export type DateRange =
   | "this-month"
   | "last-month"
-  | "last-30-days"
   | "this-quarter"
   | "this-week";
 
@@ -41,6 +40,7 @@ export interface AnalyticsData {
     todo: number;
     inProgress: number;
     technicalReview: number;
+    archived: number;
   };
   tasksByPriority: {
     urgent: number;
@@ -116,7 +116,8 @@ function getDateRange(
   switch (range) {
     case "this-week": {
       const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay());
+      const day = (now.getDay() + 6) % 7; // Monday as first day of week
+      start.setDate(now.getDate() - day);
       start.setHours(0, 0, 0, 0);
       return { start, end: today, label: "This Week" };
     }
@@ -124,12 +125,6 @@ function getDateRange(
       const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
       return { start, end, label: "Last Month" };
-    }
-    case "last-30-days": {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 30);
-      start.setHours(0, 0, 0, 0);
-      return { start, end: today, label: "Last 30 Days" };
     }
     case "this-quarter": {
       const quarter = Math.floor(now.getMonth() / 3);
@@ -165,32 +160,47 @@ async function getAnalytics(
 
   const allTasksInWorkspace = await db
     .select({
+      title: taskTable.title,
+      id: taskTable.id,
       status: taskTable.status,
       priority: taskTable.priority,
       dueDate: taskTable.dueDate,
       userId: taskTable.userId,
       projectId: taskTable.projectId,
       projectName: projectTable.name,
+      assigneeName: userTable.name,
       createdAt: taskTable.createdAt,
     })
     .from(taskTable)
     .innerJoin(projectTable, eq(taskTable.projectId, projectTable.id))
+    .leftJoin(userTable, eq(taskTable.userId, userTable.id))
     .where(and(eq(projectTable.workspaceId, workspaceId)));
 
-  const tasksInPeriod = allTasksInWorkspace.filter(
-    (t) => t.createdAt >= period.start && t.createdAt <= period.end,
-  );
+  const tasksInPeriodRaw = allTasksInWorkspace.filter((t) => {
+    const effectiveDate = t.dueDate ?? t.createdAt;
+    return effectiveDate >= period.start && effectiveDate <= period.end;
+  });
 
-  const tasksPreviousPeriod = allTasksInWorkspace.filter(
-    (t) =>
-      t.createdAt >= previousPeriod.start && t.createdAt <= previousPeriod.end,
-  );
+  const currentPeriodExcludesArchived =
+    query?.dateRange === "this-week" || query?.dateRange === "this-month";
+  const effectiveTasksInPeriod = currentPeriodExcludesArchived
+    ? tasksInPeriodRaw.filter((t) => t.status !== "archived")
+    : tasksInPeriodRaw;
+
+  const tasksPreviousPeriod = allTasksInWorkspace.filter((t) => {
+    const effectiveDate = t.dueDate ?? t.createdAt;
+    return (
+      effectiveDate >= previousPeriod.start &&
+      effectiveDate <= previousPeriod.end
+    );
+  });
 
   const tasksByStatus: AnalyticsData["tasksByStatus"] = {
     completed: 0,
     todo: 0,
     inProgress: 0,
     technicalReview: 0,
+    archived: 0,
   };
 
   const tasksByPriority: AnalyticsData["tasksByPriority"] = {
@@ -221,7 +231,7 @@ async function getAnalytics(
 
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  for (const task of tasksInPeriod) {
+  for (const task of effectiveTasksInPeriod) {
     if (!task.status) continue;
 
     switch (task.status) {
@@ -236,6 +246,9 @@ async function getAnalytics(
         break;
       case "technical-review":
         tasksByStatus.technicalReview++;
+        break;
+      case "archived":
+        tasksByStatus.archived++;
         break;
     }
 
@@ -255,7 +268,7 @@ async function getAnalytics(
         break;
     }
 
-    if (task.status !== "completed") {
+    if (task.status !== "completed" && task.status !== "archived") {
       if (task.dueDate && task.dueDate < now) overdueTasks++;
       else if (task.dueDate && task.dueDate <= sevenDaysFromNow) dueSoonTasks++;
     }
@@ -273,9 +286,15 @@ async function getAnalytics(
     const projectData = tasksByProjectMap.get(projectKey);
     if (!projectData) continue;
     projectData.total++;
-    if (task.status === "completed") projectData.completed++;
+    if (task.status === "completed" || task.status === "archived")
+      projectData.completed++;
     else if (task.status === "in-progress") projectData.inProgress++;
-    if (task.status !== "completed" && task.dueDate && task.dueDate < now)
+    if (
+      task.status !== "completed" &&
+      task.status !== "archived" &&
+      task.dueDate &&
+      task.dueDate < now
+    )
       projectData.overdue++;
 
     if (task.userId) {
@@ -290,7 +309,8 @@ async function getAnalytics(
       const userData = tasksByAssigneeMap.get(task.userId);
       if (!userData) continue;
       userData.total++;
-      if (task.status === "completed") userData.completed++;
+      if (task.status === "completed" || task.status === "archived")
+        userData.completed++;
       else if (task.status === "in-progress") userData.inProgress++;
     }
   }
@@ -376,10 +396,12 @@ async function getAnalytics(
   );
 
   if (daysInPeriod <= 35) {
-    for (const task of tasksInPeriod) {
-      if (!task.createdAt) continue;
-      const weekStart = new Date(task.createdAt);
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    for (const task of effectiveTasksInPeriod) {
+      const effectiveDate = task.dueDate ?? task.createdAt;
+      if (!effectiveDate) continue;
+      const weekStart = new Date(effectiveDate);
+      const day = (weekStart.getDay() + 6) % 7; // Monday as first day of week
+      weekStart.setDate(weekStart.getDate() - day);
       const weekKey = weekStart.toISOString().split("T")[0] ?? "";
       if (!weekMap.has(weekKey))
         weekMap.set(weekKey, { completed: 0, created: 0 });
@@ -403,25 +425,13 @@ async function getAnalytics(
       created: data.created,
     }));
 
-  const recentTasksResult = await db
-    .select({
-      id: taskTable.id,
-      title: taskTable.title,
-      status: taskTable.status,
-      priority: taskTable.priority,
-      projectName: projectTable.name,
-      assigneeName: userTable.name,
-      createdAt: taskTable.createdAt,
-      dueDate: taskTable.dueDate,
-    })
-    .from(taskTable)
-    .innerJoin(projectTable, eq(taskTable.projectId, projectTable.id))
-    .leftJoin(userTable, eq(taskTable.userId, userTable.id))
-    .where(eq(projectTable.workspaceId, workspaceId))
-    .orderBy(desc(taskTable.createdAt))
-    .limit(15);
+  const periodTasksSorted = [...tasksInPeriodRaw].sort((a, b) => {
+    const aDate = (a.dueDate ?? a.createdAt)?.getTime() ?? 0;
+    const bDate = (b.dueDate ?? b.createdAt)?.getTime() ?? 0;
+    return bDate - aDate;
+  });
 
-  for (const task of recentTasksResult) {
+  for (const task of periodTasksSorted) {
     recentTasksData.push({
       id: task.id,
       title: task.title ?? "",
@@ -432,19 +442,21 @@ async function getAnalytics(
       createdAt: task.createdAt,
       dueDate: task.dueDate,
       isOverdue: task.dueDate
-        ? task.dueDate < now && task.status !== "completed"
+        ? task.dueDate < now &&
+          task.status !== "completed" &&
+          task.status !== "archived"
         : false,
     });
   }
 
-  const totalTasks = tasksInPeriod.length;
-  const completedTasks = tasksByStatus.completed;
+  const totalTasks = effectiveTasksInPeriod.length;
+  const completedTasks = tasksByStatus.completed + tasksByStatus.archived;
   const completionRate =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const totalTasksPrevious = tasksPreviousPeriod.length;
   const completedTasksPrevious = tasksPreviousPeriod.filter(
-    (t) => t.status === "completed",
+    (t) => t.status === "completed" || t.status === "archived",
   ).length;
   const completionRatePrevious =
     totalTasksPrevious > 0

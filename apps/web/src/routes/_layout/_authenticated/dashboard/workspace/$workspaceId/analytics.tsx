@@ -1,4 +1,5 @@
 import { DateRangeFilter } from "@/components/analytics/date-range-filter";
+import { ExportAnalyticsButton } from "@/components/analytics/export-analytics-button";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,6 @@ import {
   Calendar,
   CircleCheck,
   Clock2,
-  Radar,
   TrendingDown,
   TrendingUp,
   Users,
@@ -126,9 +126,6 @@ function RouteComponent() {
   const todoColumn = DEFAULT_COLUMNS.find((col) => col.id === "to-do");
   const inProgressColumn = DEFAULT_COLUMNS.find(
     (col) => col.id === "in-progress",
-  );
-  const technicalReviewColumn = DEFAULT_COLUMNS.find(
-    (col) => col.id === "technical-review",
   );
 
   const statCards = [
@@ -282,7 +279,12 @@ function RouteComponent() {
                 : "Loading..."}
             </p>
           </div>
-          <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          <div className="flex items-center gap-3">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+            {data && (
+              <ExportAnalyticsButton data={data} dateRangeLabel={dateRange} />
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -418,6 +420,11 @@ function RouteComponent() {
                         value: data?.tasksByStatus.completed ?? 0,
                         fill: "#22c55e",
                       },
+                      {
+                        name: "Archived",
+                        value: data?.tasksByStatus.archived ?? 0,
+                        fill: "#94a3b8",
+                      },
                     ]}
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
@@ -478,85 +485,85 @@ function RouteComponent() {
               )}
             </CardContent>
           </Card>
+        </div>
 
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Recent Tasks</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {data?.recentTasks && data.recentTasks.length > 0 ? (
-                <div className="overflow-x-auto -mx-2 px-2">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="py-3">Task</TableHead>
-                        <TableHead className="py-3">Project</TableHead>
-                        <TableHead className="py-3">Priority</TableHead>
-                        <TableHead className="py-3">Status</TableHead>
-                        <TableHead className="py-3">Due</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.recentTasks.slice(0, 10).map((task) => (
-                        <TableRow key={task.id}>
-                          <TableCell className="py-3 font-medium">
-                            {task.title}
-                          </TableCell>
-                          <TableCell className="py-3">
-                            {task.projectName}
-                          </TableCell>
-                          <TableCell className="py-3">
-                            {getPriorityBadge(task.priority)}
-                          </TableCell>
-                          <TableCell className="py-3">
-                            <Badge
-                              variant="outline"
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Period Tasks</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {data?.recentTasks && data.recentTasks.length > 0 ? (
+              <div className="overflow-x-auto -mx-2 px-2">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="py-3">Task</TableHead>
+                      <TableHead className="py-3">Project</TableHead>
+                      <TableHead className="py-3">Priority</TableHead>
+                      <TableHead className="py-3">Status</TableHead>
+                      <TableHead className="py-3">Due</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.recentTasks.map((task) => (
+                      <TableRow key={task.id}>
+                        <TableCell className="py-3 font-medium">
+                          {task.title}
+                        </TableCell>
+                        <TableCell className="py-3">
+                          {task.projectName}
+                        </TableCell>
+                        <TableCell className="py-3">
+                          {getPriorityBadge(task.priority)}
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <Badge
+                            variant="outline"
+                            className={
+                              task.status === "completed"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : task.status === "in-progress"
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-gray-100 text-gray-700"
+                            }
+                          >
+                            {task.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-3">
+                          {task.dueDate ? (
+                            <span
                               className={
-                                task.status === "completed"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : task.status === "in-progress"
-                                    ? "bg-orange-100 text-orange-700"
-                                    : "bg-gray-100 text-gray-700"
+                                task.isOverdue
+                                  ? "text-red-500 font-medium"
+                                  : "text-muted-foreground"
                               }
                             >
-                              {task.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-3">
-                            {task.dueDate ? (
-                              <span
-                                className={
-                                  task.isOverdue
-                                    ? "text-red-500 font-medium"
-                                    : "text-muted-foreground"
-                                }
-                              >
-                                {new Date(task.dueDate).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                  },
-                                )}
-                                {task.isOverdue && " (Overdue)"}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="h-80 flex items-center justify-center text-muted-foreground">
-                  <p>No recent tasks available</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                              {new Date(task.dueDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                              {task.isOverdue && " (Overdue)"}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <p>No period tasks available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </WorkspaceLayout>
   );

@@ -18,7 +18,9 @@ const updateWorkspace = async (payload: UpdateWorkspaceRequest) => {
   const { id, ...json } = payload;
   const response = await client.workspace[":id"].$put({
     param: { id },
-    json: json as Parameters<typeof client.workspace[":id"]["$put"]>[0]["json"],
+    json: json as Parameters<
+      (typeof client.workspace)[":id"]["$put"]
+    >[0]["json"],
   });
 
   if (!response.ok) {

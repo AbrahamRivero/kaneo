@@ -2,15 +2,19 @@ import WorkspaceLayout from "@/components/common/workspace-layout";
 import { PhoneBoardTable } from "@/components/phone-board";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cellKey, type PhoneBoardCell, type PhoneBoardCellMap } from "@/types/phone-board";
-import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import useUpdateWorkspace from "@/hooks/mutations/workspace/use-update-workspace";
+import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
+import queryClient from "@/query-client";
 import useWorkspaceStore from "@/store/workspace";
+import {
+  type PhoneBoardCell,
+  type PhoneBoardCellMap,
+  cellKey,
+} from "@/types/phone-board";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import queryClient from "@/query-client";
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/phone-board",
@@ -27,12 +31,16 @@ function PhoneBoardRoute() {
     useUpdateWorkspace();
 
   const phoneBoardEnabled = Boolean(
-    (workspace as { phoneBoardEnabled?: boolean } | undefined)?.phoneBoardEnabled,
+    (workspace as { phoneBoardEnabled?: boolean } | undefined)
+      ?.phoneBoardEnabled,
   );
-  const initialData = (workspace as { phoneBoardData?: PhoneBoardCellMap | null } | undefined)
-    ?.phoneBoardData ?? null;
+  const initialData =
+    (workspace as { phoneBoardData?: PhoneBoardCellMap | null } | undefined)
+      ?.phoneBoardData ?? null;
 
-  const [cells, setCells] = useState<PhoneBoardCellMap>(() => initialData ?? {});
+  const [cells, setCells] = useState<PhoneBoardCellMap>(
+    () => initialData ?? {},
+  );
   const [searchTarget, setSearchTarget] = useState<{
     row: number;
     col: number;
@@ -54,20 +62,23 @@ function PhoneBoardRoute() {
     [],
   );
 
-  const handleSearch = useCallback((extension: string) => {
-    for (let r = 1; r <= 50; r++) {
-      for (let c = 1; c <= 10; c++) {
-        const k = cellKey(r, c);
-        const cell = cells[k];
-        if (cell?.extension === extension && !cell.blocked) {
-          setSearchTarget({ row: r, col: c });
-          return;
+  const handleSearch = useCallback(
+    (extension: string) => {
+      for (let r = 1; r <= 50; r++) {
+        for (let c = 1; c <= 10; c++) {
+          const k = cellKey(r, c);
+          const cell = cells[k];
+          if (cell?.extension === extension && !cell.blocked) {
+            setSearchTarget({ row: r, col: c });
+            return;
+          }
         }
       }
-    }
-    setSearchTarget(null);
-    toast.info("Extension not found in the table");
-  }, [cells]);
+      setSearchTarget(null);
+      toast.info("Extension not found in the table");
+    },
+    [cells],
+  );
 
   const handleSave = useCallback(async () => {
     if (!workspace?.id) return;
@@ -80,14 +91,16 @@ function PhoneBoardRoute() {
         phoneBoardData: cells,
       });
       setWorkspace(updated);
-      const next = (updated as { phoneBoardData?: PhoneBoardCellMap }).phoneBoardData ?? cells;
+      const next =
+        (updated as { phoneBoardData?: PhoneBoardCellMap }).phoneBoardData ??
+        cells;
       setCells(next);
       toast.success("Phone board saved");
-      await queryClient.invalidateQueries({ queryKey: [`workspace-${workspaceId}`] });
+      await queryClient.invalidateQueries({
+        queryKey: [`workspace-${workspaceId}`],
+      });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save",
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save");
     }
   }, [workspace, cells, updateWorkspace, setWorkspace, workspaceId]);
 
@@ -137,9 +150,7 @@ function PhoneBoardRoute() {
       title="Phone Board"
       headerActions={
         <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : null}
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           Save
         </Button>
       }

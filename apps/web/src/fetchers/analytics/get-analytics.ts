@@ -3,7 +3,6 @@ import { client } from "@kaneo/libs";
 export type DateRange =
   | "this-month"
   | "last-month"
-  | "last-30-days"
   | "this-quarter"
   | "this-week";
 
@@ -39,6 +38,7 @@ export interface AnalyticsData {
     todo: number;
     inProgress: number;
     technicalReview: number;
+    archived: number;
   };
   tasksByPriority: {
     urgent: number;
@@ -112,6 +112,7 @@ export interface ProjectAnalyticsData {
     todo: number;
     inProgress: number;
     technicalReview: number;
+    archived: number;
   };
   tasksByPriority: {
     urgent: number;
