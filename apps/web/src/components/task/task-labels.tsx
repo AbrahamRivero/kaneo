@@ -295,7 +295,7 @@ function TaskLabels({
                                 }}
                                 className="flex-1 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded px-2 py-1 text-sm"
                                 aria-label={`Edit label name for ${label.name}`}
-                                autoFocus
+
                               />
 
                               <div className="flex gap-1 items-center">
@@ -306,7 +306,7 @@ function TaskLabels({
                                     className={cn(
                                       "w-6 h-6 rounded-full border-2 border-transparent",
                                       editingColor === c.value &&
-                                        "ring-2 ring-offset-1 ring-zinc-200 dark:ring-zinc-800",
+                                      "ring-2 ring-offset-1 ring-zinc-200 dark:ring-zinc-800",
                                     )}
                                     style={{ backgroundColor: c.color }}
                                     onClick={() =>
@@ -337,6 +337,7 @@ function TaskLabels({
                             </div>
                           ) : (
                             <div
+                              // biome-ignore lint/a11y/useSemanticElements: <explanation>
                               role="button"
                               tabIndex={0}
                               onClick={() => toggleLabel(label.id)}
@@ -450,7 +451,7 @@ function TaskLabels({
                                 className={cn(
                                   "flex items-center px-3 py-2 text-sm text-left text-zinc-900 dark:text-zinc-200 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800",
                                   selectedColor === color.value &&
-                                    "bg-zinc-100 dark:bg-zinc-800",
+                                  "bg-zinc-100 dark:bg-zinc-800",
                                 )}
                                 onClick={() => {
                                   setSelectedColor(color.value as LabelColor);
