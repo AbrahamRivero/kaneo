@@ -1,17 +1,13 @@
 import { DateRangeFilter } from "@/components/analytics/date-range-filter";
 import { ExportAnalyticsButton } from "@/components/analytics/export-analytics-button";
+import { PeriodTasksTableWrapper } from "@/components/analytics/period-tasks-table-wrapper";
+import {
+  SecondaryCardComponent,
+  StatCardComponent,
+} from "@/components/analytics/stat-cards";
 import WorkspaceLayout from "@/components/common/workspace-layout";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { DEFAULT_COLUMNS } from "@/constants/columns";
 import useGetAnalytics, {
   type DateRange,
@@ -23,11 +19,11 @@ import {
   Calendar,
   CircleCheck,
   Clock2,
-  TrendingDown,
   TrendingUp,
   Users,
 } from "lucide-react";
 import { useState } from "react";
+
 import {
   Bar,
   BarChart,
@@ -54,6 +50,8 @@ function RouteComponent() {
   const { data, isLoading, error } = useGetAnalytics(workspaceId, {
     dateRange,
   });
+
+  const tasks = data?.recentTasks || [];
 
   if (isLoading) {
     return (
@@ -225,45 +223,7 @@ function RouteComponent() {
       fill: pieColors[index % pieColors.length],
     })) ?? [];
 
-  const getPriorityBadge = (priority: string) => {
-    const colors = {
-      urgent: "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-      high: "bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400",
-      medium:
-        "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-      low: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-    };
-    return (
-      <Badge
-        variant="outline"
-        className={colors[priority as keyof typeof colors]}
-      >
-        {priority}
-      </Badge>
-    );
-  };
 
-  const TrendIndicator = ({
-    change,
-    isPercentage,
-  }: { change: number | null; isPercentage?: boolean }) => {
-    if (change === null) return null;
-    const isPositive = change >= 0;
-    return (
-      <div
-        className={`flex items-center text-xs ${isPositive ? "text-emerald-500" : "text-red-500"}`}
-      >
-        {isPositive ? (
-          <TrendingUp className="w-3 h-3 mr-1" />
-        ) : (
-          <TrendingDown className="w-3 h-3 mr-1" />
-        )}
-        {isPositive ? "+" : ""}
-        {change}
-        {isPercentage ? "%" : ""}
-      </div>
-    );
-  };
 
   return (
     <WorkspaceLayout title="Analytics">
@@ -289,66 +249,13 @@ function RouteComponent() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((card) => (
-            <Card key={card.title}>
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {card.title}
-                  </CardTitle>
-                  <div className={`p-2.5 rounded-lg ${card.bgColor}`}>
-                    {card.icon && (
-                      <card.icon className={`w-5 h-5 ${card.color}`} />
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-end gap-2">
-                  <div className="text-3xl font-bold">{card.value}</div>
-                  <TrendIndicator
-                    change={card.change}
-                    isPercentage={card.isPercentage}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <StatCardComponent key={card.title} card={card} />
           ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {secondaryCards.map((card) => (
-            <Card
-              key={card.title}
-              className={
-                card.isAlert ? "border-red-200 dark:border-red-800" : ""
-              }
-            >
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {card.title}
-                  </CardTitle>
-                  <div className={`p-2.5 rounded-lg ${card.bgColor}`}>
-                    {card.icon && (
-                      <card.icon className={`w-5 h-5 ${card.color}`} />
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-end gap-2">
-                  <div className="text-3xl font-bold">{card.value}</div>
-                  {card.subtitle && (
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {card.subtitle}
-                    </div>
-                  )}
-                </div>
-                {card.change !== undefined && card.change !== null && (
-                  <TrendIndicator change={card.change} />
-                )}
-              </CardContent>
-            </Card>
+            <SecondaryCardComponent key={card.title} card={card} />
           ))}
         </div>
 
@@ -492,76 +399,7 @@ function RouteComponent() {
             <CardTitle className="text-lg">Period Tasks</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            {data?.recentTasks && data.recentTasks.length > 0 ? (
-              <div className="overflow-x-auto -mx-2 px-2">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="py-3">Task</TableHead>
-                      <TableHead className="py-3">Project</TableHead>
-                      <TableHead className="py-3">Priority</TableHead>
-                      <TableHead className="py-3">Status</TableHead>
-                      <TableHead className="py-3">Due</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.recentTasks.map((task) => (
-                      <TableRow key={task.id}>
-                        <TableCell className="py-3 font-medium">
-                          {task.title}
-                        </TableCell>
-                        <TableCell className="py-3">
-                          {task.projectName}
-                        </TableCell>
-                        <TableCell className="py-3">
-                          {getPriorityBadge(task.priority)}
-                        </TableCell>
-                        <TableCell className="py-3">
-                          <Badge
-                            variant="outline"
-                            className={
-                              task.status === "completed"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : task.status === "in-progress"
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "bg-gray-100 text-gray-700"
-                            }
-                          >
-                            {task.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-3">
-                          {task.dueDate ? (
-                            <span
-                              className={
-                                task.isOverdue
-                                  ? "text-red-500 font-medium"
-                                  : "text-muted-foreground"
-                              }
-                            >
-                              {new Date(task.dueDate).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}
-                              {task.isOverdue && " (Overdue)"}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="h-80 flex items-center justify-center text-muted-foreground">
-                <p>No period tasks available</p>
-              </div>
-            )}
+            <PeriodTasksTableWrapper tasks={tasks} />
           </CardContent>
         </Card>
       </div>
