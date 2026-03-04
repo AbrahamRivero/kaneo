@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import db from "../database";
 import { projectTable, taskTable, userTable } from "../database/schema";
 
@@ -320,7 +320,7 @@ async function getAnalytics(
     const usersResult = await db
       .select({ id: userTable.id, name: userTable.name })
       .from(userTable)
-      .where(eq(userTable.id, userIds[0] as string));
+      .where(inArray(userTable.id, userIds as string[]));
     for (const user of usersResult) {
       if (tasksByAssigneeMap.has(user.id)) {
         const userData = tasksByAssigneeMap.get(user.id);
