@@ -23,7 +23,7 @@ async function updateTask(
   description: string,
   priority: string,
   position: number,
-  userId?: string
+  userId?: string,
 ) {
   const existingTask = await db.query.taskTable.findFirst({
     where: eq(taskTable.id, id),
@@ -68,7 +68,7 @@ async function updateTask(
         oldStatus: existingTask.status,
         newStatus: status,
         title: updatedTask.title,
-      })
+      }),
     );
   }
   if (existingTask.priority !== priority) {
@@ -79,7 +79,7 @@ async function updateTask(
         oldPriority: existingTask.priority,
         newPriority: priority,
         title: updatedTask.title,
-      })
+      }),
     );
   }
   if (existingTask.userId !== userId) {
@@ -88,7 +88,7 @@ async function updateTask(
         taskId: updatedTask.id,
         newAssignee: userId,
         title: updatedTask.title,
-      })
+      }),
     );
   }
   if (eventPromises.length > 0) {

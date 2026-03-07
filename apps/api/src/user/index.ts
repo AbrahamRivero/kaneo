@@ -28,7 +28,10 @@ user.put(
       const res = await changePassword(userId, payload);
       return c.json(res);
     } catch (error) {
-      return c.json({ message: error instanceof Error ? error.message : "" }, 400);
+      return c.json(
+        { message: error instanceof Error ? error.message : "" },
+        400,
+      );
     }
   },
 );

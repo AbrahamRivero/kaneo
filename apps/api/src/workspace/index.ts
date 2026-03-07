@@ -60,6 +60,7 @@ const workspace = new Hono<{
           )
           .nullable()
           .optional(),
+        eventRoomsEnabled: z.boolean().optional(),
       }),
     ),
     async (c) => {
@@ -73,6 +74,7 @@ const workspace = new Hono<{
         description: body.description,
         phoneBoardEnabled: body.phoneBoardEnabled,
         phoneBoardData: body.phoneBoardData,
+        eventRoomsEnabled: body.eventRoomsEnabled,
       });
 
       return c.json(workspace);

@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import db from "../database";
@@ -115,7 +115,10 @@ const workspaceUser = new Hono<{
   .post(
     "/:workspaceId/reset-password",
     zValidator("param", z.object({ workspaceId: z.string() })),
-    zValidator("json", z.object({ userId: z.string(), password: z.string().min(8) })),
+    zValidator(
+      "json",
+      z.object({ userId: z.string(), password: z.string().min(8) }),
+    ),
     async (c) => {
       const { workspaceId } = c.req.valid("param");
       const { userId, password } = c.req.valid("json");
@@ -123,10 +126,16 @@ const workspaceUser = new Hono<{
       const requesterId = c.get("userId") as string;
 
       try {
-        const res = await resetMemberPassword(workspaceId, requesterId, { userId, password });
+        const res = await resetMemberPassword(workspaceId, requesterId, {
+          userId,
+          password,
+        });
         return c.json(res);
       } catch (error) {
-        return c.json({ message: error instanceof Error ? error.message : "" }, 400);
+        return c.json(
+          { message: error instanceof Error ? error.message : "" },
+          400,
+        );
       }
     },
   )

@@ -2,10 +2,12 @@ import { relations } from "drizzle-orm";
 import {
   accountTable,
   activityTable,
+  eventRoomTable,
   githubIntegrationTable,
   labelTable,
   notificationTable,
   projectTable,
+  reservationTable,
   sessionTable,
   taskTable,
   timeEntryTable,
@@ -142,6 +144,31 @@ export const githubIntegrationTableRelations = relations(
     project: one(projectTable, {
       fields: [githubIntegrationTable.projectId],
       references: [projectTable.id],
+    }),
+  }),
+);
+
+export const eventRoomTableRelations = relations(
+  eventRoomTable,
+  ({ one, many }) => ({
+    workspace: one(workspaceTable, {
+      fields: [eventRoomTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    reservations: many(reservationTable),
+  }),
+);
+
+export const reservationTableRelations = relations(
+  reservationTable,
+  ({ one }) => ({
+    workspace: one(workspaceTable, {
+      fields: [reservationTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    eventRoom: one(eventRoomTable, {
+      fields: [reservationTable.eventRoomId],
+      references: [eventRoomTable.id],
     }),
   }),
 );

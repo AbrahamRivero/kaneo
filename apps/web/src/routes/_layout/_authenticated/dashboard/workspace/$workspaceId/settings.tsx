@@ -1,6 +1,6 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Lock, Phone, Trash2 } from "lucide-react";
+import { AlertTriangle, Calendar, Lock, Phone, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -110,6 +110,10 @@ function SettingsComponent() {
     (workspace as { phoneBoardEnabled?: boolean }).phoneBoardEnabled,
   );
 
+  const eventRoomsEnabled = Boolean(
+    (workspace as { eventRoomsEnabled?: boolean }).eventRoomsEnabled,
+  );
+
   const handlePhoneBoardToggle = async (checked: boolean) => {
     if (!workspace?.id) return;
     try {
@@ -124,6 +128,28 @@ function SettingsComponent() {
         checked
           ? "Pizarra telefónica activada"
           : "Pizarra telefónica desactivada",
+      );
+      await queryClient.invalidateQueries({
+        queryKey: [`workspace-${workspace.id}`],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update");
+    }
+  };
+
+  const handleEventRoomsToggle = async (checked: boolean) => {
+    if (!workspace?.id) return;
+    try {
+      const updatedWorkspace = await updateWorkspace({
+        id: workspace.id,
+        name: workspace.name,
+        description: workspace.description ?? "",
+        eventRoomsEnabled: checked,
+      });
+      setWorkspace(updatedWorkspace);
+      toast.success(
+        checked ? "Event rooms module enabled" : "Event rooms module disabled",
       );
       await queryClient.invalidateQueries({
         queryKey: [`workspace-${workspace.id}`],
@@ -234,29 +260,56 @@ function SettingsComponent() {
             title="Features"
             description="Enable or disable workspace features for all members"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted/50">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
+            <div className="space-y-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted/50">
+                    <Phone className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="phone-board"
+                      className="text-base font-medium"
+                    >
+                      Phone Board
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Phone board configuration for the workspace
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="phone-board"
-                    className="text-base font-medium"
-                  >
-                    Phone Board
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Phone board configuration for the workspace
-                  </p>
-                </div>
+                <Switch
+                  id="phone-board"
+                  checked={phoneBoardEnabled}
+                  onCheckedChange={handlePhoneBoardToggle}
+                  disabled={isUpdating}
+                />
               </div>
-              <Switch
-                id="phone-board"
-                checked={phoneBoardEnabled}
-                onCheckedChange={handlePhoneBoardToggle}
-                disabled={isUpdating}
-              />
+
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted/50">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="event-rooms"
+                      className="text-base font-medium"
+                    >
+                      Event Rooms
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Calendar and booking management for hotel event spaces
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="event-rooms"
+                  checked={eventRoomsEnabled}
+                  onCheckedChange={handleEventRoomsToggle}
+                  disabled={isUpdating}
+                />
+              </div>
             </div>
           </SettingsSection>
         )}

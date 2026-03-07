@@ -18,12 +18,7 @@ const analytics = new Hono<{
       z
         .object({
           dateRange: z
-            .enum([
-              "this-month",
-              "last-month",
-              "this-quarter",
-              "this-week",
-            ])
+            .enum(["this-month", "last-month", "this-quarter", "this-week"])
             .optional(),
           startDate: z.string().optional(),
           endDate: z.string().optional(),
@@ -51,12 +46,7 @@ const analytics = new Hono<{
       z
         .object({
           dateRange: z
-            .enum([
-              "this-month",
-              "last-month",
-              "this-quarter",
-              "this-week",
-            ])
+            .enum(["this-month", "last-month", "this-quarter", "this-week"])
             .optional(),
         })
         .optional(),

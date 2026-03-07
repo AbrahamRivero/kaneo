@@ -1,10 +1,10 @@
-import type { Priority, Status } from "./update-task";
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import db from "../../database";
 import { taskTable, userTable } from "../../database/schema";
 import { publishEvent } from "../../events";
-import db from "../../database";
 import getNextTaskNumber from "./get-next-task-number";
+import type { Priority, Status } from "./update-task";
 
 async function createTask({
   projectId,

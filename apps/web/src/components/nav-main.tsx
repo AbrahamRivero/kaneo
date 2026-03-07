@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   BarChart3,
   Calendar,
+  CalendarDays,
   ChevronDown,
   LayoutDashboard,
   LayoutGrid,
@@ -48,6 +49,10 @@ export function NavMain() {
   const phoneBoardEnabled = Boolean(
     (workspaceData as { phoneBoardEnabled?: boolean } | undefined)
       ?.phoneBoardEnabled,
+  );
+  const eventRoomsEnabled = Boolean(
+    (workspaceData as { eventRoomsEnabled?: boolean } | undefined)
+      ?.eventRoomsEnabled,
   );
 
   if (!workspace) return null;
@@ -167,6 +172,38 @@ export function NavMain() {
                   >
                     <Phone className="w-4 h-4" />
                     <span>Phone Board</span>
+                  </Button>
+                </SidebarMenuButton>
+              ) : null}
+            </SidebarMenuItem>
+          )}
+
+          {currentWorkspaceId && (
+            <SidebarMenuItem>
+              {isWorkspaceLoading ? (
+                <SidebarMenuSkeleton showIcon className="w-full" />
+              ) : eventRoomsEnabled ? (
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Event Rooms"
+                  className="w-full flex gap-2 justify-start items-start"
+                >
+                  <Button
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/event-rooms`,
+                      )
+                    }
+                    variant="ghost"
+                    className={cn(
+                      "w-full",
+                      window.location.pathname ===
+                        `/dashboard/workspace/${workspace.id}/event-rooms` &&
+                        "bg-accent",
+                    )}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span>Event Rooms</span>
                   </Button>
                 </SidebarMenuButton>
               ) : null}

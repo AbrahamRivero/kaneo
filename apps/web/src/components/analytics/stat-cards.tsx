@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/cn";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
@@ -38,7 +37,7 @@ function TrendIndicator({
         "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium tracking-tight",
         isPositive
           ? "bg-success/10 text-success"
-          : "bg-destructive/10 text-destructive"
+          : "bg-destructive/10 text-destructive",
       )}
     >
       {isPositive ? (
@@ -63,7 +62,7 @@ function StatCardComponent({ card }: { card: StatCard }) {
         <div
           className={cn(
             "flex size-10 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-105",
-            card.bgColor
+            card.bgColor,
           )}
         >
           {card.icon && <card.icon className={cn("size-5", card.color)} />}
@@ -74,10 +73,7 @@ function StatCardComponent({ card }: { card: StatCard }) {
         <p className="text-3xl font-semibold tracking-tight text-card-foreground">
           {card.value}
         </p>
-        <TrendIndicator
-          change={card.change}
-          isPercentage={card.isPercentage}
-        />
+        <TrendIndicator change={card.change} isPercentage={card.isPercentage} />
       </div>
     </div>
   );
@@ -90,7 +86,7 @@ function SecondaryCardComponent({ card }: { card: SecondaryCard }) {
         "group relative rounded-xl border bg-card p-5 transition-all duration-300 hover:shadow-md",
         card.isAlert
           ? "border-destructive/30 hover:border-destructive/50"
-          : "border-border/60 hover:border-border"
+          : "border-border/60 hover:border-border",
       )}
     >
       <div className="flex items-start justify-between">
@@ -100,7 +96,7 @@ function SecondaryCardComponent({ card }: { card: SecondaryCard }) {
         <div
           className={cn(
             "flex size-10 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-105",
-            card.bgColor
+            card.bgColor,
           )}
         >
           {card.icon && <card.icon className={cn("size-5", card.color)} />}

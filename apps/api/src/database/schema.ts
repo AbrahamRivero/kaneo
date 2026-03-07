@@ -104,6 +104,7 @@ export const workspaceTable = pgTable("workspace", {
     }),
   phoneBoardEnabled: boolean("phone_board_enabled").default(false).notNull(),
   phoneBoardData: jsonb("phone_board_data").$type<PhoneBoardCellMap>(),
+  eventRoomsEnabled: boolean("event_rooms_enabled").default(false).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
@@ -267,6 +268,56 @@ export const githubIntegrationTable = pgTable("github_integration", {
   repositoryName: text("repository_name").notNull(),
   installationId: integer("installation_id"),
   isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const eventRoomTable = pgTable("event_room", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  name: text("name").notNull(),
+  capacity: integer("capacity").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const reservationTable = pgTable("reservation", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  eventRoomId: text("event_room_id")
+    .notNull()
+    .references(() => eventRoomTable.id, {
+      onDelete: "cascade",
+    }),
+  clientName: text("client_name").notNull(),
+  companyName: text("company_name"),
+  phone: text("phone"),
+  email: text("email"),
+  startDate: timestamp("start_date", { mode: "date" }).notNull(),
+  endDate: timestamp("end_date", { mode: "date" }).notNull(),
+  adultPax: integer("adult_pax").notNull().default(0),
+  childrenPax: integer("children_pax").notNull().default(0),
+  notes: text("notes"),
+  paymentConfirmed: boolean("payment_confirmed").default(false),
+  coffeeBreak: boolean("coffee_break").default(false),
+  lunch: boolean("lunch").default(false),
+  cocktail: boolean("cocktail").default(false),
+  canapes: boolean("canapes").default(false),
+  openBar: boolean("open_bar").default(false),
+  status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });

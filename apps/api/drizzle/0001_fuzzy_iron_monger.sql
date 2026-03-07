@@ -1,0 +1,1 @@
+ALTER TABLE "workspace" ADD COLUMN "event_rooms_enabled" boolean DEFAULT false NOT NULL;

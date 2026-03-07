@@ -1,9 +1,9 @@
+import bcrypt from "bcrypt";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import db from "../../database";
 import { accountTable } from "../../database/schema";
-import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
-import { hashPassword, verifyPassword } from "better-auth/crypto";
 
 const payloadSchema = z.object({
   currentPassword: z.string().min(1),

@@ -12,6 +12,7 @@ async function getWorkspace(userId: string, workspaceId: string) {
       description: workspaceTable.description,
       phoneBoardEnabled: workspaceTable.phoneBoardEnabled,
       phoneBoardData: workspaceTable.phoneBoardData,
+      eventRoomsEnabled: workspaceTable.eventRoomsEnabled,
       createdAt: workspaceTable.createdAt,
     })
     .from(workspaceTable)

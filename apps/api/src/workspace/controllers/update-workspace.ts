@@ -11,6 +11,7 @@ type UpdateWorkspacePayload = {
     string,
     { extension?: string; type?: "digital" | "analog"; blocked?: boolean }
   > | null;
+  eventRoomsEnabled?: boolean;
 };
 
 async function updateWorkspace(
@@ -50,6 +51,9 @@ async function updateWorkspace(
   if (payload.phoneBoardData !== undefined) {
     setPayload.phoneBoardData = payload.phoneBoardData;
   }
+  if (payload.eventRoomsEnabled !== undefined) {
+    setPayload.eventRoomsEnabled = payload.eventRoomsEnabled;
+  }
 
   const [updatedWorkspace] = await db
     .update(workspaceTable)
@@ -62,6 +66,7 @@ async function updateWorkspace(
       description: workspaceTable.description,
       phoneBoardEnabled: workspaceTable.phoneBoardEnabled,
       phoneBoardData: workspaceTable.phoneBoardData,
+      eventRoomsEnabled: workspaceTable.eventRoomsEnabled,
       createdAt: workspaceTable.createdAt,
     });
 

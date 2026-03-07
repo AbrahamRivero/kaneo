@@ -23,4 +23,3 @@ async function activatePendingWorkspaceUsers(userId: string) {
 }
 
 export default activatePendingWorkspaceUsers;
-

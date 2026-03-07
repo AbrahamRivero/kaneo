@@ -1,7 +1,7 @@
 type GitHubLabel = string | { name?: string };
 
 export function extractIssuePriority(
-  labels: GitHubLabel[] | undefined
+  labels: GitHubLabel[] | undefined,
 ): string {
   if (!labels) return "medium";
 

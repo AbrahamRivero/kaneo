@@ -5,26 +5,27 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
-import { auth } from "./auth";
-import { getPublicProject } from "./project/controllers/get-public-project";
-import { publishEvent } from "./events";
 import activity from "./activity";
 import analytics from "./analytics/route";
+import { auth } from "./auth";
 import config from "./config";
 import db from "./database";
+import eventRoom from "./event-room";
+import { publishEvent } from "./events";
 import githubIntegration from "./github-integration";
 import label from "./label";
 import notification from "./notification";
 import project from "./project";
+import { getPublicProject } from "./project/controllers/get-public-project";
 import search from "./search";
 import task from "./task";
 import timeEntry from "./time-entry";
+import user from "./user";
 import getSettings from "./utils/get-settings";
 import purgeDemoData from "./utils/purge-demo-data";
 import workspace from "./workspace";
 import workspaceUser from "./workspace-user";
 import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users";
-import user from "./user";
 
 const app = new Hono<{
   Variables: {
@@ -199,6 +200,7 @@ const labelRoute = app.route("/label", label);
 const notificationRoute = app.route("/notification", notification);
 const searchRoute = app.route("/search", search);
 const analyticsRoute = app.route("/analytics", analytics);
+const eventRoomRoute = app.route("/event-room", eventRoom);
 
 try {
   console.log("Migrating database...");
@@ -233,6 +235,7 @@ export type AppType =
   | typeof githubIntegrationRoute
   | typeof configRoute
   | typeof userRoute
-  | typeof analyticsRoute;
+  | typeof analyticsRoute
+  | typeof eventRoomRoute;
 
 export default app;

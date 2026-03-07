@@ -1,8 +1,8 @@
-import { z } from "zod";
-import { eq } from "drizzle-orm";
-import db from "../../database";
-import { workspaceTable, accountTable } from "../../database/schema";
 import { hashPassword } from "better-auth/crypto";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import db from "../../database";
+import { accountTable, workspaceTable } from "../../database/schema";
 
 const payloadSchema = z.object({
   userId: z.string(),
@@ -12,7 +12,7 @@ const payloadSchema = z.object({
 export default async function resetMemberPassword(
   workspaceId: string,
   requesterId: string,
-  payload: unknown
+  payload: unknown,
 ) {
   const { userId, password } = payloadSchema.parse(payload);
 
@@ -67,7 +67,7 @@ export default async function resetMemberPassword(
       "resetMemberPassword: stored password does not match hashed value",
       {
         accountId: account.id,
-      }
+      },
     );
     throw new Error("Failed to verify updated password");
   }
