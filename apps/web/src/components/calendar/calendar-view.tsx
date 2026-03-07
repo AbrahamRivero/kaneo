@@ -1,4 +1,5 @@
 import { useCalendarStore } from "@/store/calendar-store";
+import type { Reservation } from "@/types/event-room";
 import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { CalendarDayColumn } from "./calendar-day-column";
@@ -6,18 +7,27 @@ import { CalendarHoursColumn } from "./calendar-hours-column";
 import { INITIAL_SCROLL_OFFSET } from "./calendar-utils";
 import { CalendarWeekHeader } from "./calendar-week-header";
 import { EventSheet } from "./reservation-sheet";
-import type { Reservation } from "@/types/event-room";
 
-export function CalendarView() {
-  const { goToNextWeek, goToPreviousWeek, getWeekDays, getCurrentWeekReservations } =
-    useCalendarStore();
+export interface CalendarViewProps {
+  reservations: Reservation[];
+}
+
+export function CalendarView({ reservations }: CalendarViewProps) {
+  const {
+    goToNextWeek,
+    goToPreviousWeek,
+    getWeekDays,
+    getCurrentWeekReservations,
+  } = useCalendarStore();
   const weekDays = getWeekDays();
-  const filteredReservations = getCurrentWeekReservations();
+
+  const filteredReservations = getCurrentWeekReservations(reservations);
   const hoursScrollRef = useRef<HTMLDivElement>(null);
   const daysScrollRefs = useRef<(HTMLDivElement | null)[]>([]);
   const hasScrolledRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [selectedReservation, setSelectedReservation] =
+    useState<Reservation | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const today = new Date();
@@ -33,8 +43,10 @@ export function CalendarView() {
   const reservationsByDay: Record<string, Reservation[]> = {};
   for (const day of weekDays) {
     const dayStr = format(day, "yyyy-MM-dd");
-    reservationsByDay[dayStr] = filteredReservations.filter((e) => e.startDate.toDateString() === dayStr);
-  };
+    reservationsByDay[dayStr] = filteredReservations.filter(
+      (e) => e.date === dayStr,
+    );
+  }
 
   const isTodayInWeek = weekDays.some(
     (day) => format(day, "yyyy-MM-dd") === format(today, "yyyy-MM-dd"),
@@ -49,7 +61,7 @@ export function CalendarView() {
           if (ref) {
             ref.scrollTop = INITIAL_SCROLL_OFFSET;
           }
-        };
+        }
         hasScrolledRef.current = true;
       }
     };
@@ -65,7 +77,7 @@ export function CalendarView() {
       if (ref) {
         ref.scrollTop = scrollTop;
       }
-    };
+    }
   };
 
   const handleDayScroll =
@@ -78,7 +90,7 @@ export function CalendarView() {
         if (ref && idx !== index) {
           ref.scrollTop = scrollTop;
         }
-      };
+      }
     };
 
   const handleEventClick = (reservation: Reservation) => {

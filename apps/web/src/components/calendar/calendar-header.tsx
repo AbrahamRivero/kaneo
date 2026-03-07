@@ -1,16 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { getTodayEvents } from "@/mock-data/events";
 import { useCalendarStore } from "@/store/calendar-store";
+import type { EventRoom } from "@/types/event-room";
 import { format } from "date-fns";
-import {
-  Calendar as CalendarIcon,
-  Plus,
-} from "lucide-react";
+import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { useState } from "react";
 import { ReservationDialog } from "./reservation-dialog";
 import { SchedulePopover } from "./schedule-popover";
 
-export function CalendarHeader() {
+interface CalendarHeaderProps {
+  workspaceId: string;
+  eventRooms: EventRoom[];
+}
+
+export function CalendarHeader({
+  workspaceId,
+  eventRooms,
+}: CalendarHeaderProps) {
   const { currentWeekStart } = useCalendarStore();
   const todayEvents = getTodayEvents();
   const meetingsCount = todayEvents.filter(
@@ -26,6 +32,8 @@ export function CalendarHeader() {
       <ReservationDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
+        workspaceId={workspaceId}
+        eventRooms={eventRooms}
       />
       <div className="border-b border-border bg-background">
         <div className="px-3 md:px-6 py-2.5 md:py-3">

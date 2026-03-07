@@ -5,7 +5,7 @@ export type EventRoom = {
   workspaceId: string;
   name: string;
   capacity: number;
-  description?: string;
+  description?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -14,22 +14,24 @@ export type Reservation = {
   id: string;
   workspaceId: string;
   eventRoomId: string;
+  title?: string | null;
   clientName: string;
-  companyName?: string;
-  phone?: string;
-  email?: string;
-  startDate: string;
-  endDate: string;
+  companyName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  date: string;
+  startTime: string;
+  endTime: string;
   adultPax: number;
   childrenPax: number;
-  notes?: string;
-  paymentConfirmed: boolean;
-  coffeeBreak: boolean;
-  lunch: boolean;
-  cocktail: boolean;
-  canapes: boolean;
-  openBar: boolean;
-  status: "all" | "pending" | "confirmed" | "cancelled" | "completed";
+  notes?: string | null;
+  paymentConfirmed?: boolean | null;
+  coffeeBreak?: boolean | null;
+  lunch?: boolean | null;
+  cocktail?: boolean | null;
+  canapes?: boolean | null;
+  openBar?: boolean | null;
+  status: string;
   createdAt: string;
   updatedAt: string;
   roomName?: string;
@@ -52,12 +54,14 @@ export type UpdateEventRoomPayload = {
 export type CreateReservationPayload = {
   workspaceId: string;
   eventRoomId: string;
+  title?: string;
   clientName: string;
   companyName?: string;
   phone?: string;
   email?: string;
-  startDate: string;
-  endDate: string;
+  date: string;
+  startTime: string;
+  endTime: string;
   adultPax: number;
   childrenPax: number;
   notes?: string;
@@ -70,12 +74,14 @@ export type CreateReservationPayload = {
 
 export type UpdateReservationPayload = {
   eventRoomId?: string;
+  title?: string;
   clientName?: string;
   companyName?: string;
   phone?: string;
   email?: string;
-  startDate?: string;
-  endDate?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
   adultPax?: number;
   childrenPax?: number;
   notes?: string;
@@ -85,14 +91,28 @@ export type UpdateReservationPayload = {
   cocktail?: boolean;
   canapes?: boolean;
   openBar?: boolean;
-  status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
+  status?: "pending" | "confirmed" | "cancelled" | "completed";
 };
 
 export const getEventRooms = async (
   workspaceId: string,
 ): Promise<EventRoom[]> => {
-  const response = await client.eventRoom[":workspaceId"].rooms.$get({
-    param: { workspaceId },
+  const response = await fetch(
+    `http://localhost:1337/event-room/${workspaceId}/rooms`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getEventRoomById = async (id: string): Promise<EventRoom> => {
+  const response = await client["event-room"].rooms[":id"].$get({
+    param: { id },
   });
 
   if (!response.ok) {
@@ -106,8 +126,11 @@ export const getEventRooms = async (
 export const createEventRoom = async (
   payload: CreateEventRoomPayload,
 ): Promise<EventRoom> => {
-  const response = await client.eventRoom.rooms.$post({
-    json: payload,
+  const response = await fetch("http://localhost:1337/event-room/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -122,9 +145,11 @@ export const updateEventRoom = async (
   id: string,
   payload: UpdateEventRoomPayload,
 ): Promise<EventRoom> => {
-  const response = await client.eventRoom.rooms[":id"].$put({
-    param: { id },
-    json: payload,
+  const response = await fetch(`http://localhost:1337/event-room/rooms/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -138,8 +163,9 @@ export const updateEventRoom = async (
 export const deleteEventRoom = async (
   id: string,
 ): Promise<{ success: boolean }> => {
-  const response = await client.eventRoom.rooms[":id"].$delete({
-    param: { id },
+  const response = await fetch(`http://localhost:1337/event-room/rooms/${id}`, {
+    method: "DELETE",
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -152,17 +178,16 @@ export const deleteEventRoom = async (
 
 export const getReservations = async (
   workspaceId: string,
-  startDate?: string,
-  endDate?: string,
+  date?: string,
 ): Promise<Reservation[]> => {
   const queryParams: Record<string, string> = {};
-  if (startDate) queryParams.startDate = startDate;
-  if (endDate) queryParams.endDate = endDate;
+  if (date) queryParams.date = date;
 
-  const response = await client.eventRoom[":workspaceId"].reservations.$get({
-    param: { workspaceId },
-    query: Object.keys(queryParams).length > 0 ? queryParams : undefined,
-  });
+  const url = new URLSearchParams(queryParams).toString();
+  const response = await fetch(
+    `http://localhost:1337/event-room/${workspaceId}/reservations${url ? `?${url}` : ""}`,
+    { credentials: "include" },
+  );
 
   if (!response.ok) {
     const error = await response.text();
@@ -175,7 +200,7 @@ export const getReservations = async (
 export const createReservation = async (
   payload: CreateReservationPayload,
 ): Promise<Reservation> => {
-  const response = await client.eventRoom.reservations.$post({
+  const response = await client["event-room"].reservations.$post({
     json: payload,
   });
 
@@ -188,7 +213,7 @@ export const createReservation = async (
 };
 
 export const getReservation = async (id: string): Promise<Reservation> => {
-  const response = await client.eventRoom.reservations[":id"].$get({
+  const response = await client["event-room"].reservations[":id"].$get({
     param: { id },
   });
 
@@ -204,7 +229,7 @@ export const updateReservation = async (
   id: string,
   payload: UpdateReservationPayload,
 ): Promise<Reservation> => {
-  const response = await client.eventRoom.reservations[":id"].$put({
+  const response = await client["event-room"].reservations[":id"].$put({
     param: { id },
     json: payload,
   });
@@ -220,7 +245,7 @@ export const updateReservation = async (
 export const deleteReservation = async (
   id: string,
 ): Promise<{ success: boolean }> => {
-  const response = await client.eventRoom.reservations[":id"].$delete({
+  const response = await client["event-room"].reservations[":id"].$delete({
     param: { id },
   });
 

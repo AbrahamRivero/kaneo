@@ -56,9 +56,12 @@ export function CalendarDayColumn({
         const top = getEventTop(reservation.startTime);
         const height = getEventHeight(reservation.startTime, reservation.endTime);
 
-        return (
+        const key = (
+          reservation as Reservation & { flatId?: string }
+        ).flatId || reservation.id;
+      return (
           <EventCard
-            key={reservation.id}
+            key={key}
             event={reservation}
             style={{
               top: `${top + 4}px`,

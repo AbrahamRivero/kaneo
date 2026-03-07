@@ -70,13 +70,11 @@ const eventRoom = new Hono<{
 
   .get("/:workspaceId/reservations", async (c) => {
     const workspaceId = c.req.param("workspaceId");
-    const startDate = c.req.query("startDate");
-    const endDate = c.req.query("endDate");
+    const date = c.req.query("date");
 
     const reservations = await reservationController.getReservations(
       workspaceId,
-      startDate ? new Date(startDate) : undefined,
-      endDate ? new Date(endDate) : undefined,
+      date,
     );
     return c.json(reservations);
   })
@@ -88,12 +86,14 @@ const eventRoom = new Hono<{
       z.object({
         workspaceId: z.string(),
         eventRoomId: z.string(),
+        title: z.string().optional(),
         clientName: z.string(),
         companyName: z.string().optional(),
         phone: z.string().optional(),
         email: z.string().optional(),
-        startDate: z.string(),
-        endDate: z.string(),
+        date: z.string(),
+        startTime: z.string(),
+        endTime: z.string(),
         adultPax: z.number(),
         childrenPax: z.number(),
         notes: z.string().optional(),
@@ -109,11 +109,7 @@ const eventRoom = new Hono<{
       const body = c.req.valid("json");
       const reservation = await reservationController.createReservation(
         userId,
-        {
-          ...body,
-          startDate: new Date(body.startDate),
-          endDate: new Date(body.endDate),
-        },
+        body,
       );
       return c.json(reservation);
     },
@@ -132,12 +128,14 @@ const eventRoom = new Hono<{
       "json",
       z.object({
         eventRoomId: z.string().optional(),
+        title: z.string().optional(),
         clientName: z.string().optional(),
         companyName: z.string().optional(),
         phone: z.string().optional(),
         email: z.string().optional(),
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
+        date: z.string().optional(),
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
         adultPax: z.number().optional(),
         childrenPax: z.number().optional(),
         notes: z.string().optional(),
@@ -156,16 +154,10 @@ const eventRoom = new Hono<{
       const userId = c.get("userId");
       const id = c.req.param("id");
       const body = c.req.valid("json");
-
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      const payload: any = { ...body };
-      if (body.startDate) payload.startDate = new Date(body.startDate);
-      if (body.endDate) payload.endDate = new Date(body.endDate);
-
       const reservation = await reservationController.updateReservation(
         userId,
         id,
-        payload,
+        body,
       );
       return c.json(reservation);
     },

@@ -1,16 +1,16 @@
 import type { Reservation } from "@/types/event-room";
-import {
-  addDays,
-  addWeeks,
-  startOfWeek,
-  subWeeks,
-} from "date-fns";
+import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
 import { create } from "zustand";
 
 interface CalendarState {
   currentWeekStart: Date;
   searchQuery: string;
-  reservationStatusFilter: "all" | "pending" | "confirmed" | "cancelled" | "completed";
+  reservationStatusFilter:
+    | "all"
+    | "pending"
+    | "confirmed"
+    | "cancelled"
+    | "completed";
   goToNextWeek: () => void;
   goToPreviousWeek: () => void;
   goToToday: () => void;
@@ -19,7 +19,9 @@ interface CalendarState {
   setReservationStatusFilter: (
     filter: "all" | "pending" | "confirmed" | "cancelled" | "completed",
   ) => void;
-  getCurrentWeekReservations: (weekReservations: Reservation[]) => Reservation[];
+  getCurrentWeekReservations: (
+    weekReservations: Reservation[],
+  ) => Reservation[];
   getWeekDays: () => Date[];
 }
 
@@ -79,30 +81,43 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     }),
 
   setSearchQuery: (query: string) => set({ searchQuery: query }),
-  setReservationStatusFilter: (filter: "all" | "pending" | "confirmed" | "cancelled" | "completed") =>
-    set({ reservationStatusFilter: filter }),
+  setReservationStatusFilter: (
+    filter: "all" | "pending" | "confirmed" | "cancelled" | "completed",
+  ) => set({ reservationStatusFilter: filter }),
 
   getCurrentWeekReservations: (weekReservations: Reservation[]) => {
     const state = get();
-    let filterWeekReservations: Reservation[]
+    let filterWeekReservations: Reservation[] = weekReservations || [];
 
     if (state.searchQuery) {
       const query = state.searchQuery.toLowerCase();
-      filterWeekReservations = weekReservations.filter(
-        (reservation) => reservation.companyName ? reservation.companyName.toLowerCase().includes(query) : reservation.clientName.toLowerCase().includes(query),
+      filterWeekReservations = filterWeekReservations.filter((reservation) =>
+        reservation.companyName
+          ? reservation.companyName.toLowerCase().includes(query)
+          : reservation.clientName.toLowerCase().includes(query),
       );
     }
 
     if (state.reservationStatusFilter === "all") {
-      filterWeekReservations = weekReservations.filter((event) => event.status === 'all');
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.status === "pending" || event.status === "confirmed",
+      );
     } else if (state.reservationStatusFilter === "pending") {
-      filterWeekReservations = weekReservations.filter((event) => event.status === 'pending');
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.status === "pending",
+      );
     } else if (state.reservationStatusFilter === "confirmed") {
-      filterWeekReservations = weekReservations.filter((event) => event.status === 'confirmed');
-    } else if (state.reservationStatusFilter === 'cancelled') {
-      filterWeekReservations = weekReservations.filter((event) => event.status === 'cancelled')
-    } else {
-      filterWeekReservations = weekReservations.filter((event) => event.status === 'completed')
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.status === "confirmed",
+      );
+    } else if (state.reservationStatusFilter === "cancelled") {
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.status === "cancelled",
+      );
+    } else if (state.reservationStatusFilter === "completed") {
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.status === "completed",
+      );
     }
 
     return filterWeekReservations;

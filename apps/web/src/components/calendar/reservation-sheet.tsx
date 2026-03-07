@@ -41,17 +41,20 @@ function formatDate(dateStr: string): string {
   return format(date, "EEEE, MMMM dd");
 }
 
-export function EventSheet({ reservation, open, onOpenChange }: ReservationSheetProps) {
+export function EventSheet({
+  reservation,
+  open,
+  onOpenChange,
+}: ReservationSheetProps) {
   if (!reservation) return null;
 
-  const startDate = formatDate(reservation.startDate.toDateString());
-  const endDate = formatDate(reservation.endDate.toDateString());
+  const dateStr = formatDate(reservation.date);
   const startTimeStr = formatTime(reservation.startTime);
   const endTimeStr = formatTime(reservation.endTime);
 
   const organizerName = reservation.clientName;
   const organizerCompany = reservation.companyName;
-  const totalPax = reservation.adultPax + reservation.childrenPax
+  const totalPax = reservation.adultPax + reservation.childrenPax;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -105,32 +108,22 @@ export function EventSheet({ reservation, open, onOpenChange }: ReservationSheet
 
             <div className="flex flex-col gap-1 mb-4">
               <SheetTitle className="text-xl font-semibold text-foreground leading-normal">
-                {reservation.title}
+                {reservation.title || reservation.clientName}
               </SheetTitle>
               <div className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
-                <span>{startDate}</span>
-                <span className="size-1 rounded-full bg-muted-foreground" />
-                <span>
-                  {startTimeStr} - {endTimeStr}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
-                <span>{endDate}</span>
+                <span>{dateStr}</span>
                 <span className="size-1 rounded-full bg-muted-foreground" />
                 <span>
                   {startTimeStr} - {endTimeStr}
                 </span>
               </div>
             </div>
-
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-4 py-4">
             <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
               <div className="flex flex-col gap-4">
-                <div
-                  className="flex items-start gap-3 relative"
-                >
+                <div className="flex items-start gap-3 relative">
                   <Avatar className="size-7 border-[1.4px] border-background shrink-0">
                     <AvatarImage
                       src={`https://api.dicebear.com/9.x/glass/svg?seed=${reservation.id}`}
@@ -155,7 +148,6 @@ export function EventSheet({ reservation, open, onOpenChange }: ReservationSheet
                     </div>
                   </div>
                 </div>
-
               </div>
 
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
@@ -165,18 +157,22 @@ export function EventSheet({ reservation, open, onOpenChange }: ReservationSheet
                   </div>
                   <span>Reminder: 30min before</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <CalendarIcon className="size-4" />
+                {organizerCompany && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="p-1">
+                      <CalendarIcon className="size-4" />
+                    </div>
+                    <span>Organizer: {organizerCompany}</span>
                   </div>
-                  <span>Organizer: {organizerCompany}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <Phone className="size-4" />
+                )}
+                {reservation.phone && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="p-1">
+                      <Phone className="size-4" />
+                    </div>
+                    <span>+53 {reservation.phone}</span>
                   </div>
-                  <span>(CU) +53 {reservation.phone}</span>
-                </div>
+                )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <div className="p-1">
                     <Users className="size-4" />
@@ -184,8 +180,9 @@ export function EventSheet({ reservation, open, onOpenChange }: ReservationSheet
                   <span>
                     {totalPax} persons
                     <span className="mx-1">•</span>
-                    {reservation.adultPax} adults pax
-                    {reservation.childrenPax} children pax
+                    {reservation.adultPax} adults
+                    {reservation.childrenPax > 0 &&
+                      `, ${reservation.childrenPax} children`}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -196,11 +193,13 @@ export function EventSheet({ reservation, open, onOpenChange }: ReservationSheet
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground leading-[1.6]">
-                  {reservation.notes}
-                </p>
-              </div>
+              {reservation.notes && (
+                <div className="pt-4 border-t border-border">
+                  <p className="text-xs text-muted-foreground leading-[1.6]">
+                    {reservation.notes}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

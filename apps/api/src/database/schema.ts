@@ -1,11 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
+  date,
   integer,
   jsonb,
   pgEnum,
   pgTable,
   text,
+  time,
   timestamp,
 } from "drizzle-orm/pg-core";
 
@@ -302,12 +304,14 @@ export const reservationTable = pgTable("reservation", {
     .references(() => eventRoomTable.id, {
       onDelete: "cascade",
     }),
+  title: text("title"),
   clientName: text("client_name").notNull(),
   companyName: text("company_name"),
   phone: text("phone"),
   email: text("email"),
-  startDate: timestamp("start_date", { mode: "date" }).notNull(),
-  endDate: timestamp("end_date", { mode: "date" }).notNull(),
+  date: date("date").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
   adultPax: integer("adult_pax").notNull().default(0),
   childrenPax: integer("children_pax").notNull().default(0),
   notes: text("notes"),

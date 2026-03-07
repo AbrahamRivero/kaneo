@@ -183,29 +183,69 @@ export function NavMain() {
               {isWorkspaceLoading ? (
                 <SidebarMenuSkeleton showIcon className="w-full" />
               ) : eventRoomsEnabled ? (
-                <SidebarMenuButton
-                  asChild
-                  tooltip="Event Rooms"
-                  className="w-full flex gap-2 justify-start items-start"
-                >
-                  <Button
-                    onClick={() =>
-                      handleNavClick(
-                        `/dashboard/workspace/${workspace.id}/event-rooms`,
-                      )
-                    }
-                    variant="ghost"
-                    className={cn(
-                      "w-full",
-                      window.location.pathname ===
-                        `/dashboard/workspace/${workspace.id}/event-rooms` &&
-                        "bg-accent",
-                    )}
-                  >
-                    <CalendarDays className="w-4 h-4" />
-                    <span>Event Rooms</span>
-                  </Button>
-                </SidebarMenuButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full flex items-center gap-2 justify-between",
+                        window.location.pathname.includes("/event-rooms") &&
+                          "bg-accent",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4" />
+                        <span>Event Rooms</span>
+                      </div>
+                      <ChevronDown className="w-3 h-3 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleNavClick(
+                          `/dashboard/workspace/${workspace.id}/event-rooms`,
+                        )
+                      }
+                      className={cn(
+                        "cursor-pointer",
+                        window.location.pathname ===
+                          `/dashboard/workspace/${workspace.id}/event-rooms` &&
+                          "bg-accent",
+                      )}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Calendar</span>
+                        <span className="text-xs text-muted-foreground">
+                          View reservations
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleNavClick(
+                          `/dashboard/workspace/${workspace.id}/event-rooms/manage`,
+                        )
+                      }
+                      className={cn(
+                        "cursor-pointer",
+                        window.location.pathname.includes(
+                          "/event-rooms/manage",
+                        ) && "bg-accent",
+                      )}
+                    >
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Manage Rooms</span>
+                        <span className="text-xs text-muted-foreground">
+                          Create and edit rooms
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : null}
             </SidebarMenuItem>
           )}

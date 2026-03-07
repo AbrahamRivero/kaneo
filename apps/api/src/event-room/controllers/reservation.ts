@@ -1,4 +1,4 @@
-import { type SQL, and, eq, gte, lte, or } from "drizzle-orm";
+import { type SQL, and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
@@ -11,12 +11,14 @@ import {
 type CreateReservationPayload = {
   workspaceId: string;
   eventRoomId: string;
+  title?: string;
   clientName: string;
   companyName?: string;
   phone?: string;
   email?: string;
-  startDate: Date;
-  endDate: Date;
+  date: string;
+  startTime: string;
+  endTime: string;
   adultPax: number;
   childrenPax: number;
   notes?: string;
@@ -25,6 +27,28 @@ type CreateReservationPayload = {
   cocktail?: boolean;
   canapes?: boolean;
   openBar?: boolean;
+};
+
+type UpdateReservationPayload = {
+  eventRoomId?: string;
+  title?: string;
+  clientName?: string;
+  companyName?: string;
+  phone?: string;
+  email?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  adultPax?: number;
+  childrenPax?: number;
+  notes?: string;
+  paymentConfirmed?: boolean;
+  coffeeBreak?: boolean;
+  lunch?: boolean;
+  cocktail?: boolean;
+  canapes?: boolean;
+  openBar?: boolean;
+  status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
 };
 
 async function createReservation(
@@ -78,12 +102,14 @@ async function createReservation(
     .values({
       workspaceId: payload.workspaceId,
       eventRoomId: payload.eventRoomId,
+      title: payload.title,
       clientName: payload.clientName,
       companyName: payload.companyName,
       phone: payload.phone,
       email: payload.email,
-      startDate: payload.startDate,
-      endDate: payload.endDate,
+      date: payload.date,
+      startTime: payload.startTime,
+      endTime: payload.endTime,
       adultPax: payload.adultPax,
       childrenPax: payload.childrenPax,
       notes: payload.notes,
@@ -100,71 +126,83 @@ async function createReservation(
 
 async function getReservations(
   workspaceId: string,
-  startDate?: Date,
-  endDate?: Date,
+  startDate?: string,
+  endDate?: string,
 ) {
-  const baseCondition = eq(reservationTable.workspaceId, workspaceId);
-
-  // biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
-  let reservations;
+  let conditions: SQL<unknown> = eq(reservationTable.workspaceId, workspaceId);
 
   if (startDate && endDate) {
-    const dateOverlap = or(
-      and(
-        gte(reservationTable.startDate, startDate),
-        lte(reservationTable.startDate, endDate),
-      ),
-      and(
-        gte(reservationTable.endDate, startDate),
-        lte(reservationTable.endDate, endDate),
-      ),
-      and(
-        lte(reservationTable.startDate, startDate),
-        gte(reservationTable.endDate, endDate),
-      ),
-    );
-    const conditions = and(baseCondition, dateOverlap);
-
-    reservations = await db
-      .select({
-        id: reservationTable.id,
-        workspaceId: reservationTable.workspaceId,
-        eventRoomId: reservationTable.eventRoomId,
-        clientName: reservationTable.clientName,
-        companyName: reservationTable.companyName,
-        phone: reservationTable.phone,
-        email: reservationTable.email,
-        startDate: reservationTable.startDate,
-        endDate: reservationTable.endDate,
-        adultPax: reservationTable.adultPax,
-        childrenPax: reservationTable.childrenPax,
-        notes: reservationTable.notes,
-        paymentConfirmed: reservationTable.paymentConfirmed,
-        coffeeBreak: reservationTable.coffeeBreak,
-        lunch: reservationTable.lunch,
-        cocktail: reservationTable.cocktail,
-        canapes: reservationTable.canapes,
-        openBar: reservationTable.openBar,
-        status: reservationTable.status,
-        createdAt: reservationTable.createdAt,
-        updatedAt: reservationTable.updatedAt,
-        roomName: eventRoomTable.name,
-        roomCapacity: eventRoomTable.capacity,
-      })
-      .from(reservationTable)
-      .innerJoin(
-        eventRoomTable,
-        eq(reservationTable.eventRoomId, eventRoomTable.id),
-      )
-      .where(conditions);
-
-    return reservations;
+    conditions = and(
+      conditions,
+      eq(reservationTable.date, startDate),
+    ) as SQL<unknown>;
   }
+
+  const reservations = await db
+    .select({
+      id: reservationTable.id,
+      workspaceId: reservationTable.workspaceId,
+      eventRoomId: reservationTable.eventRoomId,
+      title: reservationTable.title,
+      clientName: reservationTable.clientName,
+      companyName: reservationTable.companyName,
+      phone: reservationTable.phone,
+      email: reservationTable.email,
+      date: reservationTable.date,
+      startTime: reservationTable.startTime,
+      endTime: reservationTable.endTime,
+      adultPax: reservationTable.adultPax,
+      childrenPax: reservationTable.childrenPax,
+      notes: reservationTable.notes,
+      paymentConfirmed: reservationTable.paymentConfirmed,
+      coffeeBreak: reservationTable.coffeeBreak,
+      lunch: reservationTable.lunch,
+      cocktail: reservationTable.cocktail,
+      canapes: reservationTable.canapes,
+      openBar: reservationTable.openBar,
+      status: reservationTable.status,
+      createdAt: reservationTable.createdAt,
+      updatedAt: reservationTable.updatedAt,
+      roomName: eventRoomTable.name,
+      roomCapacity: eventRoomTable.capacity,
+    })
+    .from(reservationTable)
+    .innerJoin(
+      eventRoomTable,
+      eq(reservationTable.eventRoomId, eventRoomTable.id),
+    )
+    .where(conditions);
+
+  return reservations;
 }
 
 async function getReservation(userId: string, reservationId: string) {
   const [reservation] = await db
-    .select()
+    .select({
+      id: reservationTable.id,
+      workspaceId: reservationTable.workspaceId,
+      eventRoomId: reservationTable.eventRoomId,
+      title: reservationTable.title,
+      clientName: reservationTable.clientName,
+      companyName: reservationTable.companyName,
+      phone: reservationTable.phone,
+      email: reservationTable.email,
+      date: reservationTable.date,
+      startTime: reservationTable.startTime,
+      endTime: reservationTable.endTime,
+      adultPax: reservationTable.adultPax,
+      childrenPax: reservationTable.childrenPax,
+      notes: reservationTable.notes,
+      paymentConfirmed: reservationTable.paymentConfirmed,
+      coffeeBreak: reservationTable.coffeeBreak,
+      lunch: reservationTable.lunch,
+      cocktail: reservationTable.cocktail,
+      canapes: reservationTable.canapes,
+      openBar: reservationTable.openBar,
+      status: reservationTable.status,
+      createdAt: reservationTable.createdAt,
+      updatedAt: reservationTable.updatedAt,
+    })
     .from(reservationTable)
     .where(eq(reservationTable.id, reservationId))
     .limit(1);
@@ -196,26 +234,6 @@ async function getReservation(userId: string, reservationId: string) {
 
   return reservation;
 }
-
-type UpdateReservationPayload = {
-  eventRoomId?: string;
-  clientName?: string;
-  companyName?: string;
-  phone?: string;
-  email?: string;
-  startDate?: Date;
-  endDate?: Date;
-  adultPax?: number;
-  childrenPax?: number;
-  notes?: string;
-  paymentConfirmed?: boolean;
-  coffeeBreak?: boolean;
-  lunch?: boolean;
-  cocktail?: boolean;
-  canapes?: boolean;
-  openBar?: boolean;
-  status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
-};
 
 async function updateReservation(
   userId: string,
@@ -321,5 +339,4 @@ export default {
   getReservation,
   updateReservation,
   deleteReservation,
-}
-
+};
