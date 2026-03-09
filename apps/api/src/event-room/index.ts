@@ -25,6 +25,7 @@ const eventRoom = new Hono<{
         name: z.string(),
         capacity: z.number(),
         description: z.string().optional(),
+        allowsMultipleReservations: z.boolean().optional(),
       }),
     ),
     async (c) => {
@@ -50,6 +51,7 @@ const eventRoom = new Hono<{
         name: z.string().optional(),
         capacity: z.number().optional(),
         description: z.string().optional(),
+        allowsMultipleReservations: z.boolean().optional(),
       }),
     ),
     async (c) => {

@@ -6,6 +6,7 @@ export type EventRoom = {
   name: string;
   capacity: number;
   description?: string | null;
+  allowsMultipleReservations?: boolean | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -43,12 +44,14 @@ export type CreateEventRoomPayload = {
   name: string;
   capacity: number;
   description?: string;
+  allowsMultipleReservations?: boolean;
 };
 
 export type UpdateEventRoomPayload = {
   name?: string;
   capacity?: number;
   description?: string;
+  allowsMultipleReservations?: boolean;
 };
 
 export type CreateReservationPayload = {

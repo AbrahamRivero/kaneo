@@ -99,9 +99,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     }
 
     if (state.reservationStatusFilter === "all") {
-      filterWeekReservations = filterWeekReservations.filter(
-        (event) => event.status === "pending" || event.status === "confirmed",
-      );
+      // Show all reservations - no filter applied
     } else if (state.reservationStatusFilter === "pending") {
       filterWeekReservations = filterWeekReservations.filter(
         (event) => event.status === "pending",

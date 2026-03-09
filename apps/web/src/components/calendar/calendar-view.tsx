@@ -1,5 +1,5 @@
 import { useCalendarStore } from "@/store/calendar-store";
-import type { Reservation } from "@/types/event-room";
+import type { EventRoom, Reservation } from "@/types/event-room";
 import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { CalendarDayColumn } from "./calendar-day-column";
@@ -10,9 +10,15 @@ import { EventSheet } from "./reservation-sheet";
 
 export interface CalendarViewProps {
   reservations: Reservation[];
+  workspaceId: string;
+  eventRooms: EventRoom[];
 }
 
-export function CalendarView({ reservations }: CalendarViewProps) {
+export function CalendarView({
+  reservations,
+  workspaceId,
+  eventRooms,
+}: CalendarViewProps) {
   const {
     goToNextWeek,
     goToPreviousWeek,
@@ -104,6 +110,8 @@ export function CalendarView({ reservations }: CalendarViewProps) {
         reservation={selectedReservation}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+        workspaceId={workspaceId}
+        eventRooms={eventRooms}
       />
       <div className="flex flex-col h-full overflow-x-auto w-full">
         <CalendarWeekHeader

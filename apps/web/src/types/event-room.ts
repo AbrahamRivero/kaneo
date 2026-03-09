@@ -4,6 +4,7 @@ export interface EventRoom {
   name: string;
   capacity: number;
   description?: string | null;
+  allowsMultipleReservations?: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -51,6 +51,126 @@ type UpdateReservationPayload = {
   status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
 };
 
+function timesOverlap(
+  startA: string,
+  endA: string,
+  startB: string,
+  endB: string,
+): boolean {
+  return startA < endB && endA > startB;
+}
+
+type ConflictResult =
+  | { hasConflict: false }
+  | {
+      hasConflict: true;
+      type: "time_overlap";
+      conflictingReservation: {
+        id: string;
+        title: string;
+        startTime: string;
+        endTime: string;
+      };
+    }
+  | {
+      hasConflict: true;
+      type: "capacity_exceeded";
+      capacity: number;
+      usedCapacity: number;
+      requestedPax: number;
+    };
+
+async function checkReservationConflict(
+  eventRoomId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+  adultPax: number,
+  childrenPax: number,
+  excludeReservationId?: string,
+): Promise<ConflictResult> {
+  // Get event room info to check if it allows multiple reservations
+  const [eventRoom] = await db
+    .select({
+      id: eventRoomTable.id,
+      capacity: eventRoomTable.capacity,
+      allowsMultipleReservations: eventRoomTable.allowsMultipleReservations,
+    })
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, eventRoomId))
+    .limit(1);
+
+  if (!eventRoom) {
+    return { hasConflict: false };
+  }
+
+  // Get existing reservations that overlap in time
+  const existingReservations = await db
+    .select({
+      id: reservationTable.id,
+      title: reservationTable.title,
+      startTime: reservationTable.startTime,
+      endTime: reservationTable.endTime,
+      adultPax: reservationTable.adultPax,
+      childrenPax: reservationTable.childrenPax,
+    })
+    .from(reservationTable)
+    .where(
+      and(
+        eq(reservationTable.eventRoomId, eventRoomId),
+        eq(reservationTable.date, date),
+        excludeReservationId
+          ? eq(reservationTable.id, excludeReservationId)
+          : undefined,
+      ),
+    );
+
+  // If the room allows multiple reservations, check capacity
+  if (eventRoom.allowsMultipleReservations) {
+    const totalExistingPax = existingReservations.reduce((sum, res) => {
+      // Only count reservations that overlap in time
+      if (timesOverlap(startTime, endTime, res.startTime, res.endTime)) {
+        return sum + res.adultPax + res.childrenPax;
+      }
+      return sum;
+    }, 0);
+
+    const requestedPax = adultPax + childrenPax;
+    const availableCapacity = eventRoom.capacity - totalExistingPax;
+
+    if (requestedPax > availableCapacity) {
+      return {
+        hasConflict: true,
+        type: "capacity_exceeded",
+        capacity: eventRoom.capacity,
+        usedCapacity: totalExistingPax,
+        requestedPax,
+      };
+    }
+  } else {
+    // If the room does NOT allow multiple reservations, check for time overlap
+    for (const res of existingReservations) {
+      if (
+        res.id !== excludeReservationId &&
+        timesOverlap(startTime, endTime, res.startTime, res.endTime)
+      ) {
+        return {
+          hasConflict: true,
+          type: "time_overlap",
+          conflictingReservation: {
+            id: res.id,
+            title: res.title || "Untitled",
+            startTime: res.startTime,
+            endTime: res.endTime,
+          },
+        };
+      }
+    }
+  }
+
+  return { hasConflict: false };
+}
+
 async function createReservation(
   userId: string,
   payload: CreateReservationPayload,
@@ -95,6 +215,29 @@ async function createReservation(
     throw new HTTPException(400, {
       message: `Room capacity exceeded. Maximum capacity is ${room.capacity}`,
     });
+  }
+
+  const conflict = await checkReservationConflict(
+    payload.eventRoomId,
+    payload.date,
+    payload.startTime,
+    payload.endTime,
+    payload.adultPax,
+    payload.childrenPax,
+  );
+
+  if (conflict.hasConflict) {
+    if (conflict.type === "capacity_exceeded") {
+      throw new HTTPException(400, {
+        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different time.`,
+      });
+    }
+    if (conflict.type === "time_overlap") {
+      const { title, startTime, endTime } = conflict.conflictingReservation;
+      throw new HTTPException(400, {
+        message: `Time slot conflict: The room is already reserved for "${title}" from ${startTime} to ${endTime} on this date.`,
+      });
+    }
   }
 
   const [reservation] = await db
@@ -289,6 +432,41 @@ async function updateReservation(
     if (totalPax > room.capacity) {
       throw new HTTPException(400, {
         message: `Room capacity exceeded. Maximum capacity is ${room.capacity}`,
+      });
+    }
+  }
+
+  const eventRoomId = payload.eventRoomId ?? reservation.eventRoomId;
+  const date = payload.date ?? reservation.date;
+  const startTime = payload.startTime ?? reservation.startTime;
+  const endTime = payload.endTime ?? reservation.endTime;
+  const adultPax = payload.adultPax ?? reservation.adultPax;
+  const childrenPax = payload.childrenPax ?? reservation.childrenPax;
+
+  const conflict = await checkReservationConflict(
+    eventRoomId,
+    date,
+    startTime,
+    endTime,
+    adultPax,
+    childrenPax,
+    reservationId,
+  );
+
+  if (conflict.hasConflict) {
+    if (conflict.type === "capacity_exceeded") {
+      throw new HTTPException(400, {
+        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different time.`,
+      });
+    }
+    if (conflict.type === "time_overlap") {
+      const {
+        title,
+        startTime: cStart,
+        endTime: cEnd,
+      } = conflict.conflictingReservation;
+      throw new HTTPException(400, {
+        message: `Time slot conflict: The room is already reserved for "${title}" from ${cStart} to ${cEnd} on this date.`,
       });
     }
   }

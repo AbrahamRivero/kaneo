@@ -14,9 +14,10 @@ export function useCreateEventRoom() {
 
   return useMutation({
     mutationFn: createEventRoom,
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Event room created successfully");
       queryClient.invalidateQueries({ queryKey: ["event-rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["event-room", data.id] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -33,9 +34,10 @@ export function useUpdateEventRoom() {
       payload,
     }: { id: string; payload: Parameters<typeof updateEventRoom>[1] }) =>
       updateEventRoom(id, payload),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Event room updated successfully");
       queryClient.invalidateQueries({ queryKey: ["event-rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["event-room", variables.id] });
     },
     onError: (error: Error) => {
       toast.error(error.message);

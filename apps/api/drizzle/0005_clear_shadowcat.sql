@@ -1,0 +1,1 @@
+ALTER TABLE "event_room" ADD COLUMN "allows_multiple_reservations" boolean DEFAULT false;

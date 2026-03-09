@@ -32,7 +32,7 @@ import type { EventRoom, Reservation } from "@/types/event-room";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -92,19 +92,42 @@ export function ReservationDialog({
   selectedReservation,
 }: ReservationDialogProps) {
   const { goToDate } = useCalendarStore();
-  const [startDate, setStartDate] = useState<Date>(
-    selectedReservation?.date ? new Date(selectedReservation.date) : new Date(),
-  );
+  const [startDate, setStartDate] = useState<Date>(() => {
+    if (selectedReservation?.date) {
+      const [year, month, day] = selectedReservation.date
+        .split("-")
+        .map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date();
+  });
   const [startTime, setStartTime] = useState(
     selectedReservation?.startTime || "",
   );
   const [endTime, setEndTime] = useState(selectedReservation?.endTime || "");
   const [startPickerOpen, setStartPickerOpen] = useState(false);
+  const prevReservationIdRef = useRef<string | undefined>(
+    selectedReservation?.id,
+  );
 
   // keep local date/time state in sync when editing a different reservation
   useEffect(() => {
-    if (selectedReservation) {
-      setStartDate(new Date(selectedReservation.date));
+    if (!selectedReservation) {
+      const today = new Date();
+      setStartDate(today);
+      setStartTime("");
+      setEndTime("");
+      form.reset();
+      prevReservationIdRef.current = undefined;
+      return;
+    }
+
+    if (prevReservationIdRef.current !== selectedReservation.id) {
+      prevReservationIdRef.current = selectedReservation.id;
+      const [year, month, day] = selectedReservation.date
+        .split("-")
+        .map(Number);
+      setStartDate(new Date(year, month - 1, day));
       setStartTime(selectedReservation.startTime || "");
       setEndTime(selectedReservation.endTime || "");
       form.reset({
@@ -117,6 +140,12 @@ export function ReservationDialog({
         adultPax: selectedReservation.adultPax || 0,
         childrenPax: selectedReservation.childrenPax || 0,
         notes: selectedReservation.notes || "",
+        status:
+          (selectedReservation.status as
+            | "pending"
+            | "confirmed"
+            | "cancelled"
+            | "completed") || "pending",
         paymentConfirmed: selectedReservation.paymentConfirmed || false,
         coffeeBreak: selectedReservation.coffeeBreak || false,
         lunch: selectedReservation.lunch || false,
@@ -124,13 +153,6 @@ export function ReservationDialog({
         canapes: selectedReservation.canapes || false,
         openBar: selectedReservation.openBar || false,
       });
-    } else {
-      // reset to defaults when no reservation selected
-      const today = new Date();
-      setStartDate(today);
-      setStartTime("");
-      setEndTime("");
-      form.reset();
     }
   }, [selectedReservation]);
 
@@ -149,6 +171,12 @@ export function ReservationDialog({
       adultPax: selectedReservation?.adultPax || 0,
       childrenPax: selectedReservation?.childrenPax || 0,
       notes: selectedReservation?.notes || "",
+      status:
+        (selectedReservation?.status as
+          | "pending"
+          | "confirmed"
+          | "cancelled"
+          | "completed") || "pending",
       paymentConfirmed: selectedReservation?.paymentConfirmed || false,
       coffeeBreak: selectedReservation?.coffeeBreak || false,
       lunch: selectedReservation?.lunch || false,
@@ -191,8 +219,8 @@ export function ReservationDialog({
         ...restFormData,
         eventRoomId: restFormData.eventRoomId ?? "",
         date: format(startDate, "yyyy-MM-dd"),
-        startTime,
-        endTime,
+        startTime: startTime || "00:00:00",
+        endTime: endTime || "00:00:00",
         adultPax: Number(restFormData.adultPax),
         childrenPax: Number(restFormData.childrenPax),
       };
@@ -251,23 +279,67 @@ export function ReservationDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="eventRoom">Event Room</Label>
-              <Select
-                value={form.watch("eventRoomId") || ""}
-                onValueChange={(value) => form.setValue("eventRoomId", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select event room" />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventRooms.map((room) => (
-                    <SelectItem key={room.id} value={room.id}>
-                      {room.name} (Capacity: {room.capacity})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="eventRoom">Event Room</Label>
+                <Select
+                  value={form.watch("eventRoomId") || ""}
+                  onValueChange={(value) => form.setValue("eventRoomId", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select event room" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eventRooms.map((room) => (
+                      <SelectItem key={room.id} value={room.id}>
+                        {room.name} (Capacity: {room.capacity})
+                        {room.allowsMultipleReservations && " - Multiple"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(() => {
+                  const selectedRoom = eventRooms.find(
+                    (r) => r.id === form.watch("eventRoomId"),
+                  );
+                  if (selectedRoom?.allowsMultipleReservations) {
+                    return (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        This space allows multiple reservations at the same
+                        time. Capacity is shared among all reservations.
+                      </p>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={form.watch("status") || "pending"}
+                  onValueChange={(value) =>
+                    form.setValue(
+                      "status",
+                      value as
+                        | "pending"
+                        | "confirmed"
+                        | "cancelled"
+                        | "completed",
+                    )
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -425,6 +497,13 @@ export function ReservationDialog({
                 <label className="flex items-center gap-2">
                   <input type="checkbox" {...form.register("openBar")} />
                   <span className="text-sm">Open Bar</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    {...form.register("paymentConfirmed")}
+                  />
+                  <span className="text-sm">Payment Confirmed</span>
                 </label>
               </div>
             </div>

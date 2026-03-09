@@ -4,11 +4,14 @@ import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteEventRoom } from "@/hooks/mutations/event-room";
-import { useGetEventRooms, useGetEventRoomById } from "@/hooks/queries/event-room";
+import {
+  useGetEventRoomById,
+  useGetEventRooms,
+} from "@/hooks/queries/event-room";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/",
@@ -28,8 +31,11 @@ function ManageEventRoomsRoute() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRoomId, setEditingRoomId] = useState<string | undefined>();
 
-  const { data: editingRoom, isLoading: isLoadingEditingRoom } =
-    useGetEventRoomById(editingRoomId);
+  const {
+    data: editingRoom,
+    isLoading: isLoadingEditingRoom,
+    refetch,
+  } = useGetEventRoomById(editingRoomId);
 
   const eventRoomsEnabled = Boolean(
     (workspace as { eventRoomsEnabled?: boolean } | undefined)
@@ -80,12 +86,14 @@ function ManageEventRoomsRoute() {
     name: r.name,
     capacity: r.capacity,
     description: r.description ?? undefined,
+    allowsMultipleReservations: r.allowsMultipleReservations ?? false,
   }));
 
   const handleEdit = (room: Room) => {
     // trigger the query for the full details - we'll open the dialog once the
     // data has arrived to avoid showing a blank form.
     setEditingRoomId(room.id);
+    refetch();
   };
 
   const handleDelete = (room: Room) => {
@@ -131,8 +139,9 @@ function ManageEventRoomsRoute() {
           open={dialogOpen}
           onOpenChange={handleDialogClose}
           workspaceId={workspaceId}
-          room={editingRoomId ? editingRoom : undefined}
-          isLoading={Boolean(editingRoomId) && isLoadingEditingRoom}
+          roomId={editingRoomId}
+          initialData={editingRoomId ? editingRoom : null}
+          isLoadingData={Boolean(editingRoomId) && isLoadingEditingRoom}
         />
       </div>
     </WorkspaceLayout>

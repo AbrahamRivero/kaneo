@@ -1,5 +1,11 @@
 import type { Reservation } from "@/fetchers/event-room";
-import { CheckCheck, CheckCircle, Clock, XCircle } from "lucide-react";
+import {
+  Banknote,
+  CheckCheck,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from "lucide-react";
 import { getEventDuration } from "./calendar-utils";
 
 interface EventCardProps {
@@ -42,7 +48,9 @@ export function EventCard({ event, style, onClick }: EventCardProps) {
         onClick={onClick}
       >
         {statusIcon && (
-          <div className="absolute -top-1 -left-1 bg-white rounded-full">{statusIcon}</div>
+          <div className="absolute -top-1 -left-1 bg-white rounded-full">
+            {statusIcon}
+          </div>
         )}
         <div className="size-1.5 rounded-full bg-cyan-500 shrink-0" />
         <h4 className="text-[10px] font-semibold text-foreground truncate flex-1">
@@ -64,7 +72,9 @@ export function EventCard({ event, style, onClick }: EventCardProps) {
         onClick={onClick}
       >
         {statusIcon && (
-          <div className="absolute -top-1 -left-1 bg-white rounded-full">{statusIcon}</div>
+          <div className="absolute -top-1 -left-1 bg-white rounded-full">
+            {statusIcon}
+          </div>
         )}
         <div className="flex flex-col gap-1 h-full">
           <div className="flex items-center gap-1.5">
@@ -88,9 +98,16 @@ export function EventCard({ event, style, onClick }: EventCardProps) {
       style={style}
       onClick={onClick}
     >
-      {statusIcon && (
-        <div className="absolute -top-1 -left-1 bg-white rounded-full">{statusIcon}</div>
-      )}
+      <div className="absolute -top-1 -left-1 -right-1 flex gap-0.5">
+        {statusIcon && (
+          <div className="bg-white rounded-full">{statusIcon}</div>
+        )}
+        {event.paymentConfirmed && (
+          <div className="bg-white rounded-full">
+            <Banknote className="size-3 text-green-600" />
+          </div>
+        )}
+      </div>
       <div className="flex flex-col gap-1 h-full">
         <div className="flex items-start justify-between gap-1">
           <h4

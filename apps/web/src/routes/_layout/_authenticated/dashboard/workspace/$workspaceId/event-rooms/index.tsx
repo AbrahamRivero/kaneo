@@ -88,7 +88,11 @@ function EventRoomsIndex() {
         <CalendarControls />
       </div>
       <div className="flex-1 overflow-hidden w-full">
-        <CalendarView reservations={weekReservations} />
+        <CalendarView
+          reservations={weekReservations}
+          workspaceId={workspaceId}
+          eventRooms={eventRooms}
+        />
       </div>
     </WorkspaceLayout>
   );

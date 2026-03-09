@@ -286,6 +286,9 @@ export const eventRoomTable = pgTable("event_room", {
   name: text("name").notNull(),
   capacity: integer("capacity").notNull(),
   description: text("description"),
+  allowsMultipleReservations: boolean("allows_multiple_reservations").default(
+    false,
+  ),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });

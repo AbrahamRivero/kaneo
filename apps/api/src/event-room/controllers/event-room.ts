@@ -8,6 +8,7 @@ type CreateEventRoomPayload = {
   name: string;
   capacity: number;
   description?: string;
+  allowsMultipleReservations?: boolean;
 };
 
 async function createEventRoom(
@@ -31,6 +32,7 @@ async function createEventRoom(
       name: payload.name,
       capacity: payload.capacity,
       description: payload.description,
+      allowsMultipleReservations: payload.allowsMultipleReservations ?? false,
     })
     .returning();
 
@@ -74,6 +76,7 @@ type UpdateEventRoomPayload = {
   name?: string;
   capacity?: number;
   description?: string;
+  allowsMultipleReservations?: boolean;
 };
 
 async function updateEventRoom(

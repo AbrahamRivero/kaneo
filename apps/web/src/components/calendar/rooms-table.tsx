@@ -32,6 +32,7 @@ export interface Room {
   name: string;
   capacity: number;
   description?: string | null | undefined;
+  allowsMultipleReservations?: boolean | null | undefined;
 }
 
 interface RoomsTableProps {
