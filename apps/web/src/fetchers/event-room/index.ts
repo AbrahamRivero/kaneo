@@ -1,4 +1,5 @@
 import { client } from "@kaneo/libs";
+const base = import.meta.env.VITE_API_URL || "";
 
 export type EventRoom = {
   id: string;
@@ -100,8 +101,9 @@ export type UpdateReservationPayload = {
 export const getEventRooms = async (
   workspaceId: string,
 ): Promise<EventRoom[]> => {
+  const url = `${base ? base : ""}/event-room/${workspaceId}/rooms`;
   const response = await fetch(
-    `http://localhost:1337/event-room/${workspaceId}/rooms`,
+    url,
     { credentials: "include" },
   );
 
@@ -129,7 +131,8 @@ export const getEventRoomById = async (id: string): Promise<EventRoom> => {
 export const createEventRoom = async (
   payload: CreateEventRoomPayload,
 ): Promise<EventRoom> => {
-  const response = await fetch("http://localhost:1337/event-room/rooms", {
+  const url = `${base ? base : ""}/event-room/rooms`;
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -148,7 +151,8 @@ export const updateEventRoom = async (
   id: string,
   payload: UpdateEventRoomPayload,
 ): Promise<EventRoom> => {
-  const response = await fetch(`http://localhost:1337/event-room/rooms/${id}`, {
+  const url = `${base ? base : ""}/event-room/rooms/${id}`;
+  const response = await fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -166,7 +170,8 @@ export const updateEventRoom = async (
 export const deleteEventRoom = async (
   id: string,
 ): Promise<{ success: boolean }> => {
-  const response = await fetch(`http://localhost:1337/event-room/rooms/${id}`, {
+  const url = `${base ? base : ""}/event-room/rooms/${id}`;
+  const response = await fetch(url, {
     method: "DELETE",
     credentials: "include",
   });
@@ -187,8 +192,9 @@ export const getReservations = async (
   if (date) queryParams.date = date;
 
   const url = new URLSearchParams(queryParams).toString();
+  const baseUrl = `${base ? base : ""}/event-room/${workspaceId}/reservations`;
   const response = await fetch(
-    `http://localhost:1337/event-room/${workspaceId}/reservations${url ? `?${url}` : ""}`,
+    `${baseUrl}${url ? `?${url}` : ""}`,
     { credentials: "include" },
   );
 
