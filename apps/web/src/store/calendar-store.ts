@@ -2,6 +2,10 @@ import type { Reservation } from "@/fetchers/event-room";
 import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
 import { create } from "zustand";
 
+interface ReservationWithRoomName extends Reservation {
+  roomName: string;
+}
+
 interface CalendarState {
   currentWeekStart: Date;
   searchQuery: string;
@@ -20,8 +24,8 @@ interface CalendarState {
     filter: "all" | "pending" | "confirmed" | "cancelled" | "completed",
   ) => void;
   getCurrentWeekReservations: (
-    weekReservations: Reservation[],
-  ) => Reservation[];
+    weekReservations: ReservationWithRoomName[],
+  ) => ReservationWithRoomName[];
   getWeekDays: () => Date[];
 }
 
@@ -85,16 +89,21 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     filter: "all" | "pending" | "confirmed" | "cancelled" | "completed",
   ) => set({ reservationStatusFilter: filter }),
 
-  getCurrentWeekReservations: (weekReservations: Reservation[]) => {
+  getCurrentWeekReservations: (
+    weekReservations: ReservationWithRoomName[],
+  ): ReservationWithRoomName[] => {
     const state = get();
-    let filterWeekReservations: Reservation[] = weekReservations || [];
+    let filterWeekReservations: ReservationWithRoomName[] =
+      weekReservations || [];
 
     if (state.searchQuery) {
       const query = state.searchQuery.toLowerCase();
-      filterWeekReservations = filterWeekReservations.filter((reservation) =>
-        reservation.companyName
-          ? reservation.companyName.toLowerCase().includes(query)
-          : reservation.clientName.toLowerCase().includes(query),
+      filterWeekReservations = filterWeekReservations.filter(
+        (reservation) =>
+          reservation.title?.toLowerCase().includes(query) ||
+          reservation.companyName?.toLowerCase().includes(query) ||
+          reservation.clientName.toLowerCase().includes(query) ||
+          reservation.roomName.toLowerCase().includes(query),
       );
     }
 

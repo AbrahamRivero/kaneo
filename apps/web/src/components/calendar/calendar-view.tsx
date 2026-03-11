@@ -25,7 +25,22 @@ export function CalendarView({
   } = useCalendarStore();
   const weekDays = getWeekDays();
 
-  const filteredReservations = getCurrentWeekReservations(reservations);
+  const eventRoomsMap = eventRooms.reduce(
+    (acc, room) => {
+      acc[room.id] = room.name;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+
+  const reservationsWithRoomName = reservations.map((res) => ({
+    ...res,
+    roomName: eventRoomsMap[res.eventRoomId] || "",
+  }));
+
+  const filteredReservations = getCurrentWeekReservations(
+    reservationsWithRoomName,
+  );
   const [selectedReservations, setSelectedReservations] = useState<
     Reservation[] | null
   >(null);
