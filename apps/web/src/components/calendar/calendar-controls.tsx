@@ -44,8 +44,7 @@ export function CalendarControls() {
     "MMM dd yyyy",
   );
 
-  const hasActiveFilters =
-    reservationStatusFilter !== "all"
+  const hasActiveFilters = reservationStatusFilter !== "all";
 
   return (
     <div className="px-3 md:px-6 py-4 border-b border-border">
@@ -196,7 +195,6 @@ export function CalendarControls() {
                   </Button>
                 </div>
               </div>
-
 
               {hasActiveFilters && (
                 <>

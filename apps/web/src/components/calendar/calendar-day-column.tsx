@@ -1,73 +1,42 @@
-import {
-  HOURS_24,
-  HOUR_HEIGHT,
-  getEventHeight,
-  getEventTop,
-} from "./calendar-utils";
-import { CurrentTimeIndicator } from "./current-time-indicator";
+import type { Reservation } from "@/fetchers/event-room";
 import { EventCard } from "./event-card";
-import type { Reservation } from "@/types/event-room";
 
 interface CalendarDayColumnProps {
-  day: Date;
-  dayIndex: number;
   reservations: Reservation[];
-  today: Date;
-  isTodayInWeek: boolean;
-  currentTime: Date;
-  onScroll: (index: number) => (e: React.UIEvent<HTMLDivElement>) => void;
-  scrollRef: (el: HTMLDivElement | null) => void;
-  onEventClick: (reservation: Reservation) => void;
+  onEventClick: (reservations: Reservation[]) => void;
+}
+
+function getMinutesFromTime(time: string): number {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + (minutes || 0);
+}
+
+function sortReservations(reservations: Reservation[]) {
+  return [...reservations].sort((a, b) => {
+    const startDiff =
+      getMinutesFromTime(a.startTime) - getMinutesFromTime(b.startTime);
+    if (startDiff !== 0) return startDiff;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 }
 
 export function CalendarDayColumn({
-  day,
-  dayIndex,
   reservations,
-  today,
-  isTodayInWeek,
-  currentTime,
-  onScroll,
-  scrollRef,
   onEventClick,
 }: CalendarDayColumnProps) {
+  const sortedReservations = sortReservations(reservations);
+
   return (
     <div
-      ref={scrollRef}
-      onScroll={onScroll(dayIndex)}
-      className="flex-1 border-r border-border last:border-r-0 relative min-w-44 overflow-y-auto"
+      className="flex-1 border-r border-border last:border-r-0 p-1.5 md:p-2 min-w-44 flex flex-col gap-2 overflow-y-auto relative"
+      style={{ height: 2880 }}
     >
-      {HOURS_24.map((hour) => (
-        <div
-          key={hour}
-          className="border-b border-border"
-          style={{ height: `${HOUR_HEIGHT}px` }}
-        />
-      ))}
-
-      <CurrentTimeIndicator
-        day={day}
-        today={today}
-        isTodayInWeek={isTodayInWeek}
-        currentTime={currentTime}
-      />
-
-      {reservations.map((reservation) => {
-        const top = getEventTop(reservation.startTime);
-        const height = getEventHeight(reservation.startTime, reservation.endTime);
-
-        const key = (
-          reservation as Reservation & { flatId?: string }
-        ).flatId || reservation.id;
-      return (
+      {sortedReservations.map((reservation) => {
+        return (
           <EventCard
-            key={key}
+            key={reservation.id}
             event={reservation}
-            style={{
-              top: `${top + 4}px`,
-              height: `${height - 8}px`,
-            }}
-            onClick={() => onEventClick(reservation)}
+            onClick={() => onEventClick([reservation])}
           />
         );
       })}

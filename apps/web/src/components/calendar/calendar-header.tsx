@@ -1,30 +1,27 @@
 import { Button } from "@/components/ui/button";
-import { getTodayEvents } from "@/mock-data/events";
+import type { EventRoom, Reservation } from "@/fetchers/event-room";
 import { useCalendarStore } from "@/store/calendar-store";
-import type { EventRoom } from "@/types/event-room";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { format, isSameDay } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { ReservationDialog } from "./reservation-dialog";
-import { SchedulePopover } from "./schedule-popover";
 
 interface CalendarHeaderProps {
   workspaceId: string;
   eventRooms: EventRoom[];
+  reservations: Reservation[];
 }
 
 export function CalendarHeader({
   workspaceId,
   eventRooms,
+  reservations,
 }: CalendarHeaderProps) {
   const { currentWeekStart } = useCalendarStore();
-  const todayEvents = getTodayEvents();
-  const meetingsCount = todayEvents.filter(
-    (e) =>
-      e.title.toLowerCase().includes("call") ||
-      e.title.toLowerCase().includes("meeting"),
-  ).length;
-  const eventsCount = todayEvents.length - meetingsCount;
+  const today = new Date();
+  const todayEvents = reservations.filter((r) =>
+    isSameDay(new Date(r.date), today),
+  );
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   return (
@@ -44,32 +41,16 @@ export function CalendarHeader({
                   {format(currentWeekStart, "MMMM dd, yyyy")}
                 </h1>
                 <p className="hidden md:block text-xs text-muted-foreground">
-                  You have {meetingsCount} meeting
-                  {meetingsCount !== 1 ? "s" : ""} and {eventsCount} event
-                  {eventsCount !== 1 ? "s" : ""} today 🗓️
+                  You have {todayEvents.length} reservation
+                  {todayEvents.length !== 1 ? "s" : ""} today 🗓️
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 md:gap-2 lg:gap-2.5 shrink-0">
-              <SchedulePopover>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-7 md:size-8 shrink-0 md:w-auto md:px-2 md:gap-1.5"
-                >
-                  <CalendarIcon className="size-4" />
-                  <span className="hidden lg:inline">Schedule</span>
-                </Button>
-              </SchedulePopover>
-
-              <Button
-                size="icon"
-                className="size-7 md:size-8 shrink-0 md:w-auto md:px-2 md:gap-1.5 bg-foreground text-background hover:bg-foreground/90"
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                <Plus className="size-4" />
-                <span className="hidden lg:inline">Create Event</span>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <CalendarIcon className="size-4" />
+                <span className="hidden lg:inline">Create Reservation</span>
               </Button>
             </div>
           </div>
