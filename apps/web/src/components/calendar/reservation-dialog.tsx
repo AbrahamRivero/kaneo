@@ -22,19 +22,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { EventRoom, Reservation } from "@/fetchers/event-room";
 import {
   useCreateReservation,
   useUpdateReservation,
 } from "@/hooks/mutations/event-room";
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
-import type { EventRoom, Reservation } from "@/types/event-room";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { Textarea } from "../ui/textarea";
 
 export type ReservationFormValues = {
   title?: string;
@@ -82,6 +83,7 @@ interface ReservationDialogProps {
   workspaceId: string;
   eventRooms: EventRoom[];
   selectedReservation?: Reservation;
+  onSaveSuccess?: () => void;
 }
 
 export function ReservationDialog({
@@ -90,6 +92,7 @@ export function ReservationDialog({
   workspaceId,
   eventRooms = [],
   selectedReservation,
+  onSaveSuccess,
 }: ReservationDialogProps) {
   const { goToDate } = useCalendarStore();
   const [startDate, setStartDate] = useState<Date>(() => {
@@ -106,55 +109,6 @@ export function ReservationDialog({
   );
   const [endTime, setEndTime] = useState(selectedReservation?.endTime || "");
   const [startPickerOpen, setStartPickerOpen] = useState(false);
-  const prevReservationIdRef = useRef<string | undefined>(
-    selectedReservation?.id,
-  );
-
-  // keep local date/time state in sync when editing a different reservation
-  useEffect(() => {
-    if (!selectedReservation) {
-      const today = new Date();
-      setStartDate(today);
-      setStartTime("");
-      setEndTime("");
-      form.reset();
-      prevReservationIdRef.current = undefined;
-      return;
-    }
-
-    if (prevReservationIdRef.current !== selectedReservation.id) {
-      prevReservationIdRef.current = selectedReservation.id;
-      const [year, month, day] = selectedReservation.date
-        .split("-")
-        .map(Number);
-      setStartDate(new Date(year, month - 1, day));
-      setStartTime(selectedReservation.startTime || "");
-      setEndTime(selectedReservation.endTime || "");
-      form.reset({
-        title: selectedReservation.title || "",
-        clientName: selectedReservation.clientName || "",
-        companyName: selectedReservation.companyName || "",
-        phone: selectedReservation.phone || "",
-        email: selectedReservation.email || "",
-        eventRoomId: selectedReservation.eventRoomId || "",
-        adultPax: selectedReservation.adultPax || 0,
-        childrenPax: selectedReservation.childrenPax || 0,
-        notes: selectedReservation.notes || "",
-        status:
-          (selectedReservation.status as
-            | "pending"
-            | "confirmed"
-            | "cancelled"
-            | "completed") || "pending",
-        paymentConfirmed: selectedReservation.paymentConfirmed || false,
-        coffeeBreak: selectedReservation.coffeeBreak || false,
-        lunch: selectedReservation.lunch || false,
-        cocktail: selectedReservation.cocktail || false,
-        canapes: selectedReservation.canapes || false,
-        openBar: selectedReservation.openBar || false,
-      });
-    }
-  }, [selectedReservation]);
 
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
@@ -185,6 +139,46 @@ export function ReservationDialog({
       openBar: selectedReservation?.openBar || false,
     },
   });
+
+  // keep local date/time state in sync when editing a different reservation
+  useEffect(() => {
+    if (!selectedReservation) {
+      const today = new Date();
+      setStartDate(today);
+      setStartTime("");
+      setEndTime("");
+      form.reset();
+      return;
+    }
+
+    const [year, month, day] = selectedReservation.date.split("-").map(Number);
+    setStartDate(new Date(year, month - 1, day));
+    setStartTime(selectedReservation.startTime || "");
+    setEndTime(selectedReservation.endTime || "");
+    form.reset({
+      title: selectedReservation.title || "",
+      clientName: selectedReservation.clientName || "",
+      companyName: selectedReservation.companyName || "",
+      phone: selectedReservation.phone || "",
+      email: selectedReservation.email || "",
+      eventRoomId: selectedReservation.eventRoomId || "",
+      adultPax: selectedReservation.adultPax || 0,
+      childrenPax: selectedReservation.childrenPax || 0,
+      notes: selectedReservation.notes || "",
+      status:
+        (selectedReservation.status as
+          | "pending"
+          | "confirmed"
+          | "cancelled"
+          | "completed") || "pending",
+      paymentConfirmed: selectedReservation.paymentConfirmed || false,
+      coffeeBreak: selectedReservation.coffeeBreak || false,
+      lunch: selectedReservation.lunch || false,
+      cocktail: selectedReservation.cocktail || false,
+      canapes: selectedReservation.canapes || false,
+      openBar: selectedReservation.openBar || false,
+    });
+  }, [selectedReservation, form]);
 
   const onSubmitHandler = async (formData: ReservationFormValues) => {
     try {
@@ -240,6 +234,7 @@ export function ReservationDialog({
           ...(status && status !== "all" && { status }),
         });
       }
+      onSaveSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.log(error);
@@ -293,25 +288,11 @@ export function ReservationDialog({
                     {eventRooms.map((room) => (
                       <SelectItem key={room.id} value={room.id}>
                         {room.name} (Capacity: {room.capacity})
-                        {room.allowsMultipleReservations && " - Multiple"}
+                        {room.allowsMultipleReservations && " - Mult"}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {(() => {
-                  const selectedRoom = eventRooms.find(
-                    (r) => r.id === form.watch("eventRoomId"),
-                  );
-                  if (selectedRoom?.allowsMultipleReservations) {
-                    return (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        This space allows multiple reservations at the same
-                        time. Capacity is shared among all reservations.
-                      </p>
-                    );
-                  }
-                  return null;
-                })()}
               </div>
 
               <div className="grid gap-2">
@@ -322,10 +303,10 @@ export function ReservationDialog({
                     form.setValue(
                       "status",
                       value as
-                        | "pending"
-                        | "confirmed"
-                        | "cancelled"
-                        | "completed",
+                      | "pending"
+                      | "confirmed"
+                      | "cancelled"
+                      | "completed",
                     )
                   }
                 >
@@ -510,7 +491,7 @@ export function ReservationDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes</Label>
-              <Input
+              <Textarea
                 id="notes"
                 placeholder="Additional notes"
                 {...form.register("notes")}

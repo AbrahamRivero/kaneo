@@ -4,14 +4,18 @@ import {
   CheckCheck,
   CheckCircle,
   Clock,
+  Coffee,
+  Users,
+  Utensils,
+  Wine,
   XCircle,
 } from "lucide-react";
 import { getEventDuration } from "./calendar-utils";
 
 interface EventCardProps {
   event: Reservation;
-  style: React.CSSProperties;
   onClick?: () => void;
+  style?: React.CSSProperties;
 }
 
 function getStatusIcon(status?: string) {
@@ -29,78 +33,38 @@ function getStatusIcon(status?: string) {
   }
 }
 
-export function EventCard({ event, style, onClick }: EventCardProps) {
+function getServiceIcons(event: Reservation) {
+  const icons = [];
+  if (event.coffeeBreak)
+    icons.push(<Coffee key="coffee" className="size-2.5 text-amber-600" />);
+  if (event.lunch)
+    icons.push(<Utensils key="lunch" className="size-2.5 text-orange-600" />);
+  if (event.cocktail || event.canapes)
+    icons.push(<Wine key="cocktail" className="size-2.5 text-purple-600" />);
+  return icons;
+}
+
+export function EventCard({ event, onClick, style }: EventCardProps) {
   const duration = getEventDuration(event.startTime, event.endTime);
-  const isVeryShortEvent = duration < 30;
-  const isMediumEvent = duration >= 25 && duration < 60;
   const timeStr = `${event.startTime} - ${event.endTime}`;
   const subtitle = event.companyName
     ? `${event.clientName} - ${event.companyName}`
     : event.clientName;
   const statusIcon = getStatusIcon(event.status);
-
-  if (isVeryShortEvent) {
-    return (
-      // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-      <div
-        className="absolute left-2 right-2 bg-card border border-border rounded-lg px-2 py-1 z-10 flex items-center gap-1.5 cursor-pointer hover:bg-muted transition-colors"
-        style={style}
-        onClick={onClick}
-      >
-        {statusIcon && (
-          <div className="absolute -top-1 -left-1 bg-white rounded-full">
-            {statusIcon}
-          </div>
-        )}
-        <div className="size-1.5 rounded-full bg-cyan-500 shrink-0" />
-        <h4 className="text-[10px] font-semibold text-foreground truncate flex-1">
-          {event.title || subtitle}
-        </h4>
-        <span className="text-[9px] text-muted-foreground shrink-0">
-          {event.startTime}
-        </span>
-      </div>
-    );
-  }
-
-  if (isMediumEvent) {
-    return (
-      // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-      <div
-        className="absolute left-2 right-2 bg-card border border-border rounded-lg px-2.5 py-2 z-10 cursor-pointer hover:bg-muted transition-colors"
-        style={style}
-        onClick={onClick}
-      >
-        {statusIcon && (
-          <div className="absolute -top-1 -left-1 bg-white rounded-full">
-            {statusIcon}
-          </div>
-        )}
-        <div className="flex flex-col gap-1 h-full">
-          <div className="flex items-center gap-1.5">
-            <div className="size-1.5 rounded-full bg-cyan-500 shrink-0" />
-            <h4 className="text-[10px] font-semibold text-foreground truncate flex-1">
-              {event.title || subtitle}
-            </h4>
-          </div>
-          <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
-            {timeStr}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const serviceIcons = getServiceIcons(event);
+  const totalGuests = event.adultPax + event.childrenPax;
+  const hasGuests = totalGuests > 0;
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
     <div
-      className="absolute left-2 right-2 bg-card border border-border rounded-lg p-3 z-10 cursor-pointer hover:bg-muted transition-colors"
+      className="relative bg-card border border-border rounded-lg p-3 z-10 cursor-pointer hover:bg-muted transition-colors"
       style={style}
       onClick={onClick}
     >
-      <div className="absolute -top-1 -left-1 -right-1 flex gap-0.5">
+      <div className="absolute -top-1.5 -left-1.5 flex gap-0.5">
         {statusIcon && (
-          <div className="bg-white rounded-full">{statusIcon}</div>
+          <div className="bg-white rounded-full shadow-sm">{statusIcon}</div>
         )}
         {event.paymentConfirmed && (
           <div className="bg-white rounded-full">
@@ -111,12 +75,19 @@ export function EventCard({ event, style, onClick }: EventCardProps) {
       <div className="flex flex-col gap-1 h-full">
         <div className="flex items-start justify-between gap-1">
           <h4
-            className={`text-xs font-semibold text-foreground mb-1 ${
-              duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
-            } flex-1`}
+            className={`text-xs font-semibold text-foreground mb-1 ${duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
+              } flex-1`}
           >
             {event.title || subtitle}
           </h4>
+          {hasGuests && (
+            <div className="flex items-center gap-0.5 shrink-0 bg-muted px-1.5 py-0.5 rounded">
+              <Users className="size-3 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {totalGuests}
+              </span>
+            </div>
+          )}
         </div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
           {timeStr}
@@ -125,6 +96,16 @@ export function EventCard({ event, style, onClick }: EventCardProps) {
           <p className="text-[10px] text-muted-foreground truncate">
             {subtitle}
           </p>
+        )}
+
+        <p className="text-[11px] text-muted-foreground font-semibold truncate">
+          {event.roomName}
+        </p>
+
+        {serviceIcons.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-1 pt-1 border-t border-border/50">
+            <div className="flex gap-1">{serviceIcons}</div>
+          </div>
         )}
       </div>
     </div>

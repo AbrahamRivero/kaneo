@@ -1,4 +1,4 @@
-import type { Reservation } from "@/types/event-room";
+import type { Reservation } from "@/fetchers/event-room";
 import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
 import { create } from "zustand";
 
