@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import type { EventRoom, Reservation } from "@/fetchers/event-room";
 import { useCalendarStore } from "@/store/calendar-store";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { ReservationDialog } from "./reservation-dialog";
@@ -17,10 +17,10 @@ export function CalendarHeader({
   eventRooms,
   reservations,
 }: CalendarHeaderProps) {
-  const { currentWeekStart } = useCalendarStore();
-  const today = new Date();
-  const todayEvents = reservations.filter((r) =>
-    isSameDay(new Date(r.date), today),
+  const { currentWeekStart, getWeekDays } = useCalendarStore();
+  const weekDays = getWeekDays();
+  const weekReservations = reservations.filter((r) =>
+    weekDays.some((day) => format(day, "yyyy-MM-dd") === r.date),
   );
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -41,8 +41,8 @@ export function CalendarHeader({
                   {format(currentWeekStart, "MMMM dd, yyyy")}
                 </h1>
                 <p className="hidden md:block text-xs text-muted-foreground">
-                  You have {todayEvents.length} reservation
-                  {todayEvents.length !== 1 ? "s" : ""} today 🗓️
+                  You have {weekReservations.length} reservation
+                  {weekReservations.length !== 1 ? "s" : ""} this week 🗓️
                 </p>
               </div>
             </div>
