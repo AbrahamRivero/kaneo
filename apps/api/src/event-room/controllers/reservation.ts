@@ -500,7 +500,18 @@ async function deleteReservation(userId: string, reservationId: string) {
     .where(eq(workspaceTable.id, reservation.workspaceId))
     .limit(1);
 
-  if (!workspace || workspace.ownerId !== userId) {
+  const isMember = await db
+    .select()
+    .from(workspaceUserTable)
+    .where(
+      and(
+        eq(workspaceUserTable.workspaceId, reservation.workspaceId),
+        eq(workspaceUserTable.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  if (!workspace || (workspace.ownerId !== userId && isMember.length === 0)) {
     throw new HTTPException(403, { message: "Forbidden" });
   }
 
