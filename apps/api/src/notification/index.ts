@@ -5,6 +5,7 @@ import { z } from "zod";
 import db from "../database";
 import { taskTable } from "../database/schema";
 import { subscribeToEvent } from "../events";
+import getActiveWorkspaceUsers from "../workspace-user/controllers/get-active-workspace-users";
 import clearNotifications from "./controllers/clear-notifications";
 import createNotification from "./controllers/create-notification";
 import getNotifications from "./controllers/get-notifications";
@@ -205,6 +206,127 @@ subscribeToEvent(
         resourceType: "task",
       });
     }
+  },
+);
+
+subscribeToEvent(
+  "reservation.created",
+  async ({
+    reservationId,
+    workspaceId,
+    clientName,
+    title,
+    date,
+    totalPax,
+    roomName,
+    userId,
+  }: {
+    reservationId: string;
+    workspaceId: string;
+    clientName: string;
+    title?: string;
+    date: string;
+    totalPax: number;
+    roomName: string;
+    userId: string;
+  }) => {
+    if (!reservationId || !workspaceId) {
+      return;
+    }
+
+    const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
+    const promises = workspaceUsers
+      .filter((u) => u.userId !== userId)
+      .map((u) =>
+        createNotification({
+          userId: u.userId,
+          title: "Nueva Reserva",
+          content: `"${clientName}" - ${totalPax} personas en "${roomName}" el ${date}`,
+          type: "reservation",
+          resourceId: reservationId,
+          resourceType: "reservation",
+        }),
+      );
+    await Promise.all(promises);
+  },
+);
+
+subscribeToEvent(
+  "reservation.updated",
+  async ({
+    reservationId,
+    workspaceId,
+    clientName,
+    title,
+    date,
+    totalPax,
+    roomName,
+    userId,
+  }: {
+    reservationId: string;
+    workspaceId: string;
+    clientName: string;
+    title?: string;
+    date: string;
+    totalPax: number;
+    roomName: string;
+    userId: string;
+  }) => {
+    if (!reservationId || !workspaceId) {
+      return;
+    }
+
+    const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
+    const promises = workspaceUsers
+      .filter((u) => u.userId !== userId)
+      .map((u) =>
+        createNotification({
+          userId: u.userId,
+          title: "Reserva Actualizada",
+          content: `"${clientName}" - ${totalPax} personas en "${roomName}" el ${date}`,
+          type: "reservation",
+          resourceId: reservationId,
+          resourceType: "reservation",
+        }),
+      );
+    await Promise.all(promises);
+  },
+);
+
+subscribeToEvent(
+  "reservation.deleted",
+  async ({
+    reservationId,
+    workspaceId,
+    clientName,
+    userId,
+  }: {
+    reservationId: string;
+    workspaceId: string;
+    clientName: string;
+    title?: string;
+    date: string;
+    totalPax: number;
+    userId: string;
+  }) => {
+    if (!reservationId || !workspaceId) {
+      return;
+    }
+
+    const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
+    const promises = workspaceUsers
+      .filter((u) => u.userId !== userId)
+      .map((u) =>
+        createNotification({
+          userId: u.userId,
+          title: "Reserva Eliminada",
+          content: `"${clientName}" ha sido eliminada`,
+          type: "reservation",
+          resourceId: reservationId,
+          resourceType: "reservation",
+        }),
+      );
+    await Promise.all(promises);
   },
 );
 

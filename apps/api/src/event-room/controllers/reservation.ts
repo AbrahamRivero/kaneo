@@ -7,6 +7,7 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { publishEvent } from "../../events";
 
 type CreateReservationPayload = {
   workspaceId: string;
@@ -264,6 +265,21 @@ async function createReservation(
     })
     .returning();
 
+  if (!reservation) {
+    throw new Error("Failed to create reservation");
+  }
+
+  await publishEvent("reservation.created", {
+    reservationId: reservation.id,
+    workspaceId: payload.workspaceId,
+    clientName: payload.clientName,
+    title: payload.title,
+    date: payload.date,
+    totalPax: payload.adultPax + payload.childrenPax,
+    roomName: room.name,
+    userId,
+  });
+
   return reservation;
 }
 
@@ -496,6 +512,27 @@ async function updateReservation(
     .where(eq(reservationTable.id, reservationId))
     .returning();
 
+  if (!updated) {
+    throw new Error("Failed to update reservation");
+  }
+
+  const [room] = await db
+    .select({ name: eventRoomTable.name })
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, updated.eventRoomId))
+    .limit(1);
+
+  await publishEvent("reservation.updated", {
+    reservationId: updated.id,
+    workspaceId: updated.workspaceId,
+    clientName: updated.clientName,
+    title: updated.title,
+    date: updated.date,
+    totalPax: updated.adultPax + updated.childrenPax,
+    roomName: room?.name || "Unknown",
+    userId,
+  });
+
   return updated;
 }
 
@@ -530,6 +567,16 @@ async function deleteReservation(userId: string, reservationId: string) {
   if (!workspace || (workspace.ownerId !== userId && isMember.length === 0)) {
     throw new HTTPException(403, { message: "Forbidden" });
   }
+
+  await publishEvent("reservation.deleted", {
+    reservationId: reservation.id,
+    workspaceId: reservation.workspaceId,
+    clientName: reservation.clientName,
+    title: reservation.title,
+    date: reservation.date,
+    totalPax: reservation.adultPax + reservation.childrenPax,
+    userId,
+  });
 
   await db
     .delete(reservationTable)
