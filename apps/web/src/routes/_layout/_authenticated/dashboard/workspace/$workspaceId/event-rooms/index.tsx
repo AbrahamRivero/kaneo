@@ -3,13 +3,13 @@ import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { EventRoom, Reservation } from "@/fetchers/event-room";
 import {
   useGetEventRooms,
   useGetReservations,
 } from "@/hooks/queries/event-room";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { useCalendarStore } from "@/store/calendar-store";
-import type { EventRoom, Reservation } from "@/types/event-room";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
@@ -64,17 +64,9 @@ function EventRoomsIndex() {
     );
   }
 
-  const eventRooms: EventRoom[] = (_eventRooms || []).map((r) => ({
-    ...r,
-    createdAt: new Date(r.createdAt),
-    updatedAt: new Date(r.updatedAt),
-  }));
+  const eventRooms = (_eventRooms || []) as EventRoom[];
 
-  const reservations: Reservation[] = (_reservations || []).map((r) => ({
-    ...r,
-    createdAt: new Date(r.createdAt),
-    updatedAt: new Date(r.updatedAt),
-  }));
+  const reservations = (_reservations || []) as Reservation[];
 
   const weekReservations = reservations.filter((r) => {
     const resDate = r.date;
@@ -89,7 +81,7 @@ function EventRoomsIndex() {
           eventRooms={eventRooms}
           reservations={reservations}
         />
-        <CalendarControls />
+        <CalendarControls eventRooms={eventRooms} />
       </div>
       <div className="flex-1 overflow-hidden w-full">
         <CalendarView

@@ -19,14 +19,47 @@ import {
   CheckCircle,
   CircleDashed,
   Clock,
-  Info,
+  DoorOpen,
+  Plus,
   Search,
-  SlidersHorizontal,
+  X,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
 
-export function CalendarControls() {
+import type { EventRoom } from "@/fetchers/event-room";
+
+interface CalendarControlsProps {
+  eventRooms: EventRoom[];
+}
+
+interface FilterPillProps {
+  label: string;
+  value: string;
+  onRemove: () => void;
+  icon?: React.ReactNode;
+}
+
+function FilterPill({ label, value, onRemove, icon }: FilterPillProps) {
+  return (
+    <div className="flex items-center gap-1 h-7 px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full hover:bg-secondary/80 transition-colors">
+      {icon && <span className="size-3 shrink-0">{icon}</span>}
+      <span className="font-medium truncate max-w-[100px]">
+        {label}: {value}
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-0.5 hover:bg-secondary-foreground/20 rounded-full p-0.5 shrink-0"
+        aria-label={`Remove ${label} filter`}
+      >
+        <X className="size-3" />
+      </button>
+    </div>
+  );
+}
+
+export function CalendarControls({ eventRooms }: CalendarControlsProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -35,33 +68,80 @@ export function CalendarControls() {
     currentWeekStart,
     reservationStatusFilter,
     setReservationStatusFilter,
+    eventRoomFilter,
+    setEventRoomFilter,
+    paymentConfirmedFilter,
+    setPaymentConfirmedFilter,
   } = useCalendarStore();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const weekStart = format(currentWeekStart, "MMM dd");
   const weekEnd = format(
     new Date(currentWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000),
     "MMM dd yyyy",
   );
 
-  const hasActiveFilters = reservationStatusFilter !== "all";
+  const hasActiveFilters =
+    reservationStatusFilter !== "all" ||
+    eventRoomFilter !== null ||
+    paymentConfirmedFilter !== "all";
+
+  const activeFilterCount = [
+    reservationStatusFilter !== "all",
+    eventRoomFilter !== null,
+    paymentConfirmedFilter !== "all",
+  ].filter(Boolean).length;
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Pending";
+      case "confirmed":
+        return "Confirmed";
+      case "cancelled":
+        return "Cancelled";
+      case "completed":
+        return "Completed";
+      default:
+        return status;
+    }
+  };
+
+  const selectedRoom = eventRooms.find((r) => r.id === eventRoomFilter);
+
+  const handleAddStatusFilter = (status: string) => {
+    setReservationStatusFilter(
+      status as "all" | "pending" | "confirmed" | "cancelled" | "completed",
+    );
+    setFilterPopoverOpen(false);
+  };
+
+  const handleAddSpaceFilter = (roomId: string) => {
+    setEventRoomFilter(roomId);
+    setFilterPopoverOpen(false);
+  };
+
+  const handleAddPaymentFilter = (status: string) => {
+    setPaymentConfirmedFilter(status as "all" | "confirmed" | "not_confirmed");
+    setFilterPopoverOpen(false);
+  };
 
   return (
-    <div className="px-3 md:px-6 py-4 border-b border-border">
-      <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-[280px] shrink-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+    <div className="px-3 md:px-6 py-3 border-b border-border">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px] max-w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search in calendar..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 h-8 bg-background"
+            className="pl-8 pr-8 h-7 text-xs bg-background"
           />
         </div>
 
         <Button
           variant="outline"
-          className="h-8 px-3 shrink-0"
+          className="h-7 px-2 text-xs shrink-0"
           onClick={goToToday}
         >
           Today
@@ -72,12 +152,12 @@ export function CalendarControls() {
             <Button
               variant="outline"
               className={cn(
-                "h-8 px-3 gap-2 justify-start text-left font-normal shrink-0",
+                "h-7 px-2 gap-1.5 justify-start text-left font-normal text-xs shrink-0",
                 "hover:bg-accent",
               )}
             >
-              <CalendarIcon className="size-4 text-muted-foreground" />
-              <span className="text-xs text-foreground">
+              <CalendarIcon className="size-3.5 text-muted-foreground" />
+              <span className="text-xs">
                 {weekStart} - {weekEnd}
               </span>
             </Button>
@@ -97,100 +177,148 @@ export function CalendarControls() {
           </PopoverContent>
         </Popover>
 
-        <div className="ml-auto" />
-
-        <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className={cn("h-8 px-3 gap-2", hasActiveFilters && "bg-accent")}
+              size="sm"
+              className="h-7 px-2 text-xs gap-1 shrink-0"
             >
-              <SlidersHorizontal className="size-4" />
-              <span className="hidden sm:inline text-xs">Filter</span>
-              {hasActiveFilters && (
-                <span className="size-1.5 rounded-full bg-primary" />
+              <Plus className="size-3" />
+              <span className="hidden sm:inline">Filter</span>
+              {activeFilterCount > 0 && (
+                <span className="ml-0.5 bg-primary text-primary-foreground text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent
-            className="p-4 w-[288px]! min-w-[288px]! max-w-[288px]!"
-            align="end"
-          >
-            <div className="space-y-4 w-full">
+          <PopoverContent className="p-2 w-[200px]! min-w-[200px]!" align="end">
+            <div className="space-y-2">
               <div>
-                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Info className="size-4 text-muted-foreground" />
-                  Reservation Status
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+                  Status
                 </h4>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-between h-9 px-3"
-                    onClick={() => setReservationStatusFilter("all")}
+                    className="w-full justify-between h-7 px-2 text-xs"
+                    onClick={() => handleAddStatusFilter("pending")}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <CircleDashed className="size-4 text-muted-foreground" />
-                      <span className="text-sm">All reservations</span>
-                    </div>
-                    {reservationStatusFilter === "all" && (
-                      <Check className="size-4 text-primary" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-9 px-3"
-                    onClick={() => setReservationStatusFilter("pending")}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Clock className="size-4 text-muted-foreground" />
-                      <span className="text-sm">Pending reservations</span>
+                    <div className="flex items-center">
+                      <Clock className="size-3 mr-1.5 text-muted-foreground" />
+                      Pending
                     </div>
                     {reservationStatusFilter === "pending" && (
-                      <Check className="size-4 text-primary" />
+                      <Check className="size-3 text-primary" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-between h-9 px-3"
-                    onClick={() => setReservationStatusFilter("confirmed")}
+                    className="w-full justify-between h-7 px-2 text-xs"
+                    onClick={() => handleAddStatusFilter("confirmed")}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <CheckCircle className="size-4 text-muted-foreground" />
-                      <span className="text-sm">Confirmed reservations</span>
+                    <div className="flex items-center">
+                      <CheckCircle className="size-3 mr-1.5 text-green-500" />
+                      Confirmed
                     </div>
                     {reservationStatusFilter === "confirmed" && (
-                      <Check className="size-4 text-primary" />
+                      <Check className="size-3 text-primary" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-between h-9 px-3"
-                    onClick={() => setReservationStatusFilter("cancelled")}
+                    className="w-full justify-between h-7 px-2 text-xs"
+                    onClick={() => handleAddStatusFilter("cancelled")}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <XCircle className="size-4 text-muted-foreground" />
-                      <span className="text-sm">Cancelled reservations</span>
+                    <div className="flex items-center">
+                      <XCircle className="size-3 mr-1.5 text-red-500" />
+                      Cancelled
                     </div>
                     {reservationStatusFilter === "cancelled" && (
-                      <Check className="size-4 text-primary" />
+                      <Check className="size-3 text-primary" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-between h-9 px-3"
-                    onClick={() => setReservationStatusFilter("completed")}
+                    className="w-full justify-between h-7 px-2 text-xs"
+                    onClick={() => handleAddStatusFilter("completed")}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <CheckCheck className="size-4 text-muted-foreground" />
-                      <span className="text-sm">Completed reservations</span>
+                    <div className="flex items-center">
+                      <CheckCheck className="size-3 mr-1.5 text-muted-foreground" />
+                      Completed
                     </div>
                     {reservationStatusFilter === "completed" && (
-                      <Check className="size-4 text-primary" />
+                      <Check className="size-3 text-primary" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Separator className="my-1" />
+
+              <div>
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+                  Space
+                </h4>
+                <div className="space-y-0.5">
+                  {eventRooms.slice(0, 5).map((room) => (
+                    <Button
+                      key={room.id}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-between h-7 px-2 text-xs"
+                      onClick={() => handleAddSpaceFilter(room.id)}
+                    >
+                      <div className="flex items-center">
+                        <DoorOpen className="size-3 mr-1.5 text-muted-foreground" />
+                        {room.name}
+                      </div>
+                      {eventRoomFilter === room.id && (
+                        <Check className="size-3 text-primary" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="my-1" />
+
+              <div>
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+                  Payment
+                </h4>
+                <div className="space-y-0.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between h-7 px-2 text-xs"
+                    onClick={() => handleAddPaymentFilter("confirmed")}
+                  >
+                    <div className="flex items-center">
+                      <CheckCircle className="size-3 mr-1.5 text-green-500" />
+                      Confirmed
+                    </div>
+                    {paymentConfirmedFilter === "confirmed" && (
+                      <Check className="size-3 text-primary" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between h-7 px-2 text-xs"
+                    onClick={() => handleAddPaymentFilter("not_confirmed")}
+                  >
+                    <div className="flex items-center">
+                      <Clock className="size-3 mr-1.5 text-muted-foreground" />
+                      Not confirmed
+                    </div>
+                    {paymentConfirmedFilter === "not_confirmed" && (
+                      <Check className="size-3 text-primary" />
                     )}
                   </Button>
                 </div>
@@ -198,15 +326,19 @@ export function CalendarControls() {
 
               {hasActiveFilters && (
                 <>
-                  <Separator />
+                  <Separator className="my-1" />
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full h-9"
+                    className="w-full justify-start h-7 px-2 text-xs text-muted-foreground"
                     onClick={() => {
                       setReservationStatusFilter("all");
+                      setEventRoomFilter(null);
+                      setPaymentConfirmedFilter("all");
+                      setFilterPopoverOpen(false);
                     }}
                   >
+                    <X className="size-3 mr-1.5" />
                     Clear all filters
                   </Button>
                 </>
@@ -214,6 +346,45 @@ export function CalendarControls() {
             </div>
           </PopoverContent>
         </Popover>
+
+        {hasActiveFilters && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {reservationStatusFilter !== "all" && (
+              <FilterPill
+                label="Status"
+                value={getStatusLabel(reservationStatusFilter)}
+                onRemove={() => setReservationStatusFilter("all")}
+                icon={<CircleDashed className="size-3 text-muted-foreground" />}
+              />
+            )}
+            {eventRoomFilter !== null && selectedRoom && (
+              <FilterPill
+                label="Space"
+                value={selectedRoom.name}
+                onRemove={() => setEventRoomFilter(null)}
+                icon={<DoorOpen className="size-3 text-muted-foreground" />}
+              />
+            )}
+            {paymentConfirmedFilter !== "all" && (
+              <FilterPill
+                label="Payment"
+                value={
+                  paymentConfirmedFilter === "confirmed"
+                    ? "Confirmed"
+                    : "Pending"
+                }
+                onRemove={() => setPaymentConfirmedFilter("all")}
+                icon={
+                  paymentConfirmedFilter === "confirmed" ? (
+                    <CheckCircle className="size-3 text-green-500" />
+                  ) : (
+                    <Clock className="size-3 text-muted-foreground" />
+                  )
+                }
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

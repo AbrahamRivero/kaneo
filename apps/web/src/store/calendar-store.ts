@@ -15,6 +15,8 @@ interface CalendarState {
     | "confirmed"
     | "cancelled"
     | "completed";
+  eventRoomFilter: string | null;
+  paymentConfirmedFilter: "all" | "confirmed" | "not_confirmed";
   goToNextWeek: () => void;
   goToPreviousWeek: () => void;
   goToToday: () => void;
@@ -22,6 +24,10 @@ interface CalendarState {
   setSearchQuery: (query: string) => void;
   setReservationStatusFilter: (
     filter: "all" | "pending" | "confirmed" | "cancelled" | "completed",
+  ) => void;
+  setEventRoomFilter: (filter: string | null) => void;
+  setPaymentConfirmedFilter: (
+    filter: "all" | "confirmed" | "not_confirmed",
   ) => void;
   getCurrentWeekReservations: (
     weekReservations: ReservationWithRoomName[],
@@ -63,6 +69,8 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   currentWeekStart: startOfWeek(new Date(), { weekStartsOn: 1 }),
   searchQuery: "",
   reservationStatusFilter: "all",
+  eventRoomFilter: null,
+  paymentConfirmedFilter: "all",
 
   goToNextWeek: () =>
     set((state) => ({
@@ -88,6 +96,10 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   setReservationStatusFilter: (
     filter: "all" | "pending" | "confirmed" | "cancelled" | "completed",
   ) => set({ reservationStatusFilter: filter }),
+  setEventRoomFilter: (filter: string | null) =>
+    set({ eventRoomFilter: filter }),
+  setPaymentConfirmedFilter: (filter: "all" | "confirmed" | "not_confirmed") =>
+    set({ paymentConfirmedFilter: filter }),
 
   getCurrentWeekReservations: (
     weekReservations: ReservationWithRoomName[],
@@ -124,6 +136,22 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     } else if (state.reservationStatusFilter === "completed") {
       filterWeekReservations = filterWeekReservations.filter(
         (event) => event.status === "completed",
+      );
+    }
+
+    if (state.eventRoomFilter) {
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.eventRoomId === state.eventRoomFilter,
+      );
+    }
+
+    if (state.paymentConfirmedFilter === "confirmed") {
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.paymentConfirmed === true,
+      );
+    } else if (state.paymentConfirmedFilter === "not_confirmed") {
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.paymentConfirmed !== true,
       );
     }
 
