@@ -1,6 +1,7 @@
 import { CalendarControls } from "@/components/calendar/calendar-controls";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarView } from "@/components/calendar/calendar-view";
+import { ReportsDialog } from "@/components/calendar/reports-dialog";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EventRoom, Reservation } from "@/fetchers/event-room";
@@ -12,6 +13,7 @@ import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { useCalendarStore } from "@/store/calendar-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
+import { useState } from "react";
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/",
@@ -21,6 +23,7 @@ export const Route = createFileRoute(
 
 function EventRoomsIndex() {
   const { workspaceId } = Route.useParams();
+  const [reportsOpen, setReportsOpen] = useState(false);
 
   const { data: workspace, isLoading } = useGetWorkspace({ id: workspaceId });
   const { data: _eventRooms, isLoading: isLoadingRooms } =
@@ -75,13 +78,22 @@ function EventRoomsIndex() {
 
   return (
     <WorkspaceLayout title="Event Rooms">
+      <ReportsDialog
+        open={reportsOpen}
+        onOpenChange={setReportsOpen}
+        workspaceId={workspaceId}
+        eventRooms={eventRooms}
+      />
       <div className="w-full">
         <CalendarHeader
           workspaceId={workspaceId}
           eventRooms={eventRooms}
           reservations={reservations}
         />
-        <CalendarControls eventRooms={eventRooms} />
+        <CalendarControls
+          eventRooms={eventRooms}
+          onOpenReports={() => setReportsOpen(true)}
+        />
       </div>
       <div className="flex-1 overflow-hidden w-full">
         <CalendarView

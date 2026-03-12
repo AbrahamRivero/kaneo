@@ -72,11 +72,15 @@ const eventRoom = new Hono<{
 
   .get("/:workspaceId/reservations", async (c) => {
     const workspaceId = c.req.param("workspaceId");
-    const date = c.req.query("date");
+    const startDate = c.req.query("startDate");
+    const endDate = c.req.query("endDate");
+    const eventRoomId = c.req.query("eventRoomId");
 
     const reservations = await reservationController.getReservations(
       workspaceId,
-      date,
+      startDate,
+      endDate,
+      eventRoomId,
     );
     return c.json(reservations);
   })

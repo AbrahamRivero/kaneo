@@ -1,4 +1,4 @@
-import { type SQL, and, eq } from "drizzle-orm";
+import { type SQL, and, eq, gte, lte } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
@@ -271,13 +271,29 @@ async function getReservations(
   workspaceId: string,
   startDate?: string,
   endDate?: string,
+  eventRoomId?: string,
 ) {
   let conditions: SQL<unknown> = eq(reservationTable.workspaceId, workspaceId);
 
   if (startDate && endDate) {
     conditions = and(
       conditions,
+      and(
+        gte(reservationTable.date, startDate),
+        lte(reservationTable.date, endDate),
+      ),
+    ) as SQL<unknown>;
+  } else if (startDate) {
+    conditions = and(
+      conditions,
       eq(reservationTable.date, startDate),
+    ) as SQL<unknown>;
+  }
+
+  if (eventRoomId) {
+    conditions = and(
+      conditions,
+      eq(reservationTable.eventRoomId, eventRoomId),
     ) as SQL<unknown>;
   }
 

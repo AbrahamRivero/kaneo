@@ -20,6 +20,7 @@ import {
   CircleDashed,
   Clock,
   DoorOpen,
+  FileText,
   Plus,
   Search,
   X,
@@ -31,6 +32,7 @@ import type { EventRoom } from "@/fetchers/event-room";
 
 interface CalendarControlsProps {
   eventRooms: EventRoom[];
+  onOpenReports?: () => void;
 }
 
 interface FilterPillProps {
@@ -59,7 +61,10 @@ function FilterPill({ label, value, onRemove, icon }: FilterPillProps) {
   );
 }
 
-export function CalendarControls({ eventRooms }: CalendarControlsProps) {
+export function CalendarControls({
+  eventRooms,
+  onOpenReports,
+}: CalendarControlsProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -152,7 +157,7 @@ export function CalendarControls({ eventRooms }: CalendarControlsProps) {
             <Button
               variant="outline"
               className={cn(
-                "h-7 px-2 gap-1.5 justify-start text-left font-normal text-xs shrink-0",
+                "h-7 px-2 gap-1.5 justify-start font-normal text-xs shrink-0",
                 "hover:bg-accent",
               )}
             >
@@ -176,6 +181,17 @@ export function CalendarControls({ eventRooms }: CalendarControlsProps) {
             />
           </PopoverContent>
         </Popover>
+
+        {onOpenReports && (
+          <Button
+            variant="outline"
+            className="h-7 px-2 text-xs gap-1 shrink-0"
+            onClick={onOpenReports}
+          >
+            <FileText className="size-3.5" />
+            <span className="hidden sm:inline">Reports</span>
+          </Button>
+        )}
 
         <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
           <PopoverTrigger asChild>

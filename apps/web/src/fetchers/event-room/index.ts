@@ -102,10 +102,7 @@ export const getEventRooms = async (
   workspaceId: string,
 ): Promise<EventRoom[]> => {
   const url = `${base ? base : ""}/event-room/${workspaceId}/rooms`;
-  const response = await fetch(
-    url,
-    { credentials: "include" },
-  );
+  const response = await fetch(url, { credentials: "include" });
 
   if (!response.ok) {
     const error = await response.text();
@@ -186,17 +183,20 @@ export const deleteEventRoom = async (
 
 export const getReservations = async (
   workspaceId: string,
-  date?: string,
+  startDate?: string,
+  endDate?: string,
+  eventRoomId?: string,
 ): Promise<Reservation[]> => {
   const queryParams: Record<string, string> = {};
-  if (date) queryParams.date = date;
+  if (startDate) queryParams.startDate = startDate;
+  if (endDate) queryParams.endDate = endDate;
+  if (eventRoomId) queryParams.eventRoomId = eventRoomId;
 
   const url = new URLSearchParams(queryParams).toString();
   const baseUrl = `${base ? base : ""}/event-room/${workspaceId}/reservations`;
-  const response = await fetch(
-    `${baseUrl}${url ? `?${url}` : ""}`,
-    { credentials: "include" },
-  );
+  const response = await fetch(`${baseUrl}${url ? `?${url}` : ""}`, {
+    credentials: "include",
+  });
 
   if (!response.ok) {
     const error = await response.text();
