@@ -25,7 +25,7 @@ function getStatusIcon(status?: string) {
     case "pending":
       return <Clock className="size-3 text-amber-500" />;
     case "cancelled":
-      return <XCircle className="size-3 text-red-500" />;
+      return <XCircle className="size-3 text-red-500 dark:text-red-400" />;
     case "completed":
       return <CheckCheck className="size-3 text-blue-500" />;
     default:
@@ -36,7 +36,12 @@ function getStatusIcon(status?: string) {
 function getServiceIcons(event: Reservation) {
   const icons = [];
   if (event.coffeeBreak)
-    icons.push(<Coffee key="coffee" className="size-2.5 text-amber-600" />);
+    icons.push(
+      <Coffee
+        key="coffee"
+        className="size-2.5 text-amber-600 dark:text-amber-500"
+      />,
+    );
   if (event.lunch)
     icons.push(<Utensils key="lunch" className="size-2.5 text-orange-600" />);
   if (event.cocktail || event.canapes)
@@ -64,21 +69,24 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
     >
       <div className="absolute -top-1.5 -left-1.5 flex gap-0.5">
         {statusIcon && (
-          <div className="bg-white rounded-full shadow-sm">{statusIcon}</div>
+          <div className="bg-background rounded-full shadow-sm">
+            {statusIcon}
+          </div>
         )}
         {event.paymentConfirmed && (
-          <div className="bg-white rounded-full">
-            <Banknote className="size-3 text-green-600" />
+          <div className="bg-background rounded-full">
+            <Banknote className="size-3 text-green-600 dark:text-green-400" />
           </div>
         )}
       </div>
       <div className="flex flex-col gap-1 h-full">
         <div className="flex items-start justify-between gap-1">
           <h4
-            className={`text-xs font-semibold text-foreground mb-1 ${duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
-              } flex-1`}
+            className={`text-xs font-semibold text-foreground mb-1 ${
+              duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
+            } flex-1`}
           >
-            {event.title || subtitle}
+            {event.title || event.clientName}
           </h4>
           {hasGuests && (
             <div className="flex items-center gap-0.5 shrink-0 bg-muted px-1.5 py-0.5 rounded">

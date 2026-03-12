@@ -58,15 +58,15 @@ function formatDate(dateStr: string): string {
 function getStatusColor(status?: string): string {
   switch (status) {
     case "confirmed":
-      return "bg-green-100 text-green-700";
+      return "bg-green-500/20 text-green-600 dark:text-green-400";
     case "pending":
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
     case "cancelled":
-      return "bg-red-100 text-red-700";
+      return "bg-red-500/20 text-red-600 dark:text-red-400";
     case "completed":
-      return "bg-blue-100 text-blue-700";
+      return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -203,7 +203,7 @@ function SingleReservationSection({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 hover:bg-red-50"
+              className="size-7 hover:bg-red-500/10"
               onClick={() => setDeleteAlertOpen(true)}
               title="Delete reservation"
             >
@@ -292,9 +292,13 @@ function SingleReservationSection({
               <span>
                 Payment:{" "}
                 {reservation.paymentConfirmed ? (
-                  <span className="text-green-600 font-medium">Confirmed</span>
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    Confirmed
+                  </span>
                 ) : (
-                  <span className="text-amber-600 font-medium">Pending</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    Pending
+                  </span>
                 )}
               </span>
             </div>
@@ -393,7 +397,7 @@ export function EventSheet({
                 </span>
               </div>
               {eventRoom?.allowsMultipleReservations && (
-                <span className="text-[10px] text-cyan-600 mt-1">
+                <span className="text-[10px] text-cyan-600 dark:text-cyan-400 mt-1">
                   Multiple reservations allowed
                 </span>
               )}

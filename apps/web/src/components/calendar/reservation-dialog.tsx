@@ -42,8 +42,11 @@ export type ReservationFormValues = {
   clientName: string;
   companyName?: string;
   phone?: string;
-  email: string;
-  eventRoomId?: string;
+  email?: string;
+  eventRoomId: string;
+  date?: string;
+  startTime: string;
+  endTime: string;
   adultPax?: number;
   childrenPax?: number;
   notes?: string;
@@ -56,26 +59,41 @@ export type ReservationFormValues = {
   status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
 };
 
-const reservationSchema = z.object({
-  title: z.string().optional(),
-  clientName: z.string().min(3, { error: "Client Name is too short" }),
-  companyName: z.string().optional(),
-  phone: z.string().min(8, { error: "Phone is too short" }).optional(),
-  email: z.email(),
-  eventRoomId: z.string().optional(),
-  adultPax: z.number().optional(),
-  childrenPax: z.number().optional(),
-  notes: z.string().optional(),
-  paymentConfirmed: z.boolean().optional(),
-  coffeeBreak: z.boolean().optional(),
-  lunch: z.boolean().optional(),
-  cocktail: z.boolean().optional(),
-  canapes: z.boolean().optional(),
-  openBar: z.boolean().optional(),
-  status: z
-    .enum(["all", "pending", "confirmed", "cancelled", "completed"])
-    .default("all"),
-});
+const reservationSchema = z
+  .object({
+    title: z.string().optional(),
+    clientName: z.string().min(3, { error: "Client Name is too short" }),
+    companyName: z.string().optional(),
+    phone: z.string().optional(),
+    email: z
+      .string()
+      .email("Invalid email format")
+      .optional()
+      .or(z.literal("")),
+    eventRoomId: z.string().min(1, { error: "Event Room is required" }),
+    date: z.string().optional(),
+    startTime: z.string().min(1, { error: "Start Time is required" }),
+    endTime: z.string().min(1, { error: "End Time is required" }),
+    adultPax: z.number().optional(),
+    childrenPax: z.number().optional(),
+    notes: z.string().optional(),
+    paymentConfirmed: z.boolean().optional(),
+    coffeeBreak: z.boolean().optional(),
+    lunch: z.boolean().optional(),
+    cocktail: z.boolean().optional(),
+    canapes: z.boolean().optional(),
+    openBar: z.boolean().optional(),
+    status: z
+      .enum(["all", "pending", "confirmed", "cancelled", "completed"])
+      .default("all"),
+  })
+  .refine(
+    (data) => {
+      if (!data.startTime || !data.endTime) return true;
+      return data.endTime > data.startTime;
+    },
+    { error: "End Time must be after Start Time", path: ["endTime"] },
+  );
 
 interface ReservationDialogProps {
   open: boolean;
@@ -104,10 +122,6 @@ export function ReservationDialog({
     }
     return new Date();
   });
-  const [startTime, setStartTime] = useState(
-    selectedReservation?.startTime || "",
-  );
-  const [endTime, setEndTime] = useState(selectedReservation?.endTime || "");
   const [startPickerOpen, setStartPickerOpen] = useState(false);
 
   const createReservation = useCreateReservation();
@@ -122,6 +136,8 @@ export function ReservationDialog({
       phone: selectedReservation?.phone || "",
       email: selectedReservation?.email || "",
       eventRoomId: selectedReservation?.eventRoomId || "",
+      startTime: selectedReservation?.startTime || "",
+      endTime: selectedReservation?.endTime || "",
       adultPax: selectedReservation?.adultPax || 0,
       childrenPax: selectedReservation?.childrenPax || 0,
       notes: selectedReservation?.notes || "",
@@ -140,21 +156,25 @@ export function ReservationDialog({
     },
   });
 
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+      setStartDate(new Date());
+    }
+  }, [open, form]);
+
   // keep local date/time state in sync when editing a different reservation
   useEffect(() => {
     if (!selectedReservation) {
       const today = new Date();
       setStartDate(today);
-      setStartTime("");
-      setEndTime("");
       form.reset();
       return;
     }
 
     const [year, month, day] = selectedReservation.date.split("-").map(Number);
     setStartDate(new Date(year, month - 1, day));
-    setStartTime(selectedReservation.startTime || "");
-    setEndTime(selectedReservation.endTime || "");
     form.reset({
       title: selectedReservation.title || "",
       clientName: selectedReservation.clientName || "",
@@ -162,6 +182,8 @@ export function ReservationDialog({
       phone: selectedReservation.phone || "",
       email: selectedReservation.email || "",
       eventRoomId: selectedReservation.eventRoomId || "",
+      startTime: selectedReservation.startTime || "",
+      endTime: selectedReservation.endTime || "",
       adultPax: selectedReservation.adultPax || 0,
       childrenPax: selectedReservation.childrenPax || 0,
       notes: selectedReservation.notes || "",
@@ -182,7 +204,7 @@ export function ReservationDialog({
 
   const onSubmitHandler = async (formData: ReservationFormValues) => {
     try {
-      const { status, ...restFormData } = formData;
+      const { status, startTime, endTime, ...restFormData } = formData;
 
       // Create start and end DateTime from date and times
       const startDateTime = new Date(startDate);
@@ -245,8 +267,6 @@ export function ReservationDialog({
     // reset date/time fields for next open
     const today = new Date();
     setStartDate(today);
-    setStartTime("");
-    setEndTime("");
     onOpenChange(false);
   };
 
@@ -276,7 +296,7 @@ export function ReservationDialog({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="eventRoom">Event Room</Label>
+                <Label htmlFor="eventRoom">Event Room *</Label>
                 <Select
                   value={form.watch("eventRoomId") || ""}
                   onValueChange={(value) => form.setValue("eventRoomId", value)}
@@ -293,6 +313,11 @@ export function ReservationDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                {form.formState.errors.eventRoomId && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.eventRoomId.message as string}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -303,10 +328,10 @@ export function ReservationDialog({
                     form.setValue(
                       "status",
                       value as
-                      | "pending"
-                      | "confirmed"
-                      | "cancelled"
-                      | "completed",
+                        | "pending"
+                        | "confirmed"
+                        | "cancelled"
+                        | "completed",
                     )
                   }
                 >
@@ -331,6 +356,11 @@ export function ReservationDialog({
                   placeholder="Client name"
                   {...form.register("clientName")}
                 />
+                {form.formState.errors.clientName && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.clientName.message as string}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -345,13 +375,18 @@ export function ReservationDialog({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="email@example.com"
                   {...form.register("email")}
                 />
+                {form.formState.errors.email && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.email.message as string}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -404,31 +439,39 @@ export function ReservationDialog({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="startTime">Start Time</Label>
+                <Label htmlFor="startTime">Start Time *</Label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     id="startTime"
                     type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
+                    {...form.register("startTime")}
                     className="pl-9"
                   />
                 </div>
+                {form.formState.errors.startTime && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.startTime.message as string}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="endTime">End Time</Label>
+                <Label htmlFor="endTime">End Time *</Label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     id="endTime"
                     type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
+                    {...form.register("endTime")}
                     className="pl-9"
                   />
                 </div>
+                {form.formState.errors.endTime && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.endTime.message as string}
+                  </p>
+                )}
               </div>
             </div>
 
