@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import { projectTable, taskTable } from "../../database/schema";
 import { publishEvent } from "../../events";
+import { requireAtLeastMember } from "../../utils/permissions";
 import getNextTaskNumber from "./get-next-task-number";
 import type { Priority, Status } from "./update-task";
 
@@ -15,7 +16,11 @@ type ImportTask = {
   userId?: string | null;
 };
 
-async function importTasks(projectId: string, tasksToImport: ImportTask[]) {
+async function importTasks(
+  userId: string,
+  projectId: string,
+  tasksToImport: ImportTask[],
+) {
   const project = await db.query.projectTable.findFirst({
     where: eq(projectTable.id, projectId),
   });
@@ -25,6 +30,8 @@ async function importTasks(projectId: string, tasksToImport: ImportTask[]) {
       message: "Project not found",
     });
   }
+
+  await requireAtLeastMember(userId, project.workspaceId);
 
   const nextTaskNumber = await getNextTaskNumber(projectId);
 

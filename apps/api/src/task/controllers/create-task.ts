@@ -1,14 +1,15 @@
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
-import { taskTable, userTable } from "../../database/schema";
+import { projectTable, taskTable, userTable } from "../../database/schema";
 import { publishEvent } from "../../events";
+import { requireAtLeastMember } from "../../utils/permissions";
 import getNextTaskNumber from "./get-next-task-number";
 import type { Priority, Status } from "./update-task";
 
 async function createTask({
-  projectId,
   userId,
+  projectId,
   title,
   status,
   dueDate,
@@ -23,6 +24,18 @@ async function createTask({
   description?: string;
   priority?: string;
 }) {
+  const [project] = await db
+    .select({ workspaceId: projectTable.workspaceId })
+    .from(projectTable)
+    .where(eq(projectTable.id, projectId))
+    .limit(1);
+
+  if (!project) {
+    throw new HTTPException(404, { message: "Project not found" });
+  }
+
+  await requireAtLeastMember(userId!, project.workspaceId);
+
   const nextTaskNumber = await getNextTaskNumber(projectId);
 
   const [createdTask] = await db

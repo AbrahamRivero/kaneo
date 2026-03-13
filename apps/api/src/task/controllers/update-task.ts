@@ -1,8 +1,9 @@
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
-import { taskTable } from "../../database/schema";
+import { projectTable, taskTable } from "../../database/schema";
 import { publishEvent } from "../../events";
+import { requireAtLeastMember } from "../../utils/permissions";
 
 export type Status =
   | "backlog"
@@ -34,6 +35,18 @@ async function updateTask(
       message: "Task not found",
     });
   }
+
+  const [project] = await db
+    .select({ workspaceId: projectTable.workspaceId })
+    .from(projectTable)
+    .where(eq(projectTable.id, projectId))
+    .limit(1);
+
+  if (!project) {
+    throw new HTTPException(404, { message: "Project not found" });
+  }
+
+  await requireAtLeastMember(userId!, project.workspaceId);
 
   const currentStatus = status as Status;
   const currentPriority = priority as Priority;

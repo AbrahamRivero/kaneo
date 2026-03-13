@@ -139,6 +139,7 @@ async function updateEventRoom(
         and(
           eq(workspaceUserTable.workspaceId, eventRoom.workspaceId),
           eq(workspaceUserTable.userId, userId),
+          eq(workspaceUserTable.status, "active"),
         ),
       )
       .limit(1);
@@ -193,6 +194,7 @@ async function deleteEventRoom(userId: string, eventRoomId: string) {
         and(
           eq(workspaceUserTable.workspaceId, eventRoom.workspaceId),
           eq(workspaceUserTable.userId, userId),
+          eq(workspaceUserTable.status, "active"),
         ),
       )
       .limit(1);

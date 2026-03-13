@@ -42,10 +42,11 @@ const task = new Hono<{
       const { projectId } = c.req.param();
       const { title, description, dueDate, priority, status, userId } =
         c.req.valid("json");
+      const requesterId = c.get("userId");
 
       const task = await createTask({
         projectId,
-        userId,
+        userId: userId || requesterId,
         title,
         description,
         dueDate: new Date(dueDate),
@@ -91,6 +92,7 @@ const task = new Hono<{
         position,
         userId,
       } = c.req.valid("json");
+      const requesterId = c.get("userId");
 
       const task = await updateTask(
         id,
@@ -101,7 +103,7 @@ const task = new Hono<{
         description,
         priority,
         position,
-        userId,
+        userId || requesterId,
       );
 
       return c.json(task);
@@ -139,8 +141,9 @@ const task = new Hono<{
     async (c) => {
       const { projectId } = c.req.valid("param");
       const { tasks } = c.req.valid("json");
+      const userId = c.get("userId");
 
-      const result = await importTasks(projectId, tasks);
+      const result = await importTasks(userId, projectId, tasks);
 
       return c.json(result);
     },
@@ -150,8 +153,9 @@ const task = new Hono<{
     zValidator("param", z.object({ id: z.string() })),
     async (c) => {
       const { id } = c.req.valid("param");
+      const userId = c.get("userId");
 
-      const task = await deleteTask(id);
+      const task = await deleteTask(id, userId);
 
       return c.json(task);
     },

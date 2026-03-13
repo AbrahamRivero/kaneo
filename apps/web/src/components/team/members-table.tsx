@@ -1,13 +1,23 @@
+import useUpdateUserRole from "@/hooks/mutations/workspace-user/use-update-user-role";
 import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import { getStatusIcon, getStatusText } from "@/lib/status";
 import type WorkspaceUser from "@/types/workspace-user";
-import { Key, MoreHorizontal, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Key,
+  MoreHorizontal,
+  ShieldMinus,
+  ShieldPlus,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
@@ -29,12 +39,34 @@ function MembersTable({
   workspaceId: string;
 }) {
   const { isOwner } = useWorkspacePermission();
+  const { mutateAsync: updateUserRole } = useUpdateUserRole();
+  const queryClient = useQueryClient();
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<WorkspaceUser | null>(
     null,
   );
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);
+
+  const handleRoleChange = async (newRole: "owner" | "member" | "viewer") => {
+    if (!selectedMember) return;
+
+    try {
+      await updateUserRole({
+        workspaceId,
+        userId: selectedMember.userId ?? "",
+        role: newRole,
+      });
+      await queryClient.refetchQueries({
+        queryKey: ["workspace-users", workspaceId],
+      });
+      toast.success(`User role updated to ${newRole}`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update role",
+      );
+    }
+  };
 
   if (users?.length === 0) {
     return (
@@ -139,6 +171,43 @@ function MembersTable({
                           <Key className="size-4" />
                           Reset password
                         </DropdownMenuItem>
+
+                        {member.role === "viewer" && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedMember(member);
+                              handleRoleChange("member");
+                            }}
+                          >
+                            <ShieldPlus className="size-4" />
+                            Promote to Member
+                          </DropdownMenuItem>
+                        )}
+
+                        {member.role === "member" && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedMember(member);
+                                handleRoleChange("owner");
+                              }}
+                            >
+                              <ShieldPlus className="size-4" />
+                              Promote to Owner
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedMember(member);
+                                handleRoleChange("viewer");
+                              }}
+                            >
+                              <ShieldMinus className="size-4" />
+                              Demote to Viewer
+                            </DropdownMenuItem>
+                          </>
+                        )}
+
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => {
                             setIsRemoveMemberModalOpen(true);

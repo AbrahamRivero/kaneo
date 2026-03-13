@@ -115,8 +115,14 @@ const workspaceUser = new Hono<{
     async (c) => {
       const { workspaceId } = c.req.valid("param");
       const { email, role } = c.req.valid("json");
+      const userId = c.get("userId");
 
-      const workspaceUser = await inviteWorkspaceUser(workspaceId, email, role);
+      const workspaceUser = await inviteWorkspaceUser(
+        userId,
+        workspaceId,
+        email,
+        role,
+      );
 
       return c.json(workspaceUser);
     },

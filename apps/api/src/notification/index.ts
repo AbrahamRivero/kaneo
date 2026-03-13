@@ -1,10 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import db from "../database";
-import { taskTable } from "../database/schema";
+import { projectTable, taskTable } from "../database/schema";
 import { subscribeToEvent } from "../events";
+import { requireAtLeastMember } from "../utils/permissions";
 import getActiveWorkspaceUsers from "../workspace-user/controllers/get-active-workspace-users";
 import clearNotifications from "./controllers/clear-notifications";
 import createNotification from "./controllers/create-notification";
@@ -38,8 +39,24 @@ const notification = new Hono<{
     async (c) => {
       const { userId, title, content, type, resourceId, resourceType } =
         c.req.valid("json");
+      const requesterId = c.get("userId");
 
-      const notification = await createNotification({
+      if (resourceType === "task" && resourceId) {
+        const task = await db
+          .select({
+            workspaceId: projectTable.workspaceId,
+          })
+          .from(taskTable)
+          .innerJoin(projectTable, eq(taskTable.projectId, projectTable.id))
+          .where(eq(taskTable.id, resourceId))
+          .limit(1);
+
+        if (task[0]) {
+          await requireAtLeastMember(requesterId, task[0].workspaceId);
+        }
+      }
+
+      const newNotification = await createNotification({
         userId,
         title,
         content,
@@ -48,7 +65,7 @@ const notification = new Hono<{
         resourceType,
       });
 
-      return c.json(notification);
+      return c.json(newNotification);
     },
   )
   .patch(
@@ -56,8 +73,8 @@ const notification = new Hono<{
     zValidator("param", z.object({ id: z.string() })),
     async (c) => {
       const { id } = c.req.valid("param");
-      const notification = await markNotificationAsRead(id);
-      return c.json(notification);
+      const notif = await markNotificationAsRead(id);
+      return c.json(notif);
     },
   )
   .patch("/read-all", async (c) => {

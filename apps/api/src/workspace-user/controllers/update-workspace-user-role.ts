@@ -32,10 +32,15 @@ async function updateWorkspaceUserRole(
   const [targetUser] = await db
     .select()
     .from(workspaceUserTable)
-    .where(eq(workspaceUserTable.workspaceId, workspaceId))
+    .where(
+      and(
+        eq(workspaceUserTable.workspaceId, workspaceId),
+        eq(workspaceUserTable.userId, targetUserId),
+      ),
+    )
     .limit(1);
 
-  if (!targetUser || targetUser.userId !== targetUserId) {
+  if (!targetUser) {
     throw new HTTPException(404, { message: "User not found in workspace" });
   }
 

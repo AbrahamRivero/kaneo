@@ -49,7 +49,11 @@ subscribeToEvent<{
   title: string;
 }>("task.priority_changed", handleTaskPriorityChanged);
 
-const githubIntegration = new Hono()
+const githubIntegration = new Hono<{
+  Variables: {
+    userId: string;
+  };
+}>()
   .get("/app-info", async (c) => {
     return c.json({
       appName: process.env.GITHUB_APP_NAME || null,
@@ -101,8 +105,10 @@ const githubIntegration = new Hono()
     async (c) => {
       const { projectId } = c.req.valid("param");
       const { repositoryOwner, repositoryName } = c.req.valid("json");
+      const userId = c.get("userId");
 
       const integration = await createGithubIntegration({
+        userId,
         projectId,
         repositoryOwner,
         repositoryName,
@@ -116,7 +122,8 @@ const githubIntegration = new Hono()
     zValidator("param", z.object({ projectId: z.string() })),
     async (c) => {
       const { projectId } = c.req.valid("param");
-      const result = await deleteGithubIntegration(projectId);
+      const userId = c.get("userId");
+      const result = await deleteGithubIntegration(userId, projectId);
       return c.json(result);
     },
   )
@@ -125,7 +132,8 @@ const githubIntegration = new Hono()
     zValidator("json", z.object({ projectId: z.string() })),
     async (c) => {
       const { projectId } = c.req.valid("json");
-      const result = await importIssues(projectId);
+      const userId = c.get("userId");
+      const result = await importIssues(userId, projectId);
       return c.json(result);
     },
   )

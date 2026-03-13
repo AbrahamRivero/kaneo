@@ -2,16 +2,19 @@ import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import { githubIntegrationTable, projectTable } from "../../database/schema";
+import { requireAtLeastMember } from "../../utils/permissions";
 import createGithubApp from "../utils/create-github-app";
 
 const githubApp = createGithubApp();
 
 async function createGithubIntegration({
+  userId,
   projectId,
   repositoryOwner,
   repositoryName,
 }: {
   projectId: string;
+  userId: string;
   repositoryOwner: string;
   repositoryName: string;
 }) {
@@ -28,6 +31,8 @@ async function createGithubIntegration({
   if (!project) {
     throw new HTTPException(404, { message: "Project not found" });
   }
+
+  await requireAtLeastMember(userId, project.workspaceId);
 
   let installationId: number | null = null;
   try {

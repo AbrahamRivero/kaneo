@@ -11,9 +11,10 @@ export type InviteWorkspaceMemberRequest = InferRequestType<
 const inviteWorkspaceMember = async ({
   workspaceId,
   email,
-}: InviteWorkspaceMemberRequest) => {
+  role,
+}: InviteWorkspaceMemberRequest & { role?: "owner" | "member" | "viewer" }) => {
   const response = await client["workspace-user"][":workspaceId"].invite.$post({
-    json: { email },
+    json: { email, role },
     param: { workspaceId },
   });
 

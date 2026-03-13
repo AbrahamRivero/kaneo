@@ -186,19 +186,24 @@ async function createReservation(
     throw new HTTPException(404, { message: "Workspace not found" });
   }
 
-  const isMember = await db
-    .select()
+  const isOwner = workspace.ownerId === userId;
+
+  const [member] = await db
+    .select({ role: workspaceUserTable.role })
     .from(workspaceUserTable)
     .where(
       and(
         eq(workspaceUserTable.workspaceId, payload.workspaceId),
         eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.status, "active"),
       ),
     )
     .limit(1);
 
-  if (workspace.ownerId !== userId && isMember.length === 0) {
-    throw new HTTPException(403, { message: "Forbidden" });
+  if (!isOwner && (!member || member.role === "viewer")) {
+    throw new HTTPException(403, {
+      message: "Viewers cannot create reservations",
+    });
   }
 
   const [room] = await db
@@ -432,19 +437,28 @@ async function updateReservation(
     .where(eq(workspaceTable.id, reservation.workspaceId))
     .limit(1);
 
-  const isMember = await db
-    .select()
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  const [member] = await db
+    .select({ role: workspaceUserTable.role })
     .from(workspaceUserTable)
     .where(
       and(
         eq(workspaceUserTable.workspaceId, reservation.workspaceId),
         eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.status, "active"),
       ),
     )
     .limit(1);
 
-  if (!workspace || (workspace.ownerId !== userId && isMember.length === 0)) {
-    throw new HTTPException(403, { message: "Forbidden" });
+  if (!isOwner && (!member || member.role === "viewer")) {
+    throw new HTTPException(403, {
+      message: "Viewers cannot update reservations",
+    });
   }
 
   if (payload.eventRoomId) {
@@ -554,6 +568,12 @@ async function deleteReservation(userId: string, reservationId: string) {
     .where(eq(workspaceTable.id, reservation.workspaceId))
     .limit(1);
 
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
   const [workspaceUser] = await db
     .select({ role: workspaceUserTable.role })
     .from(workspaceUserTable)
@@ -561,17 +581,12 @@ async function deleteReservation(userId: string, reservationId: string) {
       and(
         eq(workspaceUserTable.workspaceId, reservation.workspaceId),
         eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.status, "active"),
       ),
     )
     .limit(1);
 
-  const isOwner = workspace?.ownerId === userId;
-  const isMember = !!workspaceUser;
   const isViewer = workspaceUser?.role === "viewer";
-
-  if (!workspace || !isMember) {
-    throw new HTTPException(403, { message: "Forbidden" });
-  }
 
   if (isViewer) {
     throw new HTTPException(403, {

@@ -6,8 +6,10 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { requireAtLeastMember } from "../../utils/permissions";
 
 async function inviteWorkspaceUser(
+  userId: string,
   workspaceId: string,
   email: string,
   role?: "owner" | "member" | "viewer",
@@ -23,6 +25,8 @@ async function inviteWorkspaceUser(
     });
   }
 
+  await requireAtLeastMember(userId, workspaceId);
+
   const [user] = await db
     .select()
     .from(userTable)
@@ -35,7 +39,7 @@ async function inviteWorkspaceUser(
     });
   }
 
-  const userId = user.id;
+  const targetUserId = user.id;
 
   const [existingUser] = await db
     .select()
@@ -43,7 +47,7 @@ async function inviteWorkspaceUser(
     .where(
       and(
         eq(workspaceUserTable.workspaceId, workspaceId),
-        eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.userId, targetUserId),
       ),
     );
 
@@ -56,7 +60,7 @@ async function inviteWorkspaceUser(
   const [invitedUser] = await db
     .insert(workspaceUserTable)
     .values({
-      userId,
+      userId: targetUserId,
       workspaceId,
       role: role || "member",
     })

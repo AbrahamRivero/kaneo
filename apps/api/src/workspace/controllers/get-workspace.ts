@@ -16,30 +16,42 @@ async function getWorkspace(userId: string, workspaceId: string) {
       createdAt: workspaceTable.createdAt,
     })
     .from(workspaceTable)
-    .leftJoin(
-      workspaceUserTable,
-      eq(workspaceTable.id, workspaceUserTable.workspaceId),
-    )
-    .where(
-      and(
-        eq(workspaceTable.id, workspaceId),
-        or(
-          eq(workspaceTable.ownerId, userId),
-          eq(workspaceUserTable.userId, userId),
-        ),
-      ),
-    )
+    .where(eq(workspaceTable.id, workspaceId))
     .limit(1);
 
-  const isWorkspaceExisting = Boolean(existingWorkspace);
-
-  if (!isWorkspaceExisting) {
+  if (!existingWorkspace) {
     throw new HTTPException(404, {
       message: "Workspace not found",
     });
   }
 
-  return existingWorkspace;
+  const isOwner = existingWorkspace.ownerId === userId;
+
+  let currentUserRole: "owner" | "member" | "viewer" | undefined;
+
+  if (isOwner) {
+    currentUserRole = "owner";
+  } else {
+    const [member] = await db
+      .select({
+        role: workspaceUserTable.role,
+      })
+      .from(workspaceUserTable)
+      .where(
+        and(
+          eq(workspaceUserTable.workspaceId, workspaceId),
+          eq(workspaceUserTable.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    currentUserRole = (member?.role as "member" | "viewer") || undefined;
+  }
+
+  return {
+    ...existingWorkspace,
+    currentUserRole,
+  };
 }
 
 export default getWorkspace;

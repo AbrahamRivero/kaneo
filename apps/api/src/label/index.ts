@@ -29,15 +29,21 @@ const label = new Hono<{
     ),
     async (c) => {
       const { name, color, taskId } = c.req.valid("json");
-      const label = await createLabel(name, color, taskId);
+      const userId = c.get("userId");
+      const label = await createLabel(userId, name, color, taskId);
       return c.json(label);
     },
   )
-  .delete("/:id", async (c) => {
-    const { id } = c.req.param();
-    const label = await deleteLabel(id);
-    return c.json(label);
-  })
+  .delete(
+    "/:id",
+    zValidator("param", z.object({ id: z.string() })),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const userId = c.get("userId");
+      const label = await deleteLabel(userId, id);
+      return c.json(label);
+    },
+  )
   .get("/:id", zValidator("param", z.object({ id: z.string() })), async (c) => {
     const { id } = c.req.valid("param");
     const label = await getLabel(id);
@@ -50,7 +56,8 @@ const label = new Hono<{
     async (c) => {
       const { id } = c.req.valid("param");
       const { name, color } = c.req.valid("json");
-      const label = await updateLabel(id, name, color);
+      const userId = c.get("userId");
+      const label = await updateLabel(userId, id, name, color);
       return c.json(label);
     },
   );

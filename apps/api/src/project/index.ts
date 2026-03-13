@@ -7,7 +7,11 @@ import getProject from "./controllers/get-project";
 import getProjects from "./controllers/get-projects";
 import updateProject from "./controllers/update-project";
 
-const project = new Hono()
+const project = new Hono<{
+  Variables: {
+    userId: string;
+  };
+}>()
   .get(
     "/",
     zValidator("query", z.object({ workspaceId: z.string() })),
@@ -30,8 +34,9 @@ const project = new Hono()
     ),
     async (c) => {
       const { name, workspaceId, icon, slug } = c.req.valid("json");
-      const project = await createProject(workspaceId, name, icon, slug);
-      return c.json(project);
+      const userId = c.get("userId");
+      const proj = await createProject(userId, workspaceId, name, icon, slug);
+      return c.json(proj);
     },
   )
   .delete(
@@ -39,8 +44,9 @@ const project = new Hono()
     zValidator("param", z.object({ id: z.string() })),
     async (c) => {
       const { id } = c.req.valid("param");
+      const userId = c.get("userId");
 
-      const project = await deleteProject(id);
+      const project = await deleteProject(userId, id);
 
       return c.json(project);
     },
@@ -61,8 +67,10 @@ const project = new Hono()
     async (c) => {
       const { id } = c.req.valid("param");
       const { name, icon, slug, description, isPublic } = c.req.valid("json");
+      const userId = c.get("userId");
 
       const project = await updateProject(
+        userId,
         id,
         name,
         icon,

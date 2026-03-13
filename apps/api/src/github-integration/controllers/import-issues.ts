@@ -1,11 +1,27 @@
 import { and, eq, notLike } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
 import db from "../../database";
-import { githubIntegrationTable, taskTable } from "../../database/schema";
+import {
+  githubIntegrationTable,
+  projectTable,
+  taskTable,
+} from "../../database/schema";
+import { requireAtLeastMember } from "../../utils/permissions";
 import createGithubApp from "../utils/create-github-app";
 
 const githubApp = createGithubApp();
 
-export async function importIssues(projectId: string) {
+export async function importIssues(userId: string, projectId: string) {
+  const project = await db.query.projectTable.findFirst({
+    where: eq(projectTable.id, projectId),
+  });
+
+  if (!project) {
+    throw new HTTPException(404, { message: "Project not found" });
+  }
+
+  await requireAtLeastMember(userId, project.workspaceId);
+
   const githubIntegration = await db.query.githubIntegrationTable.findFirst({
     where: eq(githubIntegrationTable.projectId, projectId),
   });

@@ -6,8 +6,12 @@ function useInviteWorkspaceUser() {
     mutationFn: ({
       workspaceId,
       email,
-    }: { workspaceId: string; email: string }) =>
-      inviteWorkspaceMember({ workspaceId, email }),
+      role,
+    }: {
+      workspaceId: string;
+      email: string;
+      role?: "owner" | "member" | "viewer";
+    }) => inviteWorkspaceMember({ workspaceId, email, role }),
   });
 }
 
