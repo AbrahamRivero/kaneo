@@ -1,7 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
-import { eventRoomTable, workspaceTable } from "../../database/schema";
+import {
+  eventRoomTable,
+  workspaceTable,
+  workspaceUserTable,
+} from "../../database/schema";
 
 type CreateEventRoomPayload = {
   workspaceId: string;
@@ -21,8 +25,29 @@ async function createEventRoom(
     .where(eq(workspaceTable.id, payload.workspaceId))
     .limit(1);
 
-  if (!workspace || workspace.ownerId !== userId) {
-    throw new HTTPException(403, { message: "Forbidden" });
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  if (!isOwner) {
+    const [member] = await db
+      .select({ role: workspaceUserTable.role })
+      .from(workspaceUserTable)
+      .where(
+        and(
+          eq(workspaceUserTable.workspaceId, payload.workspaceId),
+          eq(workspaceUserTable.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!member || member.role === "viewer") {
+      throw new HTTPException(403, {
+        message: "Only owners and members can create event rooms",
+      });
+    }
   }
 
   const [eventRoom] = await db
@@ -100,8 +125,29 @@ async function updateEventRoom(
     .where(eq(workspaceTable.id, eventRoom.workspaceId))
     .limit(1);
 
-  if (!workspace || workspace.ownerId !== userId) {
-    throw new HTTPException(403, { message: "Forbidden" });
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  if (!isOwner) {
+    const [member] = await db
+      .select({ role: workspaceUserTable.role })
+      .from(workspaceUserTable)
+      .where(
+        and(
+          eq(workspaceUserTable.workspaceId, eventRoom.workspaceId),
+          eq(workspaceUserTable.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!member || member.role === "viewer") {
+      throw new HTTPException(403, {
+        message: "Only owners and members can update event rooms",
+      });
+    }
   }
 
   const [updated] = await db
@@ -133,8 +179,29 @@ async function deleteEventRoom(userId: string, eventRoomId: string) {
     .where(eq(workspaceTable.id, eventRoom.workspaceId))
     .limit(1);
 
-  if (!workspace || workspace.ownerId !== userId) {
-    throw new HTTPException(403, { message: "Forbidden" });
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  if (!isOwner) {
+    const [member] = await db
+      .select({ role: workspaceUserTable.role })
+      .from(workspaceUserTable)
+      .where(
+        and(
+          eq(workspaceUserTable.workspaceId, eventRoom.workspaceId),
+          eq(workspaceUserTable.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!member || member.role === "viewer") {
+      throw new HTTPException(403, {
+        message: "Only owners and members can delete event rooms",
+      });
+    }
   }
 
   await db.delete(eventRoomTable).where(eq(eventRoomTable.id, eventRoomId));

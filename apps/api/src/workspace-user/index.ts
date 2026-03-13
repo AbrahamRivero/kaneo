@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import db from "../database";
@@ -14,6 +14,7 @@ import getWorkspaceUsers from "./controllers/get-workspace-users";
 import inviteWorkspaceUser from "./controllers/invite-workspace-user";
 import resetMemberPassword from "./controllers/reset-member-password";
 import updateWorkspaceUser from "./controllers/update-workspace-user";
+import updateWorkspaceUserRole from "./controllers/update-workspace-user-role";
 
 const workspaceUser = new Hono<{
   Variables: {
@@ -66,9 +67,11 @@ const workspaceUser = new Hono<{
     async (c) => {
       const { workspaceId } = c.req.valid("param");
       const { userId } = c.req.valid("query");
+      const requesterId = c.get("userId") as string;
 
       const deletedWorkspaceUser = await deleteWorkspaceUser(
         workspaceId,
+        requesterId,
         userId,
       );
 
@@ -102,14 +105,46 @@ const workspaceUser = new Hono<{
   .post(
     "/:workspaceId/invite",
     zValidator("param", z.object({ workspaceId: z.string() })),
-    zValidator("json", z.object({ email: z.string().email() })),
+    zValidator(
+      "json",
+      z.object({
+        email: z.string().email(),
+        role: z.enum(["owner", "member", "viewer"]).optional(),
+      }),
+    ),
     async (c) => {
       const { workspaceId } = c.req.valid("param");
-      const { email } = c.req.valid("json");
+      const { email, role } = c.req.valid("json");
 
-      const workspaceUser = await inviteWorkspaceUser(workspaceId, email);
+      const workspaceUser = await inviteWorkspaceUser(workspaceId, email, role);
 
       return c.json(workspaceUser);
+    },
+  )
+  .patch(
+    "/:workspaceId/users/:userId/role",
+    zValidator(
+      "param",
+      z.object({ workspaceId: z.string(), userId: z.string() }),
+    ),
+    zValidator(
+      "json",
+      z.object({ role: z.enum(["owner", "member", "viewer"]) }),
+    ),
+    async (c) => {
+      const { workspaceId, userId } = c.req.valid("param");
+      const { role } = c.req.valid("json");
+
+      const requesterId = c.get("userId") as string;
+
+      const updatedUser = await updateWorkspaceUserRole(
+        requesterId,
+        workspaceId,
+        userId,
+        { role },
+      );
+
+      return c.json(updatedUser);
     },
   )
   .post(
@@ -147,9 +182,11 @@ const workspaceUser = new Hono<{
     ),
     async (c) => {
       const { workspaceId, userId } = c.req.valid("param");
+      const requesterId = c.get("userId") as string;
 
       const deletedWorkspaceUser = await deleteWorkspaceUser(
         workspaceId,
+        requesterId,
         userId,
       );
 

@@ -246,6 +246,7 @@ async function createReservation(
     .values({
       workspaceId: payload.workspaceId,
       eventRoomId: payload.eventRoomId,
+      userId,
       title: payload.title,
       clientName: payload.clientName,
       companyName: payload.companyName,
@@ -553,8 +554,8 @@ async function deleteReservation(userId: string, reservationId: string) {
     .where(eq(workspaceTable.id, reservation.workspaceId))
     .limit(1);
 
-  const isMember = await db
-    .select()
+  const [workspaceUser] = await db
+    .select({ role: workspaceUserTable.role })
     .from(workspaceUserTable)
     .where(
       and(
@@ -564,8 +565,24 @@ async function deleteReservation(userId: string, reservationId: string) {
     )
     .limit(1);
 
-  if (!workspace || (workspace.ownerId !== userId && isMember.length === 0)) {
+  const isOwner = workspace?.ownerId === userId;
+  const isMember = !!workspaceUser;
+  const isViewer = workspaceUser?.role === "viewer";
+
+  if (!workspace || !isMember) {
     throw new HTTPException(403, { message: "Forbidden" });
+  }
+
+  if (isViewer) {
+    throw new HTTPException(403, {
+      message: "Viewers cannot delete reservations",
+    });
+  }
+
+  if (!isOwner && reservation.userId !== userId) {
+    throw new HTTPException(403, {
+      message: "You can only delete your own reservations",
+    });
   }
 
   await publishEvent("reservation.deleted", {

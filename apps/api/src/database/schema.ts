@@ -27,7 +27,7 @@ export const taskStatus = pgEnum("task_status", [
   "completed",
 ]);
 export const workspaceMemberRole = pgEnum("workspace_member_role", [
-  "admin",
+  "viewer",
   "owner",
   "member",
 ]);
@@ -307,6 +307,9 @@ export const reservationTable = pgTable("reservation", {
     .references(() => eventRoomTable.id, {
       onDelete: "cascade",
     }),
+  userId: text("user_id").references(() => userTable.id, {
+    onDelete: "set null",
+  }),
   title: text("title"),
   clientName: text("client_name").notNull(),
   companyName: text("company_name"),
