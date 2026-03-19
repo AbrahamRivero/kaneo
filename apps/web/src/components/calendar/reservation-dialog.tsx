@@ -108,8 +108,8 @@ function parseDateRange(dateRangeStr: string): DateRange {
   try {
     const parsed = JSON.parse(dateRangeStr) as { from: string; to?: string };
     return {
-      from: new Date(parsed.from + "T00:00:00"),
-      to: parsed.to ? new Date(parsed.to + "T00:00:00") : undefined,
+      from: new Date(`${parsed.from}T00:00:00`),
+      to: parsed.to ? new Date(`${parsed.to}T00:00:00`) : undefined,
     };
   } catch {
     return { from: new Date() };

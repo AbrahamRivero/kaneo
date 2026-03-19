@@ -294,7 +294,7 @@ export function ReportsDialog({
                   <td>${(() => {
                     const dr = parseDateRange(res.dateRange);
                     return format(
-                      new Date(dr.from + "T00:00:00"),
+                      new Date(`${dr.from}T00:00:00`),
                       "MMM dd, yyyy",
                     );
                   })()}</td>
