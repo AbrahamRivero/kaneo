@@ -7,7 +7,6 @@ import {
   pgEnum,
   pgTable,
   text,
-  time,
   timestamp,
 } from "drizzle-orm/pg-core";
 
@@ -315,9 +314,7 @@ export const reservationTable = pgTable("reservation", {
   companyName: text("company_name"),
   phone: text("phone"),
   email: text("email"),
-  date: date("date").notNull(),
-  startTime: time("start_time").notNull(),
-  endTime: time("end_time").notNull(),
+  dateRange: text("date_range").notNull(),
   adultPax: integer("adult_pax").notNull().default(0),
   childrenPax: integer("children_pax").notNull().default(0),
   notes: text("notes"),

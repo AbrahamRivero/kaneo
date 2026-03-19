@@ -9,6 +9,8 @@ export interface EventRoom {
   updatedAt: Date;
 }
 
+export type DateRange = { from: string; to?: string };
+
 export interface Reservation {
   id: string;
   workspaceId: string;
@@ -18,9 +20,7 @@ export interface Reservation {
   companyName?: string | null;
   phone?: string | null;
   email?: string | null;
-  date: string;
-  startTime: string;
-  endTime: string;
+  dateRange: string;
   adultPax: number;
   childrenPax: number;
   notes?: string | null;

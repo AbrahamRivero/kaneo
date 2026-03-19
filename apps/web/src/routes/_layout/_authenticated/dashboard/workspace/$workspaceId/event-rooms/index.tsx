@@ -4,7 +4,7 @@ import { CalendarView } from "@/components/calendar/calendar-view";
 import { ReportsDialog } from "@/components/calendar/reports-dialog";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { EventRoom, Reservation } from "@/fetchers/event-room";
+import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import {
   useGetEventRooms,
   useGetReservations,
@@ -20,6 +20,21 @@ export const Route = createFileRoute(
 )({
   component: EventRoomsIndex,
 });
+
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
+}
+
+function isDateInRange(dateStr: string, dateRange: DateRange): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  const from = new Date(dateRange.from + "T00:00:00");
+  const to = new Date((dateRange.to || dateRange.from) + "T00:00:00");
+  return date >= from && date <= to;
+}
 
 function EventRoomsIndex() {
   const { workspaceId } = Route.useParams();
@@ -72,8 +87,10 @@ function EventRoomsIndex() {
   const reservations = (_reservations || []) as Reservation[];
 
   const weekReservations = reservations.filter((r) => {
-    const resDate = r.date;
-    return weekDays.some((day) => format(day, "yyyy-MM-dd") === resDate);
+    const dateRange = parseDateRange(r.dateRange);
+    return weekDays.some((day) =>
+      isDateInRange(format(day, "yyyy-MM-dd"), dateRange),
+    );
   });
 
   return (

@@ -1,4 +1,4 @@
-import type { EventRoom, Reservation } from "@/fetchers/event-room";
+import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useCalendarStore } from "@/store/calendar-store";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -10,6 +10,25 @@ export interface CalendarViewProps {
   reservations: Reservation[];
   workspaceId: string;
   eventRooms: EventRoom[];
+}
+
+interface ReservationWithRoomName extends Reservation {
+  roomName: string;
+}
+
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
+}
+
+function isDateInRange(dateStr: string, dateRange: DateRange): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  const from = new Date(dateRange.from + "T00:00:00");
+  const to = new Date((dateRange.to || dateRange.from) + "T00:00:00");
+  return date >= from && date <= to;
 }
 
 export function CalendarView({
@@ -33,10 +52,12 @@ export function CalendarView({
     {} as Record<string, string>,
   );
 
-  const reservationsWithRoomName = reservations.map((res) => ({
-    ...res,
-    roomName: eventRoomsMap[res.eventRoomId] || "",
-  }));
+  const reservationsWithRoomName: ReservationWithRoomName[] = reservations.map(
+    (res) => ({
+      ...res,
+      roomName: eventRoomsMap[res.eventRoomId] || "",
+    }),
+  );
 
   const filteredReservations = getCurrentWeekReservations(
     reservationsWithRoomName,
@@ -49,9 +70,10 @@ export function CalendarView({
   const reservationsByDay: Record<string, Reservation[]> = {};
   for (const day of weekDays) {
     const dayStr = format(day, "yyyy-MM-dd");
-    reservationsByDay[dayStr] = filteredReservations.filter(
-      (e) => e.date === dayStr,
-    );
+    reservationsByDay[dayStr] = filteredReservations.filter((e) => {
+      const dateRange = parseDateRange(e.dateRange);
+      return isDateInRange(dayStr, dateRange);
+    });
   }
 
   const handleEventClick = (reservations: Reservation[]) => {

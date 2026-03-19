@@ -1,4 +1,4 @@
-import { type SQL, and, eq, gte, lte } from "drizzle-orm";
+import { type SQL, and, eq, gte, lte, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
@@ -9,7 +9,9 @@ import {
 } from "../../database/schema";
 import { publishEvent } from "../../events";
 
-type CreateReservationPayload = {
+export type DateRange = { from: string; to?: string };
+
+export type CreateReservationPayload = {
   workspaceId: string;
   eventRoomId: string;
   title?: string;
@@ -17,9 +19,7 @@ type CreateReservationPayload = {
   companyName?: string;
   phone?: string;
   email?: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  dateRange: DateRange;
   adultPax: number;
   childrenPax: number;
   notes?: string;
@@ -30,16 +30,14 @@ type CreateReservationPayload = {
   openBar?: boolean;
 };
 
-type UpdateReservationPayload = {
+export type UpdateReservationPayload = {
   eventRoomId?: string;
   title?: string;
   clientName?: string;
   companyName?: string;
   phone?: string;
   email?: string;
-  date?: string;
-  startTime?: string;
-  endTime?: string;
+  dateRange?: DateRange;
   adultPax?: number;
   childrenPax?: number;
   notes?: string;
@@ -52,25 +50,49 @@ type UpdateReservationPayload = {
   status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
 };
 
-function timesOverlap(
+function parseDateRange(dateRange: string | DateRange): DateRange {
+  if (typeof dateRange === "string") {
+    const parsed = JSON.parse(dateRange) as DateRange;
+    return parsed;
+  }
+  return dateRange;
+}
+
+type NormalizedDateRange = { from: string; to: string };
+
+function normalizeDateRange(dateRange: DateRange): NormalizedDateRange {
+  return {
+    from: dateRange.from,
+    to: dateRange.to || dateRange.from,
+  };
+}
+
+function dateRangeToString(dateRange: DateRange): string {
+  return JSON.stringify(normalizeDateRange(dateRange));
+}
+
+function dateRangeFromString(dateRangeStr: string): DateRange {
+  return JSON.parse(dateRangeStr) as DateRange;
+}
+
+function datesOverlap(
   startA: string,
   endA: string,
   startB: string,
   endB: string,
 ): boolean {
-  return startA < endB && endA > startB;
+  return startA <= endB && endA >= startB;
 }
 
 type ConflictResult =
   | { hasConflict: false }
   | {
       hasConflict: true;
-      type: "time_overlap";
+      type: "date_overlap";
       conflictingReservation: {
         id: string;
         title: string;
-        startTime: string;
-        endTime: string;
+        dateRange: DateRange;
       };
     }
   | {
@@ -83,14 +105,13 @@ type ConflictResult =
 
 async function checkReservationConflict(
   eventRoomId: string,
-  date: string,
-  startTime: string,
-  endTime: string,
+  dateRange: DateRange,
   adultPax: number,
   childrenPax: number,
   excludeReservationId?: string,
 ): Promise<ConflictResult> {
-  // Get event room info to check if it allows multiple reservations
+  const normalizedDateRange = normalizeDateRange(dateRange);
+
   const [eventRoom] = await db
     .select({
       id: eventRoomTable.id,
@@ -105,13 +126,11 @@ async function checkReservationConflict(
     return { hasConflict: false };
   }
 
-  // Get existing reservations that overlap in time
   const existingReservations = await db
     .select({
       id: reservationTable.id,
       title: reservationTable.title,
-      startTime: reservationTable.startTime,
-      endTime: reservationTable.endTime,
+      dateRange: reservationTable.dateRange,
       adultPax: reservationTable.adultPax,
       childrenPax: reservationTable.childrenPax,
     })
@@ -119,21 +138,27 @@ async function checkReservationConflict(
     .where(
       and(
         eq(reservationTable.eventRoomId, eventRoomId),
-        eq(reservationTable.date, date),
         excludeReservationId
-          ? eq(reservationTable.id, excludeReservationId)
+          ? ne(reservationTable.id, excludeReservationId)
           : undefined,
       ),
     );
 
-  // If the room allows multiple reservations, check capacity
   if (eventRoom.allowsMultipleReservations) {
-    const totalExistingPax = existingReservations.reduce((sum, res) => {
-      // Only count reservations that overlap in time
-      if (timesOverlap(startTime, endTime, res.startTime, res.endTime)) {
-        return sum + res.adultPax + res.childrenPax;
-      }
-      return sum;
+    const overlappingReservations = existingReservations.filter((res) => {
+      const resDateRange = normalizeDateRange(
+        dateRangeFromString(res.dateRange),
+      );
+      return datesOverlap(
+        normalizedDateRange.from,
+        normalizedDateRange.to,
+        resDateRange.from,
+        resDateRange.to,
+      );
+    });
+
+    const totalExistingPax = overlappingReservations.reduce((sum, res) => {
+      return sum + res.adultPax + res.childrenPax;
     }, 0);
 
     const requestedPax = adultPax + childrenPax;
@@ -149,20 +174,25 @@ async function checkReservationConflict(
       };
     }
   } else {
-    // If the room does NOT allow multiple reservations, check for time overlap
     for (const res of existingReservations) {
+      const resDateRange = normalizeDateRange(
+        dateRangeFromString(res.dateRange),
+      );
       if (
-        res.id !== excludeReservationId &&
-        timesOverlap(startTime, endTime, res.startTime, res.endTime)
+        datesOverlap(
+          normalizedDateRange.from,
+          normalizedDateRange.to,
+          resDateRange.from,
+          resDateRange.to,
+        )
       ) {
         return {
           hasConflict: true,
-          type: "time_overlap",
+          type: "date_overlap",
           conflictingReservation: {
             id: res.id,
             title: res.title || "Untitled",
-            startTime: res.startTime,
-            endTime: res.endTime,
+            dateRange: resDateRange,
           },
         };
       }
@@ -225,9 +255,7 @@ async function createReservation(
 
   const conflict = await checkReservationConflict(
     payload.eventRoomId,
-    payload.date,
-    payload.startTime,
-    payload.endTime,
+    payload.dateRange,
     payload.adultPax,
     payload.childrenPax,
   );
@@ -235,13 +263,13 @@ async function createReservation(
   if (conflict.hasConflict) {
     if (conflict.type === "capacity_exceeded") {
       throw new HTTPException(400, {
-        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different time.`,
+        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different date range.`,
       });
     }
-    if (conflict.type === "time_overlap") {
-      const { title, startTime, endTime } = conflict.conflictingReservation;
+    if (conflict.type === "date_overlap") {
+      const { title, dateRange } = conflict.conflictingReservation;
       throw new HTTPException(400, {
-        message: `Time slot conflict: The room is already reserved for "${title}" from ${startTime} to ${endTime} on this date.`,
+        message: `Date range conflict: The room is already reserved for "${title}" from ${dateRange.from} to ${dateRange.to}.`,
       });
     }
   }
@@ -257,9 +285,7 @@ async function createReservation(
       companyName: payload.companyName,
       phone: payload.phone,
       email: payload.email,
-      date: payload.date,
-      startTime: payload.startTime,
-      endTime: payload.endTime,
+      dateRange: dateRangeToString(payload.dateRange),
       adultPax: payload.adultPax,
       childrenPax: payload.childrenPax,
       notes: payload.notes,
@@ -275,12 +301,14 @@ async function createReservation(
     throw new Error("Failed to create reservation");
   }
 
+  const resDateRange = dateRangeFromString(reservation.dateRange);
+
   await publishEvent("reservation.created", {
     reservationId: reservation.id,
     workspaceId: payload.workspaceId,
     clientName: payload.clientName,
     title: payload.title,
-    date: payload.date,
+    dateRange: resDateRange,
     totalPax: payload.adultPax + payload.childrenPax,
     roomName: room.name,
     userId,
@@ -301,14 +329,17 @@ async function getReservations(
     conditions = and(
       conditions,
       and(
-        gte(reservationTable.date, startDate),
-        lte(reservationTable.date, endDate),
+        gte(reservationTable.dateRange, startDate),
+        lte(reservationTable.dateRange, endDate),
       ),
     ) as SQL<unknown>;
   } else if (startDate) {
     conditions = and(
       conditions,
-      eq(reservationTable.date, startDate),
+      and(
+        gte(reservationTable.dateRange, startDate),
+        lte(reservationTable.dateRange, startDate),
+      ),
     ) as SQL<unknown>;
   }
 
@@ -329,9 +360,7 @@ async function getReservations(
       companyName: reservationTable.companyName,
       phone: reservationTable.phone,
       email: reservationTable.email,
-      date: reservationTable.date,
-      startTime: reservationTable.startTime,
-      endTime: reservationTable.endTime,
+      dateRange: reservationTable.dateRange,
       adultPax: reservationTable.adultPax,
       childrenPax: reservationTable.childrenPax,
       notes: reservationTable.notes,
@@ -368,9 +397,7 @@ async function getReservation(userId: string, reservationId: string) {
       companyName: reservationTable.companyName,
       phone: reservationTable.phone,
       email: reservationTable.email,
-      date: reservationTable.date,
-      startTime: reservationTable.startTime,
-      endTime: reservationTable.endTime,
+      dateRange: reservationTable.dateRange,
       adultPax: reservationTable.adultPax,
       childrenPax: reservationTable.childrenPax,
       notes: reservationTable.notes,
@@ -484,17 +511,15 @@ async function updateReservation(
   }
 
   const eventRoomId = payload.eventRoomId ?? reservation.eventRoomId;
-  const date = payload.date ?? reservation.date;
-  const startTime = payload.startTime ?? reservation.startTime;
-  const endTime = payload.endTime ?? reservation.endTime;
+  const dateRange = payload.dateRange
+    ? payload.dateRange
+    : dateRangeFromString(reservation.dateRange);
   const adultPax = payload.adultPax ?? reservation.adultPax;
   const childrenPax = payload.childrenPax ?? reservation.childrenPax;
 
   const conflict = await checkReservationConflict(
     eventRoomId,
-    date,
-    startTime,
-    endTime,
+    dateRange,
     adultPax,
     childrenPax,
     reservationId,
@@ -503,25 +528,30 @@ async function updateReservation(
   if (conflict.hasConflict) {
     if (conflict.type === "capacity_exceeded") {
       throw new HTTPException(400, {
-        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different time.`,
+        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different date range.`,
       });
     }
-    if (conflict.type === "time_overlap") {
-      const {
-        title,
-        startTime: cStart,
-        endTime: cEnd,
-      } = conflict.conflictingReservation;
+    if (conflict.type === "date_overlap") {
+      const { title, dateRange: cDateRange } = conflict.conflictingReservation;
       throw new HTTPException(400, {
-        message: `Time slot conflict: The room is already reserved for "${title}" from ${cStart} to ${cEnd} on this date.`,
+        message: `Date range conflict: The room is already reserved for "${title}" from ${cDateRange.from} to ${cDateRange.to}.`,
       });
     }
   }
 
+  const updateValues: Record<string, unknown> = { ...payload };
+  if (payload.dateRange) {
+    updateValues.dateRange = dateRangeToString(payload.dateRange);
+  }
+  delete updateValues.status;
+
   const [updated] = await db
     .update(reservationTable)
     .set({
-      ...payload,
+      ...updateValues,
+      ...(payload.status && payload.status !== "all"
+        ? { status: payload.status }
+        : {}),
       updatedAt: new Date(),
     })
     .where(eq(reservationTable.id, reservationId))
@@ -537,12 +567,14 @@ async function updateReservation(
     .where(eq(eventRoomTable.id, updated.eventRoomId))
     .limit(1);
 
+  const updatedDateRange = dateRangeFromString(updated.dateRange);
+
   await publishEvent("reservation.updated", {
     reservationId: updated.id,
     workspaceId: updated.workspaceId,
     clientName: updated.clientName,
     title: updated.title,
-    date: updated.date,
+    dateRange: updatedDateRange,
     totalPax: updated.adultPax + updated.childrenPax,
     roomName: room?.name || "Unknown",
     userId,
@@ -600,12 +632,14 @@ async function deleteReservation(userId: string, reservationId: string) {
     });
   }
 
+  const resDateRange = dateRangeFromString(reservation.dateRange);
+
   await publishEvent("reservation.deleted", {
     reservationId: reservation.id,
     workspaceId: reservation.workspaceId,
     clientName: reservation.clientName,
     title: reservation.title,
-    date: reservation.date,
+    dateRange: resDateRange,
     totalPax: reservation.adultPax + reservation.childrenPax,
     userId,
   });

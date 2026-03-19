@@ -17,7 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { EventRoom, Reservation } from "@/fetchers/event-room";
+import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useDeleteReservation } from "@/hooks/mutations/event-room";
 import { format } from "date-fns";
 import {
@@ -43,16 +43,23 @@ interface ReservationSheetProps {
   eventRooms: EventRoom[];
 }
 
-function formatTime(time: string): string {
-  const [hour, minute] = time.split(":").map(Number);
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`;
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(`${dateStr}T00:00:00`);
-  return format(date, "EEEE, MMMM dd, yyyy");
+function formatDateRangeFromObject(dateRange: DateRange): string {
+  const start = new Date(`${dateRange.from}T00:00:00`);
+  const end = new Date(`${dateRange.to || dateRange.from}T00:00:00`);
+
+  if (dateRange.from === dateRange.to || !dateRange.to) {
+    return format(start, "EEEE, MMMM dd, yyyy");
+  }
+
+  return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
 }
 
 function getStatusColor(status?: string): string {
@@ -120,8 +127,8 @@ function SingleReservationSection({
 
   const deleteReservation = useDeleteReservation();
 
-  const startTimeStr = formatTime(reservation.startTime);
-  const endTimeStr = formatTime(reservation.endTime);
+  const dateRange = parseDateRange(reservation.dateRange);
+  const dateRangeStr = formatDateRangeFromObject(dateRange);
   const totalPax = reservation.adultPax + reservation.childrenPax;
 
   const services = [
@@ -252,9 +259,7 @@ function SingleReservationSection({
               <div className="p-1">
                 <CalendarIcon className="size-4" />
               </div>
-              <span>
-                {startTimeStr} - {endTimeStr}
-              </span>
+              <span>{dateRangeStr}</span>
             </div>
             {reservation.companyName && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -350,7 +355,8 @@ export function EventSheet({
     (r) => r.id === firstReservation.eventRoomId,
   );
   const roomName = eventRoom?.name || "Event Room";
-  const dateStr = formatDate(firstReservation.date);
+  const firstDateRange = parseDateRange(firstReservation.dateRange);
+  const dateStr = formatDateRangeFromObject(firstDateRange);
 
   const handleDeleteSuccess = () => {
     setRefreshKey((k) => k + 1);

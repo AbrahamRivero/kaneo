@@ -97,9 +97,10 @@ const eventRoom = new Hono<{
         companyName: z.string().optional(),
         phone: z.string().optional(),
         email: z.string().optional(),
-        date: z.string(),
-        startTime: z.string(),
-        endTime: z.string(),
+        dateRange: z.object({
+          from: z.string(),
+          to: z.string().optional(),
+        }),
         adultPax: z.number(),
         childrenPax: z.number(),
         notes: z.string().optional(),
@@ -139,9 +140,12 @@ const eventRoom = new Hono<{
         companyName: z.string().optional(),
         phone: z.string().optional(),
         email: z.string().optional(),
-        date: z.string().optional(),
-        startTime: z.string().optional(),
-        endTime: z.string().optional(),
+        dateRange: z
+          .object({
+            from: z.string(),
+            to: z.string().optional(),
+          })
+          .optional(),
         adultPax: z.number().optional(),
         childrenPax: z.number().optional(),
         notes: z.string().optional(),

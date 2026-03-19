@@ -21,9 +21,7 @@ export type Reservation = {
   companyName?: string | null;
   phone?: string | null;
   email?: string | null;
-  date: string;
-  startTime: string;
-  endTime: string;
+  dateRange: string;
   adultPax: number;
   childrenPax: number;
   notes?: string | null;
@@ -39,6 +37,8 @@ export type Reservation = {
   roomName?: string;
   roomCapacity?: number;
 };
+
+export type DateRange = { from: string; to?: string };
 
 export type CreateEventRoomPayload = {
   workspaceId: string;
@@ -63,9 +63,7 @@ export type CreateReservationPayload = {
   companyName?: string;
   phone?: string;
   email?: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  dateRange: DateRange;
   adultPax: number;
   childrenPax: number;
   notes?: string;
@@ -83,9 +81,7 @@ export type UpdateReservationPayload = {
   companyName?: string;
   phone?: string;
   email?: string;
-  date?: string;
-  startTime?: string;
-  endTime?: string;
+  dateRange?: DateRange;
   adultPax?: number;
   childrenPax?: number;
   notes?: string;

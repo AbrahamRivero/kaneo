@@ -1,4 +1,4 @@
-import type { Reservation } from "@/fetchers/event-room";
+import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { EventCard } from "./event-card";
 
 interface CalendarDayColumnProps {
@@ -6,16 +6,20 @@ interface CalendarDayColumnProps {
   onEventClick: (reservations: Reservation[]) => void;
 }
 
-function getMinutesFromTime(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + (minutes || 0);
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
 }
 
 function sortReservations(reservations: Reservation[]) {
   return [...reservations].sort((a, b) => {
-    const startDiff =
-      getMinutesFromTime(a.startTime) - getMinutesFromTime(b.startTime);
-    if (startDiff !== 0) return startDiff;
+    const dateRangeA = parseDateRange(a.dateRange);
+    const dateRangeB = parseDateRange(b.dateRange);
+    const dateDiff = dateRangeA.from.localeCompare(dateRangeB.from);
+    if (dateDiff !== 0) return dateDiff;
     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   });
 }

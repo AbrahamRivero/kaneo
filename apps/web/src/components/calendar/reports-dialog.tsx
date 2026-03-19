@@ -12,7 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type EventRoom, getReservations } from "@/fetchers/event-room";
+import {
+  type DateRange,
+  type EventRoom,
+  getReservations,
+} from "@/fetchers/event-room";
 import {
   endOfMonth,
   endOfQuarter,
@@ -26,6 +30,14 @@ import { FileDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export type ReportPeriod = "weekly" | "monthly" | "quarterly";
+
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
+}
 
 interface ReportsDialogProps {
   open: boolean;
@@ -279,7 +291,13 @@ export function ReportsDialog({
                         (res) => `
                 <tr>
                   <td>${formatEventInfo(res)}</td>
-                  <td>${format(new Date(res.date), "MMM dd, yyyy")}</td>
+                  <td>${(() => {
+                    const dr = parseDateRange(res.dateRange);
+                    return format(
+                      new Date(dr.from + "T00:00:00"),
+                      "MMM dd, yyyy",
+                    );
+                  })()}</td>
                   <td>${res.roomName}</td>
                   <td><span class="status status-${res.status || "pending"}">${formatStatus(res.status)}</span></td>
                   <td class="${res.paymentConfirmed ? "yes" : "no"}">${formatPayment(res.paymentConfirmed)}</td>

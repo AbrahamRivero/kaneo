@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import type { EventRoom, Reservation } from "@/fetchers/event-room";
+import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useCalendarStore } from "@/store/calendar-store";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -12,6 +12,21 @@ interface CalendarHeaderProps {
   reservations: Reservation[];
 }
 
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
+}
+
+function isDateInRange(dateStr: string, dateRange: DateRange): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  const from = new Date(dateRange.from + "T00:00:00");
+  const to = new Date((dateRange.to || dateRange.from) + "T00:00:00");
+  return date >= from && date <= to;
+}
+
 export function CalendarHeader({
   workspaceId,
   eventRooms,
@@ -19,9 +34,12 @@ export function CalendarHeader({
 }: CalendarHeaderProps) {
   const { currentWeekStart, getWeekDays } = useCalendarStore();
   const weekDays = getWeekDays();
-  const weekReservations = reservations.filter((r) =>
-    weekDays.some((day) => format(day, "yyyy-MM-dd") === r.date),
-  );
+  const weekReservations = reservations.filter((r) => {
+    const dateRange = parseDateRange(r.dateRange);
+    return weekDays.some((day) =>
+      isDateInRange(format(day, "yyyy-MM-dd"), dateRange),
+    );
+  });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   return (

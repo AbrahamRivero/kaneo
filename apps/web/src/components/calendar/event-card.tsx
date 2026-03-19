@@ -1,4 +1,5 @@
-import type { Reservation } from "@/fetchers/event-room";
+import type { DateRange, Reservation } from "@/fetchers/event-room";
+import { format } from "date-fns";
 import {
   Banknote,
   CheckCheck,
@@ -10,7 +11,6 @@ import {
   Wine,
   XCircle,
 } from "lucide-react";
-import { getEventDuration } from "./calendar-utils";
 
 interface EventCardProps {
   event: Reservation;
@@ -49,9 +49,20 @@ function getServiceIcons(event: Reservation) {
   return icons;
 }
 
+function parseDateRange(dateRangeStr: string): DateRange {
+  try {
+    return JSON.parse(dateRangeStr) as DateRange;
+  } catch {
+    return { from: "", to: "" };
+  }
+}
+
 export function EventCard({ event, onClick, style }: EventCardProps) {
-  const duration = getEventDuration(event.startTime, event.endTime);
-  const timeStr = `${event.startTime} - ${event.endTime}`;
+  const dateRange = parseDateRange(event.dateRange);
+  const dateStr =
+    dateRange.from === dateRange.to || !dateRange.to
+      ? format(new Date(`${dateRange.from}T00:00:00`), "MMM d")
+      : `${format(new Date(`${dateRange.from}T00:00:00`), "MMM d")} - ${format(new Date(`${dateRange.to}T00:00:00`), "MMM d")}`;
   const subtitle = event.companyName
     ? `${event.clientName} - ${event.companyName}`
     : event.clientName;
@@ -82,9 +93,7 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
       <div className="flex flex-col gap-1 h-full">
         <div className="flex items-start justify-between gap-1">
           <h4
-            className={`text-xs font-semibold text-foreground mb-1 ${
-              duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
-            } flex-1`}
+            className="text-xs font-semibold text-foreground mb-1 truncate whitespace-nowrap flex-1"
           >
             {event.title || event.clientName}
           </h4>
@@ -98,7 +107,7 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
           )}
         </div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-          {timeStr}
+          {dateStr}
         </p>
         {subtitle && (
           <p className="text-[10px] text-muted-foreground truncate">
