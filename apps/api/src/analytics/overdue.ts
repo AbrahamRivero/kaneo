@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, ne } from "drizzle-orm";
+import { and, eq, isNotNull, ne } from "drizzle-orm";
 import db from "../database";
 import { projectTable, taskTable, userTable } from "../database/schema";
 

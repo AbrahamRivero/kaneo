@@ -1,6 +1,10 @@
 import type { Workspace } from "@/types/workspace";
 import { create } from "zustand";
 
+export type WorkspaceWithRole = Workspace & {
+  currentUserRole?: "owner" | "member" | "viewer";
+};
+
 const useWorkspaceStore = create<{
   workspace: Workspace | undefined;
   currentUserRole: "owner" | "member" | "viewer" | undefined;

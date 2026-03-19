@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
-import { projectTable, workspaceTable } from "../../database/schema";
+import { projectTable } from "../../database/schema";
 import { requireAtLeastMember } from "../../utils/permissions";
 
 async function updateProject(

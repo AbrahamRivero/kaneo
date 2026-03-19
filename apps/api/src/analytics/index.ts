@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import db from "../database";
 import { projectTable, taskTable, userTable } from "../database/schema";
 

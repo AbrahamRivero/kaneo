@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import db from "../database";
@@ -232,7 +232,6 @@ subscribeToEvent(
     reservationId,
     workspaceId,
     clientName,
-    title,
     date,
     totalPax,
     roomName,
@@ -241,7 +240,6 @@ subscribeToEvent(
     reservationId: string;
     workspaceId: string;
     clientName: string;
-    title?: string;
     date: string;
     totalPax: number;
     roomName: string;
@@ -274,7 +272,6 @@ subscribeToEvent(
     reservationId,
     workspaceId,
     clientName,
-    title,
     date,
     totalPax,
     roomName,
@@ -283,7 +280,6 @@ subscribeToEvent(
     reservationId: string;
     workspaceId: string;
     clientName: string;
-    title?: string;
     date: string;
     totalPax: number;
     roomName: string;

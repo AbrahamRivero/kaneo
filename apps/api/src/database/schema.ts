@@ -1,7 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
-  date,
   integer,
   jsonb,
   pgEnum,

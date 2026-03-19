@@ -50,14 +50,6 @@ export type UpdateReservationPayload = {
   status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
 };
 
-function parseDateRange(dateRange: string | DateRange): DateRange {
-  if (typeof dateRange === "string") {
-    const parsed = JSON.parse(dateRange) as DateRange;
-    return parsed;
-  }
-  return dateRange;
-}
-
 type NormalizedDateRange = { from: string; to: string };
 
 function normalizeDateRange(dateRange: DateRange): NormalizedDateRange {
@@ -539,16 +531,16 @@ async function updateReservation(
     }
   }
 
-  const updateValues: Record<string, unknown> = { ...payload };
-  if (payload.dateRange) {
-    updateValues.dateRange = dateRangeToString(payload.dateRange);
-  }
-  delete updateValues.status;
+  const { status: _, ...restPayload } = payload;
+  const { dateRange: payloadDateRange, ...restWithoutDateRange } = restPayload;
 
   const [updated] = await db
     .update(reservationTable)
     .set({
-      ...updateValues,
+      ...restWithoutDateRange,
+      ...(payloadDateRange
+        ? { dateRange: dateRangeToString(payloadDateRange) }
+        : {}),
       ...(payload.status && payload.status !== "all"
         ? { status: payload.status }
         : {}),

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import db from "../database";
 import { projectTable, taskTable, userTable } from "../database/schema";
 import type { DateRange, QueryParams } from "./index";
