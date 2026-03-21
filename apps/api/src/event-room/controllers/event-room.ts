@@ -90,8 +90,30 @@ async function getEventRoom(userId: string, eventRoomId: string) {
     .where(eq(workspaceTable.id, eventRoom.workspaceId))
     .limit(1);
 
-  if (!workspace || workspace.ownerId !== userId) {
-    throw new HTTPException(403, { message: "Forbidden" });
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  if (!isOwner) {
+    const [member] = await db
+      .select({ role: workspaceUserTable.role })
+      .from(workspaceUserTable)
+      .where(
+        and(
+          eq(workspaceUserTable.workspaceId, eventRoom.workspaceId),
+          eq(workspaceUserTable.userId, userId),
+          eq(workspaceUserTable.status, "active"),
+        ),
+      )
+      .limit(1);
+
+    if (!member || member.role === "viewer") {
+      throw new HTTPException(403, {
+        message: "Only owners and members can view event rooms",
+      });
+    }
   }
 
   return eventRoom;
