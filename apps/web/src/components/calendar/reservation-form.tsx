@@ -143,7 +143,9 @@ export function ReservationForm({
     }
     return { from: new Date() };
   });
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState<boolean | "from" | "to">(
+    false,
+  );
 
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
@@ -336,55 +338,84 @@ export function ReservationForm({
           </div>
         </div>
 
-        <div className="grid gap-2">
-          <Label>Date Range</Label>
-          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !dateRange.from && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="mr-2 size-4" />
-                {dateRange.from ? (
-                  dateRange.to ? (
-                    `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}`
-                  ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="dateFrom">From</Label>
+            <Popover
+              open={datePickerOpen === "from"}
+              onOpenChange={(open) => setDatePickerOpen(open ? "from" : false)}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateRange.from && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 size-4" />
+                  {dateRange.from ? (
                     format(dateRange.from, "PPP")
-                  )
-                ) : (
-                  <span>Select date range</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(selected) => {
-                  if (selected?.from) {
-                    const newDateRange = {
-                      from: selected.from,
-                      to: selected.to,
-                    };
-                    setDateRange(newDateRange);
-                    form.setValue("dateRange", newDateRange);
-                    if (selected.from && selected.to) {
+                  ) : (
+                    <span>Select start date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateRange.from}
+                  onSelect={(date) => {
+                    if (date) {
+                      const newDateRange = { ...dateRange, from: date };
+                      setDateRange(newDateRange);
+                      form.setValue("dateRange", newDateRange);
                       setDatePickerOpen(false);
                     }
-                  }
-                }}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-          {form.formState.errors.dateRange && (
-            <p className="text-sm text-red-500">
-              {form.formState.errors.dateRange.message as string}
-            </p>
-          )}
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="dateTo">To</Label>
+            <Popover
+              open={datePickerOpen === "to"}
+              onOpenChange={(open) => setDatePickerOpen(open ? "to" : false)}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateRange.to && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 size-4" />
+                  {dateRange.to ? (
+                    format(dateRange.to, "PPP")
+                  ) : (
+                    <span>Select end date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateRange.to}
+                  onSelect={(date) => {
+                    const newDateRange = { ...dateRange, to: date };
+                    setDateRange(newDateRange);
+                    form.setValue("dateRange", newDateRange);
+                    setDatePickerOpen(false);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
