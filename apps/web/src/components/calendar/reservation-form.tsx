@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { EventRoom } from "@/fetchers/event-room";
 import {
@@ -26,7 +27,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 export type DateRange = { from: Date; to?: Date };
@@ -410,6 +411,28 @@ export function ReservationForm({
           </div>
         </div>
 
+        <div className="flex items-center justify-between py-2">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="paymentConfirmed" className="text-sm font-medium">
+              Payment Confirmed
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              Indicates if the client has paid for the reservation
+            </span>
+          </div>
+          <Controller
+            control={form.control}
+            name="paymentConfirmed"
+            render={({ field }) => (
+              <Switch
+                id="paymentConfirmed"
+                checked={field.value ?? false}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+        </div>
+
         <div className="grid gap-2">
           <Label>Services</Label>
           <div className="flex flex-wrap gap-4">
@@ -432,10 +455,6 @@ export function ReservationForm({
             <label className="flex items-center gap-2">
               <input type="checkbox" {...form.register("openBar")} />
               <span className="text-sm">Open Bar</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" {...form.register("paymentConfirmed")} />
-              <span className="text-sm">Payment Confirmed</span>
             </label>
           </div>
         </div>
