@@ -84,9 +84,12 @@ export function useUpdateReservation() {
       payload,
     }: { id: string; payload: Parameters<typeof updateReservation>[1] }) =>
       updateReservation(id, payload),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Reservation updated successfully");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["reservation", variables.id],
+      });
     },
     onError: (error: Error) => {
       toast.error(error.message);
