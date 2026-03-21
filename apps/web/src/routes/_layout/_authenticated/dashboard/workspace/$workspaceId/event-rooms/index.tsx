@@ -13,7 +13,7 @@ import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { useCalendarStore } from "@/store/calendar-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/",
@@ -41,12 +41,23 @@ function EventRoomsIndex() {
   const [reportsOpen, setReportsOpen] = useState(false);
 
   const { data: workspace, isLoading } = useGetWorkspace({ id: workspaceId });
-  const { data: _eventRooms, isLoading: isLoadingRooms } =
-    useGetEventRooms(workspaceId);
+  const {
+    data: _eventRooms,
+    isLoading: isLoadingRooms,
+    refetch: refetchRooms,
+  } = useGetEventRooms(workspaceId);
   const { getWeekDays } = useCalendarStore();
   const weekDays = getWeekDays();
-  const { data: _reservations, isLoading: isLoadingReservations } =
-    useGetReservations(workspaceId);
+  const {
+    data: _reservations,
+    isLoading: isLoadingReservations,
+    refetch: refetchReservations,
+  } = useGetReservations(workspaceId);
+
+  useEffect(() => {
+    refetchRooms();
+    refetchReservations();
+  }, [refetchRooms, refetchReservations]);
 
   const eventRoomsEnabled = Boolean(
     (workspace as { eventRoomsEnabled?: boolean } | undefined)
@@ -102,11 +113,7 @@ function EventRoomsIndex() {
         eventRooms={eventRooms}
       />
       <div className="w-full">
-        <CalendarHeader
-          workspaceId={workspaceId}
-          eventRooms={eventRooms}
-          reservations={reservations}
-        />
+        <CalendarHeader workspaceId={workspaceId} reservations={reservations} />
         <CalendarControls
           eventRooms={eventRooms}
           onOpenReports={() => setReportsOpen(true)}

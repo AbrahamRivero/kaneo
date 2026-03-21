@@ -36,6 +36,10 @@ import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsMana
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdSettingsRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/settings'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog'
+import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/new'
+import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/$id'
+import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/new'
+import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdTaskTaskIdRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/task/$taskId_'
 
 const TestErrorRoute = TestErrorRouteImport.update({
@@ -208,6 +212,42 @@ const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRou
         LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRoute,
     } as any,
   )
+const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute =
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRouteImport.update(
+    {
+      id: '/reservations/new',
+      path: '/reservations/new',
+      getParentRoute: () =>
+        LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute,
+    } as any,
+  )
+const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute =
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRouteImport.update(
+    {
+      id: '/reservations/$id',
+      path: '/reservations/$id',
+      getParentRoute: () =>
+        LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute,
+    } as any,
+  )
+const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute =
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRouteImport.update(
+    {
+      id: '/manage/new',
+      path: '/manage/new',
+      getParentRoute: () =>
+        LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute,
+    } as any,
+  )
+const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute =
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRouteImport.update(
+    {
+      id: '/manage/$roomId',
+      path: '/manage/$roomId',
+      getParentRoute: () =>
+        LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute,
+    } as any,
+  )
 const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdTaskTaskIdRoute =
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdTaskTaskIdRouteImport.update(
     {
@@ -239,6 +279,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/workspace/$workspaceId/settings': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSettingsRoute
   '/dashboard/workspace/$workspaceId/': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
   '/dashboard/workspace/$workspaceId/event-rooms/': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/manage/new': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/reservations/$id': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/reservations/new': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/board': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/settings': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdSettingsRoute
@@ -264,6 +308,10 @@ export interface FileRoutesByTo {
   '/dashboard/workspace/$workspaceId/settings': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSettingsRoute
   '/dashboard/workspace/$workspaceId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
   '/dashboard/workspace/$workspaceId/event-rooms': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/manage/new': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/reservations/$id': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute
+  '/dashboard/workspace/$workspaceId/event-rooms/reservations/new': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/board': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/settings': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdSettingsRoute
@@ -295,6 +343,10 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/settings': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSettingsRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute
+  '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute
+  '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/new': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute
+  '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/$id': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute
+  '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/new': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/settings': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdSettingsRoute
@@ -325,6 +377,10 @@ export interface FileRouteTypes {
     | '/dashboard/workspace/$workspaceId/settings'
     | '/dashboard/workspace/$workspaceId/'
     | '/dashboard/workspace/$workspaceId/event-rooms/'
+    | '/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId'
+    | '/dashboard/workspace/$workspaceId/event-rooms/manage/new'
+    | '/dashboard/workspace/$workspaceId/event-rooms/reservations/$id'
+    | '/dashboard/workspace/$workspaceId/event-rooms/reservations/new'
     | '/dashboard/workspace/$workspaceId/project/$projectId/backlog'
     | '/dashboard/workspace/$workspaceId/project/$projectId/board'
     | '/dashboard/workspace/$workspaceId/project/$projectId/settings'
@@ -350,6 +406,10 @@ export interface FileRouteTypes {
     | '/dashboard/workspace/$workspaceId/settings'
     | '/dashboard/workspace/$workspaceId'
     | '/dashboard/workspace/$workspaceId/event-rooms'
+    | '/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId'
+    | '/dashboard/workspace/$workspaceId/event-rooms/manage/new'
+    | '/dashboard/workspace/$workspaceId/event-rooms/reservations/$id'
+    | '/dashboard/workspace/$workspaceId/event-rooms/reservations/new'
     | '/dashboard/workspace/$workspaceId/project/$projectId/backlog'
     | '/dashboard/workspace/$workspaceId/project/$projectId/board'
     | '/dashboard/workspace/$workspaceId/project/$projectId/settings'
@@ -380,6 +440,10 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/settings'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/'
+    | '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId'
+    | '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/new'
+    | '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/$id'
+    | '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/new'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/settings'
@@ -587,6 +651,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRoute
     }
+    '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/new': {
+      id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/new'
+      path: '/reservations/new'
+      fullPath: '/dashboard/workspace/$workspaceId/event-rooms/reservations/new'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute
+    }
+    '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/$id': {
+      id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/$id'
+      path: '/reservations/$id'
+      fullPath: '/dashboard/workspace/$workspaceId/event-rooms/reservations/$id'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute
+    }
+    '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/new': {
+      id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/new'
+      path: '/manage/new'
+      fullPath: '/dashboard/workspace/$workspaceId/event-rooms/manage/new'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute
+    }
+    '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId': {
+      id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId'
+      path: '/manage/$roomId'
+      fullPath: '/dashboard/workspace/$workspaceId/event-rooms/manage/$roomId'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRoute
+    }
     '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/task/$taskId_': {
       id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/task/$taskId_'
       path: '/project/$projectId/task/$taskId'
@@ -614,6 +706,10 @@ const LayoutAuthenticatedDashboardSettingsRouteWithChildren =
 
 interface LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRouteChildren {
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageIndexRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageIndexRoute
 }
 
@@ -621,6 +717,14 @@ const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsRouteChildren: L
   {
     LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute:
       LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsIndexRoute,
+    LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute:
+      LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageRoomIdRoute,
+    LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute:
+      LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageNewRoute,
+    LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute:
+      LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsIdRoute,
+    LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute:
+      LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsReservationsNewRoute,
     LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageIndexRoute:
       LayoutAuthenticatedDashboardWorkspaceWorkspaceIdEventRoomsManageIndexRoute,
   }

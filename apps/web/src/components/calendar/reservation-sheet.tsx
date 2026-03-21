@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useDeleteReservation } from "@/hooks/mutations/event-room";
+import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
   Bell,
@@ -33,7 +34,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ReservationDialog } from "./reservation-dialog";
 
 interface ReservationSheetProps {
   reservations: Reservation[] | null;
@@ -107,9 +107,7 @@ interface SingleReservationSectionProps {
   index: number;
   total: number;
   workspaceId: string;
-  eventRooms: EventRoom[];
   onDeleteSuccess: () => void;
-  onSaveSuccess: () => void;
 }
 
 function SingleReservationSection({
@@ -118,11 +116,9 @@ function SingleReservationSection({
   index,
   total,
   workspaceId,
-  eventRooms,
   onDeleteSuccess,
-  onSaveSuccess,
 }: SingleReservationSectionProps) {
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
   const deleteReservation = useDeleteReservation();
@@ -150,19 +146,15 @@ function SingleReservationSection({
     }
   };
 
+  const handleEdit = () => {
+    navigate({
+      to: "/dashboard/workspace/$workspaceId/event-rooms/reservations/$id",
+      params: { workspaceId, id: reservation.id },
+    });
+  };
+
   return (
     <>
-      <ReservationDialog
-        open={editDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) onSaveSuccess();
-          setEditDialogOpen(open);
-        }}
-        workspaceId={workspaceId}
-        eventRooms={eventRooms}
-        selectedReservation={reservation}
-      />
-
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -202,7 +194,7 @@ function SingleReservationSection({
               variant="ghost"
               size="icon"
               className="size-7 hover:bg-muted"
-              onClick={() => setEditDialogOpen(true)}
+              onClick={handleEdit}
               title="Edit reservation"
             >
               <Pen className="size-3.5 text-muted-foreground" />
@@ -420,9 +412,7 @@ export function EventSheet({
                   index={index}
                   total={reservations.length}
                   workspaceId={workspaceId}
-                  eventRooms={eventRooms}
                   onDeleteSuccess={handleDeleteSuccess}
-                  onSaveSuccess={handleDeleteSuccess}
                 />
               ))}
             </div>

@@ -1,6 +1,7 @@
 import {
   getEventRoomById,
   getEventRooms,
+  getReservation,
   getReservations,
 } from "@/fetchers/event-room";
 import { useQuery } from "@tanstack/react-query";
@@ -26,5 +27,13 @@ export function useGetReservations(workspaceId: string, date?: string) {
     queryKey: ["reservations", workspaceId, date],
     queryFn: () => getReservations(workspaceId, date),
     enabled: !!workspaceId,
+  });
+}
+
+export function useGetReservationById(id?: string) {
+  return useQuery({
+    queryKey: ["reservation", id],
+    queryFn: () => getReservation(id as string),
+    enabled: Boolean(id),
   });
 }
