@@ -21,11 +21,15 @@ import {
   useCreateReservation,
   useUpdateReservation,
 } from "@/hooks/mutations/event-room";
+import {
+  useGetGastronomicServices,
+  useGetRoomTariffs,
+} from "@/hooks/queries/event-room";
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
@@ -44,11 +48,8 @@ export type ReservationFormValues = {
   childrenPax?: number;
   notes?: string;
   paymentConfirmed?: boolean;
-  coffeeBreak?: boolean;
-  lunch?: boolean;
-  cocktail?: boolean;
-  canapes?: boolean;
-  openBar?: boolean;
+  roomTariffId?: string;
+  serviceIds?: string[];
   status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
 };
 
@@ -72,11 +73,8 @@ const reservationSchema = z
     childrenPax: z.number().optional(),
     notes: z.string().optional(),
     paymentConfirmed: z.boolean().optional(),
-    coffeeBreak: z.boolean().optional(),
-    lunch: z.boolean().optional(),
-    cocktail: z.boolean().optional(),
-    canapes: z.boolean().optional(),
-    openBar: z.boolean().optional(),
+    roomTariffId: z.string().optional(),
+    serviceIds: z.array(z.string()).optional(),
     status: z
       .enum(["all", "pending", "confirmed", "cancelled", "completed"])
       .default("all"),
@@ -105,11 +103,8 @@ interface ReservationFormProps {
     childrenPax?: number | null;
     notes?: string | null;
     paymentConfirmed?: boolean | null;
-    coffeeBreak?: boolean | null;
-    lunch?: boolean | null;
-    cocktail?: boolean | null;
-    canapes?: boolean | null;
-    openBar?: boolean | null;
+    roomTariffId?: string | null;
+    serviceIds?: string[] | null;
     status?: string | null;
   } | null;
   onSuccess?: () => void;
@@ -170,13 +165,50 @@ export function ReservationForm({
           | "cancelled"
           | "completed") || "pending",
       paymentConfirmed: initialData?.paymentConfirmed || false,
-      coffeeBreak: initialData?.coffeeBreak || false,
-      lunch: initialData?.lunch || false,
-      cocktail: initialData?.cocktail || false,
-      canapes: initialData?.canapes || false,
-      openBar: initialData?.openBar || false,
+      roomTariffId: initialData?.roomTariffId || "",
+      serviceIds: initialData?.serviceIds || [],
     },
   });
+
+  const { data: gastronomicServicesData } =
+    useGetGastronomicServices(workspaceId);
+  const { data: roomTariffsData } = useGetRoomTariffs(workspaceId);
+
+  const gastronomicServices = gastronomicServicesData?.data ?? [];
+  const roomTariffs = roomTariffsData?.data ?? [];
+
+  const selectedTariffId = form.watch("roomTariffId");
+  const selectedServiceIds = form.watch("serviceIds") || [];
+
+  const selectedTariff = roomTariffs.find((t) => t.id === selectedTariffId);
+  const selectedServices = gastronomicServices.filter((s) =>
+    selectedServiceIds.includes(s.id),
+  );
+
+  const calculatePricing = () => {
+    const totalPax =
+      (Number(form.watch("adultPax")) || 0) +
+      (Number(form.watch("childrenPax")) || 0);
+    const tariffPrice = selectedTariff?.price ?? 0;
+    const servicesPrice = selectedServices.reduce(
+      (sum, s) => sum + (s.pricePerPax ?? 0) * totalPax,
+      0,
+    );
+    const serviceChargePercent = selectedTariff?.serviceChargePercent ?? 0;
+    const subTotal = tariffPrice + servicesPrice;
+    const serviceChargeAmount = subTotal * (serviceChargePercent / 100);
+    const grandTotal = subTotal + serviceChargeAmount;
+    return {
+      tariffPrice,
+      servicesPrice,
+      serviceChargePercent,
+      serviceChargeAmount,
+      grandTotal,
+      totalPax,
+    };
+  };
+
+  const pricing = calculatePricing();
 
   const onSubmitHandler = async (formData: ReservationFormValues) => {
     try {
@@ -465,30 +497,113 @@ export function ReservationForm({
         </div>
 
         <div className="grid gap-2">
-          <Label>Services</Label>
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" {...form.register("coffeeBreak")} />
-              <span className="text-sm">Coffee Break</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" {...form.register("lunch")} />
-              <span className="text-sm">Lunch</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" {...form.register("cocktail")} />
-              <span className="text-sm">Cocktail</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" {...form.register("canapes")} />
-              <span className="text-sm">Canapés</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" {...form.register("openBar")} />
-              <span className="text-sm">Open Bar</span>
-            </label>
+          <Label htmlFor="roomTariff">Room Tariff</Label>
+          <Select
+            value={form.watch("roomTariffId") || ""}
+            onValueChange={(value) =>
+              form.setValue("roomTariffId", value || undefined)
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select tariff (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {roomTariffs.map((tariff) => (
+                <SelectItem key={tariff.id} value={tariff.id}>
+                  {tariff.sessionType.replace("_", " ")} -{" "}
+                  {tariff.price ? `$${tariff.price}` : "No price"}
+                  {tariff.serviceChargePercent > 0 &&
+                    ` (+${tariff.serviceChargePercent}% svc)`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <Label>Gastronomic Services</Label>
+          <div className="border rounded-md p-3 space-y-2">
+            {gastronomicServices.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No services available
+              </p>
+            ) : (
+              gastronomicServices.map((service) => (
+                <label
+                  key={service.id}
+                  className="flex items-center justify-between p-2 hover:bg-accent rounded cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedServiceIds.includes(service.id)}
+                      onChange={(e) => {
+                        const current = form.getValues("serviceIds") || [];
+                        if (e.target.checked) {
+                          form.setValue("serviceIds", [...current, service.id]);
+                        } else {
+                          form.setValue(
+                            "serviceIds",
+                            current.filter((id) => id !== service.id),
+                          );
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <div>
+                      <span className="text-sm font-medium">
+                        {service.name}
+                      </span>
+                      {service.description && (
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {service.description}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    ${service.pricePerPax ?? 0}/pax
+                  </span>
+                </label>
+              ))
+            )}
           </div>
         </div>
+
+        {(selectedTariff || selectedServices.length > 0) && (
+          <div className="border rounded-md p-4 bg-muted/30">
+            <div className="flex items-center gap-2 mb-3">
+              <UtensilsCrossed className="size-4" />
+              <Label className="font-medium">Pricing Summary</Label>
+            </div>
+            <div className="space-y-1 text-sm">
+              {selectedTariff && (
+                <div className="flex justify-between">
+                  <span>
+                    Room ({selectedTariff.sessionType.replace("_", " ")})
+                  </span>
+                  <span>${pricing.tariffPrice.toFixed(2)}</span>
+                </div>
+              )}
+              {selectedServices.length > 0 && (
+                <div className="flex justify-between">
+                  <span>Services ({pricing.totalPax} pax)</span>
+                  <span>${pricing.servicesPrice.toFixed(2)}</span>
+                </div>
+              )}
+              {pricing.serviceChargePercent > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Service Charge ({pricing.serviceChargePercent}%)</span>
+                  <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-medium border-t pt-2 mt-2">
+                <span>Total</span>
+                <span>${pricing.grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-2">
           <Label htmlFor="notes">Notes</Label>

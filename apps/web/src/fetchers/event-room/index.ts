@@ -1,6 +1,13 @@
 import { client } from "@kaneo/libs";
 const base = import.meta.env.VITE_API_URL || "";
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export type EventRoom = {
   id: string;
   workspaceId: string;
@@ -10,6 +17,48 @@ export type EventRoom = {
   allowsMultipleReservations?: boolean | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type SessionType =
+  | "half_session"
+  | "full_session"
+  | "social_event"
+  | "flat";
+
+export type GastronomicService = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  pricePerPax: number | null;
+  description?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ReservationService = {
+  id: string;
+  reservationId: string;
+  gastronomicServiceId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  createdAt: string;
+  gastronomicService?: Partial<GastronomicService> & { name: string };
+};
+
+export type RoomTariff = {
+  id: string;
+  workspaceId: string;
+  eventRoomId: string;
+  sessionType: SessionType;
+  price: number | null;
+  serviceChargePercent: number;
+  modificationCharge: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  roomName?: string;
 };
 
 export type Reservation = {
@@ -26,16 +75,18 @@ export type Reservation = {
   childrenPax: number;
   notes?: string | null;
   paymentConfirmed?: boolean | null;
-  coffeeBreak?: boolean | null;
-  lunch?: boolean | null;
-  cocktail?: boolean | null;
-  canapes?: boolean | null;
-  openBar?: boolean | null;
+  roomTariffId?: string | null;
+  totalRoomPrice?: number | null;
+  totalServicePrice?: number | null;
+  serviceChargeAmount?: number | null;
+  grandTotal?: number | null;
+  totalPax?: number | null;
   status: string;
   createdAt: string;
   updatedAt: string;
   roomName?: string;
   roomCapacity?: number;
+  services?: ReservationService[];
 };
 
 export type DateRange = { from: string; to?: string };
@@ -67,11 +118,17 @@ export type CreateReservationPayload = {
   adultPax: number;
   childrenPax: number;
   notes?: string;
-  coffeeBreak?: boolean;
-  lunch?: boolean;
-  cocktail?: boolean;
-  canapes?: boolean;
-  openBar?: boolean;
+  roomTariffId?: string;
+  totalRoomPrice?: number;
+  totalServicePrice?: number;
+  serviceChargeAmount?: number;
+  grandTotal?: number;
+  services?: {
+    gastronomicServiceId: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }[];
 };
 
 export type UpdateReservationPayload = {
@@ -86,11 +143,17 @@ export type UpdateReservationPayload = {
   childrenPax?: number;
   notes?: string;
   paymentConfirmed?: boolean;
-  coffeeBreak?: boolean;
-  lunch?: boolean;
-  cocktail?: boolean;
-  canapes?: boolean;
-  openBar?: boolean;
+  roomTariffId?: string;
+  totalRoomPrice?: number;
+  totalServicePrice?: number;
+  serviceChargeAmount?: number;
+  grandTotal?: number;
+  services?: {
+    gastronomicServiceId: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }[];
   status?: "pending" | "confirmed" | "cancelled" | "completed";
 };
 
@@ -252,6 +315,191 @@ export const deleteReservation = async (
 ): Promise<{ success: boolean }> => {
   const response = await client["event-room"].reservations[":id"].$delete({
     param: { id },
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getGastronomicServices = async (
+  workspaceId: string,
+  page = 1,
+  limit = 10,
+): Promise<PaginatedResponse<GastronomicService>> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  const url = `${base ? base : ""}/event-room/${workspaceId}/gastronomic-services?${params}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getGastronomicServiceById = async (
+  id: string,
+): Promise<GastronomicService> => {
+  const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const createGastronomicService = async (
+  payload: Omit<GastronomicService, "id" | "createdAt" | "updatedAt">,
+): Promise<GastronomicService> => {
+  const url = `${base ? base : ""}/event-room/gastronomic-services`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const updateGastronomicService = async (
+  id: string,
+  payload: Partial<
+    Omit<GastronomicService, "id" | "workspaceId" | "createdAt" | "updatedAt">
+  >,
+): Promise<GastronomicService> => {
+  const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const deleteGastronomicService = async (
+  id: string,
+): Promise<{ success: boolean }> => {
+  const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getRoomTariffs = async (
+  workspaceId: string,
+  page = 1,
+  limit = 10,
+): Promise<PaginatedResponse<RoomTariff>> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  const url = `${base ? base : ""}/event-room/${workspaceId}/room-tariffs?${params}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getRoomTariffById = async (id: string): Promise<RoomTariff> => {
+  const url = `${base ? base : ""}/event-room/room-tariffs/${id}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const createRoomTariff = async (
+  payload: Omit<RoomTariff, "id" | "createdAt" | "updatedAt" | "roomName">,
+): Promise<RoomTariff> => {
+  const url = `${base ? base : ""}/event-room/room-tariffs`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const updateRoomTariff = async (
+  id: string,
+  payload: Partial<
+    Omit<
+      RoomTariff,
+      "id" | "workspaceId" | "createdAt" | "updatedAt" | "roomName"
+    >
+  >,
+): Promise<RoomTariff> => {
+  const url = `${base ? base : ""}/event-room/room-tariffs/${id}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const deleteRoomTariff = async (
+  id: string,
+): Promise<{ success: boolean }> => {
+  const url = `${base ? base : ""}/event-room/room-tariffs/${id}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    credentials: "include",
   });
 
   if (!response.ok) {

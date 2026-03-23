@@ -127,13 +127,7 @@ function SingleReservationSection({
   const dateRangeStr = formatDateRangeFromObject(dateRange);
   const totalPax = reservation.adultPax + reservation.childrenPax;
 
-  const services = [
-    { label: "Coffee Break", value: reservation.coffeeBreak },
-    { label: "Lunch", value: reservation.lunch },
-    { label: "Cocktail", value: reservation.cocktail },
-    { label: "Canapés", value: reservation.canapes },
-    { label: "Open Bar", value: reservation.openBar },
-  ].filter((s) => s.value);
+  const hasPricing = reservation.grandTotal != null;
 
   const handleDelete = async () => {
     try {
@@ -301,16 +295,37 @@ function SingleReservationSection({
             </div>
           </div>
 
-          {services.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-              {services.map((service) => (
-                <span
-                  key={service.label}
-                  className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md"
-                >
-                  {service.label}
-                </span>
-              ))}
+          {hasPricing && (
+            <div className="pt-2 border-t border-border">
+              <div className="text-xs bg-muted/50 p-3 rounded-lg space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Room</span>
+                  <span>${(reservation.totalRoomPrice ?? 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Services</span>
+                  <span>
+                    ${(reservation.totalServicePrice ?? 0).toFixed(2)}
+                  </span>
+                </div>
+                {(reservation.serviceChargeAmount ?? 0) > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Service Charge</span>
+                    <span>
+                      ${(reservation.serviceChargeAmount ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium border-t pt-1 mt-1">
+                  <span>Total</span>
+                  <span>${(reservation.grandTotal ?? 0).toFixed(2)}</span>
+                </div>
+                {reservation.totalPax && (
+                  <div className="text-muted-foreground text-[10px] pt-1">
+                    ({reservation.totalPax} pax)
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

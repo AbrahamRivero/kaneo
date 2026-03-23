@@ -3,11 +3,14 @@ import {
   accountTable,
   activityTable,
   eventRoomTable,
+  gastronomicServiceTable,
   githubIntegrationTable,
   labelTable,
   notificationTable,
   projectTable,
+  reservationServiceTable,
   reservationTable,
+  roomTariffTable,
   sessionTable,
   taskTable,
   timeEntryTable,
@@ -161,7 +164,7 @@ export const eventRoomTableRelations = relations(
 
 export const reservationTableRelations = relations(
   reservationTable,
-  ({ one }) => ({
+  ({ one, many }) => ({
     workspace: one(workspaceTable, {
       fields: [reservationTable.workspaceId],
       references: [workspaceTable.id],
@@ -169,6 +172,51 @@ export const reservationTableRelations = relations(
     eventRoom: one(eventRoomTable, {
       fields: [reservationTable.eventRoomId],
       references: [eventRoomTable.id],
+    }),
+    roomTariff: one(roomTariffTable, {
+      fields: [reservationTable.roomTariffId],
+      references: [roomTariffTable.id],
+    }),
+    services: many(reservationServiceTable),
+  }),
+);
+
+export const gastronomicServiceTableRelations = relations(
+  gastronomicServiceTable,
+  ({ one, many }) => ({
+    workspace: one(workspaceTable, {
+      fields: [gastronomicServiceTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    reservationServices: many(reservationServiceTable),
+  }),
+);
+
+export const roomTariffTableRelations = relations(
+  roomTariffTable,
+  ({ one, many }) => ({
+    workspace: one(workspaceTable, {
+      fields: [roomTariffTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    eventRoom: one(eventRoomTable, {
+      fields: [roomTariffTable.eventRoomId],
+      references: [eventRoomTable.id],
+    }),
+    reservations: many(reservationTable),
+  }),
+);
+
+export const reservationServiceTableRelations = relations(
+  reservationServiceTable,
+  ({ one }) => ({
+    reservation: one(reservationTable, {
+      fields: [reservationServiceTable.reservationId],
+      references: [reservationTable.id],
+    }),
+    gastronomicService: one(gastronomicServiceTable, {
+      fields: [reservationServiceTable.gastronomicServiceId],
+      references: [gastronomicServiceTable.id],
     }),
   }),
 );

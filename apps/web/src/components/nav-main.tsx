@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Phone,
   Search,
+  Tag,
   Users,
 } from "lucide-react";
 
@@ -241,6 +242,50 @@ export function NavMain() {
                         <span className="font-medium">Manage Rooms</span>
                         <span className="text-xs text-muted-foreground">
                           Create and edit rooms
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleNavClick(
+                          `/dashboard/workspace/${workspace.id}/event-rooms/pricing/services`,
+                        )
+                      }
+                      className={cn(
+                        "cursor-pointer",
+                        window.location.pathname.includes(
+                          "/event-rooms/pricing/services",
+                        ) && "bg-accent",
+                      )}
+                    >
+                      <Tag className="w-4 h-4 mr-2" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Gastronomic Services</span>
+                        <span className="text-xs text-muted-foreground">
+                          Manage service catalog
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleNavClick(
+                          `/dashboard/workspace/${workspace.id}/event-rooms/pricing/tariffs`,
+                        )
+                      }
+                      className={cn(
+                        "cursor-pointer",
+                        window.location.pathname.includes(
+                          "/event-rooms/pricing/tariffs",
+                        ) && "bg-accent",
+                      )}
+                    >
+                      <Tag className="w-4 h-4 mr-2" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Room Tariffs</span>
+                        <span className="text-xs text-muted-foreground">
+                          Manage room prices
                         </span>
                       </div>
                     </DropdownMenuItem>

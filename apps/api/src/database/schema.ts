@@ -30,6 +30,13 @@ export const workspaceMemberRole = pgEnum("workspace_member_role", [
   "member",
 ]);
 
+export const sessionTypeEnum = pgEnum("session_type", [
+  "half_session",
+  "full_session",
+  "social_event",
+  "flat",
+]);
+
 export const userTable = pgTable("user", {
   id: text("id")
     .$defaultFn(() => createId())
@@ -291,6 +298,46 @@ export const eventRoomTable = pgTable("event_room", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const gastronomicServiceTable = pgTable("gastronomic_service", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  name: text("name").notNull(),
+  pricePerPax: integer("price_per_pax").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const roomTariffTable = pgTable("room_tariff", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  eventRoomId: text("event_room_id")
+    .notNull()
+    .references(() => eventRoomTable.id, {
+      onDelete: "cascade",
+    }),
+  sessionType: sessionTypeEnum("session_type").notNull(),
+  price: integer("price").notNull(),
+  serviceChargePercent: integer("service_charge_percent").default(10).notNull(),
+  modificationCharge: integer("modification_charge").default(2000).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 export const reservationTable = pgTable("reservation", {
   id: text("id")
     .$defaultFn(() => createId())
@@ -318,12 +365,35 @@ export const reservationTable = pgTable("reservation", {
   childrenPax: integer("children_pax").notNull().default(0),
   notes: text("notes"),
   paymentConfirmed: boolean("payment_confirmed").default(false),
-  coffeeBreak: boolean("coffee_break").default(false),
-  lunch: boolean("lunch").default(false),
-  cocktail: boolean("cocktail").default(false),
-  canapes: boolean("canapes").default(false),
-  openBar: boolean("open_bar").default(false),
+  roomTariffId: text("room_tariff_id").references(() => roomTariffTable.id, {
+    onDelete: "set null",
+  }),
+  totalRoomPrice: integer("total_room_price"),
+  totalServicePrice: integer("total_service_price"),
+  serviceChargeAmount: integer("service_charge_amount"),
+  grandTotal: integer("grand_total"),
+  totalPax: integer("total_pax"),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const reservationServiceTable = pgTable("reservation_service", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  reservationId: text("reservation_id")
+    .notNull()
+    .references(() => reservationTable.id, {
+      onDelete: "cascade",
+    }),
+  gastronomicServiceId: text("gastronomic_service_id")
+    .notNull()
+    .references(() => gastronomicServiceTable.id, {
+      onDelete: "cascade",
+    }),
+  quantity: integer("quantity").notNull(),
+  unitPrice: integer("unit_price").notNull(),
+  totalPrice: integer("total_price").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });

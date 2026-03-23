@@ -1,10 +1,16 @@
 import {
   createEventRoom,
+  createGastronomicService,
   createReservation,
+  createRoomTariff,
   deleteEventRoom,
+  deleteGastronomicService,
   deleteReservation,
+  deleteRoomTariff,
   updateEventRoom,
+  updateGastronomicService,
   updateReservation,
+  updateRoomTariff,
 } from "@/fetchers/event-room";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -105,6 +111,150 @@ export function useDeleteReservation() {
     onSuccess: () => {
       toast.success("Reservation deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useCreateGastronomicService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createGastronomicService,
+    onSuccess: async (data) => {
+      toast.success("Gastronomic service created successfully");
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["gastronomic-services"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["gastronomic-service", data.id],
+          refetchType: "all",
+        }),
+      ]);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdateGastronomicService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Parameters<typeof updateGastronomicService>[1];
+    }) => updateGastronomicService(id, payload),
+    onSuccess: async (_data, variables) => {
+      toast.success("Gastronomic service updated successfully");
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["gastronomic-services"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["gastronomic-service", variables.id],
+          refetchType: "all",
+        }),
+      ]);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeleteGastronomicService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteGastronomicService,
+    onSuccess: async () => {
+      toast.success("Gastronomic service deleted successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["gastronomic-services"],
+        refetchType: "all",
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useCreateRoomTariff() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createRoomTariff,
+    onSuccess: async (data) => {
+      toast.success("Room tariff created successfully");
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["room-tariffs"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["room-tariff", data.id],
+          refetchType: "all",
+        }),
+      ]);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdateRoomTariff() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Parameters<typeof updateRoomTariff>[1];
+    }) => updateRoomTariff(id, payload),
+    onSuccess: async (_data, variables) => {
+      toast.success("Room tariff updated successfully");
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["room-tariffs"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["room-tariff", variables.id],
+          refetchType: "all",
+        }),
+      ]);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeleteRoomTariff() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteRoomTariff,
+    onSuccess: async () => {
+      toast.success("Room tariff deleted successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["room-tariffs"],
+        refetchType: "all",
+      });
     },
     onError: (error: Error) => {
       toast.error(error.message);
