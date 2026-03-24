@@ -176,6 +176,10 @@ export function ReservationForm({
 
   const gastronomicServices = gastronomicServicesData?.data ?? [];
   const roomTariffs = roomTariffsData?.data ?? [];
+  const selectedEventRoomId = form.watch("eventRoomId");
+  const filteredTariffs = selectedEventRoomId
+    ? roomTariffs.filter((tariff) => tariff.eventRoomId === selectedEventRoomId)
+    : roomTariffs;
 
   const selectedTariffId = form.watch("roomTariffId");
   const selectedServiceIds = form.watch("serviceIds") || [];
@@ -503,12 +507,21 @@ export function ReservationForm({
             onValueChange={(value) =>
               form.setValue("roomTariffId", value || undefined)
             }
+            disabled={!selectedEventRoomId || filteredTariffs.length === 0}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select tariff (optional)" />
+              <SelectValue
+                placeholder={
+                  !selectedEventRoomId
+                    ? "Select a room first"
+                    : filteredTariffs.length === 0
+                      ? "No tariffs for this room"
+                      : "Select tariff (optional)"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              {roomTariffs.map((tariff) => (
+              {filteredTariffs.map((tariff) => (
                 <SelectItem key={tariff.id} value={tariff.id}>
                   {tariff.sessionType.replace("_", " ")} -{" "}
                   {tariff.price ? `$${tariff.price}` : "No price"}
