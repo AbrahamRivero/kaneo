@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useDeleteReservation } from "@/hooks/mutations/event-room";
+import queryClient from "@/query-client";
 import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 import {
   Bell,
   Calendar as CalendarIcon,
@@ -30,9 +31,10 @@ import {
   Phone,
   Trash2,
   Users,
+  UtensilsCrossed,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface ReservationSheetProps {
@@ -126,6 +128,14 @@ function SingleReservationSection({
   const dateRange = parseDateRange(reservation.dateRange);
   const dateRangeStr = formatDateRangeFromObject(dateRange);
   const totalPax = reservation.adultPax + reservation.childrenPax;
+  const days =
+    dateRange.to && dateRange.to !== dateRange.from
+      ? differenceInDays(
+          new Date(`${dateRange.to}T00:00:00`),
+          new Date(`${dateRange.from}T00:00:00`),
+        ) + 1
+      : 1;
+  const reservationServices = reservation.services ?? [];
 
   const hasPricing = reservation.grandTotal != null;
 
@@ -295,15 +305,56 @@ function SingleReservationSection({
             </div>
           </div>
 
+          {reservationServices.length > 0 && (
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                <UtensilsCrossed className="size-4" />
+                <span>Gastronomic Services</span>
+              </div>
+              <div className="space-y-1">
+                {reservationServices.map((service) => (
+                  <div
+                    key={service.id}
+                    className="flex items-center justify-between text-xs bg-muted/50 p-2 rounded-lg"
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-medium truncate">
+                        {service.gastronomicService?.name || "Service"}
+                      </span>
+                      {service.gastronomicService?.description && (
+                        <span className="text-muted-foreground truncate">
+                          {service.gastronomicService.description}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-muted-foreground whitespace-nowrap ml-2">
+                      ${service.unitPrice.toFixed(2)}/pax × {service.quantity}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {hasPricing && (
             <div className="pt-2 border-t border-border">
               <div className="text-xs bg-muted/50 p-3 rounded-lg space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Room</span>
+                  <span className="text-muted-foreground">
+                    Room
+                    {days > 1 && <span className="ml-1">× {days} days</span>}
+                  </span>
                   <span>${(reservation.totalRoomPrice ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Services</span>
+                  <span className="text-muted-foreground">
+                    Services
+                    {days > 1 && totalPax > 0 && (
+                      <span className="ml-1">
+                        ({totalPax} pax × {days} days)
+                      </span>
+                    )}
+                  </span>
                   <span>
                     ${(reservation.totalServicePrice ?? 0).toFixed(2)}
                   </span>
@@ -354,6 +405,12 @@ export function EventSheet({
   eventRooms,
 }: ReservationSheetProps) {
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (open) {
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    }
+  }, [open]);
 
   if (!reservations || reservations.length === 0) return null;
 

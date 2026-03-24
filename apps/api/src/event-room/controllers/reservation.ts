@@ -1,4 +1,4 @@
-import { type SQL, and, eq, gte, lte, ne } from "drizzle-orm";
+import { type SQL, and, eq, gte, lte, ne, or } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
@@ -425,7 +425,7 @@ async function getReservations(
       ),
     )
     .where(
-      and(
+      or(
         ...reservationIds.map((id) =>
           eq(reservationServiceTable.reservationId, id),
         ),

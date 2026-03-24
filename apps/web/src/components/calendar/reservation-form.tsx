@@ -1,7 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Popover,
   PopoverContent,
@@ -15,6 +30,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import type { EventRoom } from "@/fetchers/event-room";
 import {
@@ -28,9 +51,15 @@ import {
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, UtensilsCrossed } from "lucide-react";
-import { useState } from "react";
+import { differenceInDays, format } from "date-fns";
+import {
+  Calendar as CalendarIcon,
+  Plus,
+  Search,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -105,6 +134,7 @@ interface ReservationFormProps {
     paymentConfirmed?: boolean | null;
     roomTariffId?: string | null;
     serviceIds?: string[] | null;
+    services?: { gastronomicServiceId: string }[] | null;
     status?: string | null;
   } | null;
   onSuccess?: () => void;
@@ -141,6 +171,11 @@ export function ReservationForm({
   const [datePickerOpen, setDatePickerOpen] = useState<boolean | "from" | "to">(
     false,
   );
+  const [servicesDialogOpen, setServicesDialogOpen] = useState(false);
+  const [servicesSearch, setServicesSearch] = useState("");
+  const [servicesPage, setServicesPage] = useState(1);
+  const [tempServiceIds, setTempServiceIds] = useState<string[]>([]);
+  const servicesLimit = 10;
 
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
@@ -166,12 +201,53 @@ export function ReservationForm({
           | "completed") || "pending",
       paymentConfirmed: initialData?.paymentConfirmed || false,
       roomTariffId: initialData?.roomTariffId || "",
-      serviceIds: initialData?.serviceIds || [],
+      serviceIds:
+        initialData?.serviceIds ||
+        initialData?.services?.map((s) => s.gastronomicServiceId) ||
+        [],
     },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      const parsedDateRange = initialData.dateRange
+        ? parseDateRange(initialData.dateRange)
+        : { from: new Date() };
+      setDateRange(parsedDateRange);
+      form.reset({
+        title: initialData.title || "",
+        clientName: initialData.clientName || "",
+        companyName: initialData.companyName || "",
+        phone: initialData.phone || "",
+        email: initialData.email || "",
+        eventRoomId: initialData.eventRoomId || "",
+        dateRange: parsedDateRange,
+        adultPax: initialData.adultPax || 0,
+        childrenPax: initialData.childrenPax || 0,
+        notes: initialData.notes || "",
+        status:
+          (initialData.status as
+            | "pending"
+            | "confirmed"
+            | "cancelled"
+            | "completed") || "pending",
+        paymentConfirmed: initialData.paymentConfirmed || false,
+        roomTariffId: initialData.roomTariffId || "",
+        serviceIds:
+          initialData.serviceIds ||
+          initialData.services?.map((s) => s.gastronomicServiceId) ||
+          [],
+      });
+    }
+  }, [initialData, form.reset]);
+
   const { data: gastronomicServicesData } =
     useGetGastronomicServices(workspaceId);
+  const { data: dialogServicesData } = useGetGastronomicServices(
+    workspaceId,
+    servicesPage,
+    servicesLimit,
+  );
   const { data: roomTariffsData } = useGetRoomTariffs(workspaceId);
 
   const gastronomicServices = gastronomicServicesData?.data ?? [];
@@ -193,9 +269,12 @@ export function ReservationForm({
     const totalPax =
       (Number(form.watch("adultPax")) || 0) +
       (Number(form.watch("childrenPax")) || 0);
-    const tariffPrice = selectedTariff?.price ?? 0;
+    const days = dateRange.to
+      ? differenceInDays(dateRange.to, dateRange.from) + 1
+      : 1;
+    const tariffPrice = (selectedTariff?.price ?? 0) * days;
     const servicesPrice = selectedServices.reduce(
-      (sum, s) => sum + (s.pricePerPax ?? 0) * totalPax,
+      (sum, s) => sum + (s.pricePerPax ?? 0) * totalPax * days,
       0,
     );
     const serviceChargePercent = selectedTariff?.serviceChargePercent ?? 0;
@@ -209,6 +288,7 @@ export function ReservationForm({
       serviceChargeAmount,
       grandTotal,
       totalPax,
+      days,
     };
   };
 
@@ -216,7 +296,12 @@ export function ReservationForm({
 
   const onSubmitHandler = async (formData: ReservationFormValues) => {
     try {
-      const { status, dateRange: formDateRange, ...restFormData } = formData;
+      const {
+        status,
+        dateRange: formDateRange,
+        serviceIds,
+        ...restFormData
+      } = formData;
 
       const dateRangePayload = {
         from: format(formDateRange.from, "yyyy-MM-dd"),
@@ -225,6 +310,25 @@ export function ReservationForm({
           : format(formDateRange.from, "yyyy-MM-dd"),
       };
 
+      const totalPax =
+        (Number(formData.adultPax) || 0) + (Number(formData.childrenPax) || 0);
+      const days = formDateRange.to
+        ? differenceInDays(formDateRange.to, formDateRange.from) + 1
+        : 1;
+      const services = (serviceIds || [])
+        .map((id) => {
+          const svc = gastronomicServices.find((s) => s.id === id);
+          if (!svc) return null;
+          const unitPrice = svc.pricePerPax ?? 0;
+          return {
+            gastronomicServiceId: id,
+            quantity: totalPax * days,
+            unitPrice,
+            totalPrice: unitPrice * totalPax * days,
+          };
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null);
+
       const payload = {
         workspaceId,
         ...restFormData,
@@ -232,6 +336,7 @@ export function ReservationForm({
         dateRange: dateRangePayload,
         adultPax: Number(restFormData.adultPax) || 0,
         childrenPax: Number(restFormData.childrenPax) || 0,
+        services,
       };
 
       if (reservationId) {
@@ -542,57 +647,251 @@ export function ReservationForm({
 
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label>Gastronomic Services</Label>
-            <div className="border rounded-md p-3 space-y-2 max-h-[280px] overflow-y-auto">
-              {gastronomicServices.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No services available
-                </p>
-              ) : (
-                gastronomicServices.map((service) => (
-                  <label
-                    key={service.id}
-                    className="flex items-center justify-between p-2 hover:bg-accent rounded cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedServiceIds.includes(service.id)}
-                        onChange={(e) => {
-                          const current = form.getValues("serviceIds") || [];
-                          if (e.target.checked) {
-                            form.setValue("serviceIds", [
-                              ...current,
-                              service.id,
-                            ]);
-                          } else {
-                            form.setValue(
-                              "serviceIds",
-                              current.filter((id) => id !== service.id),
-                            );
-                          }
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                      <div>
-                        <span className="text-sm font-medium">
-                          {service.name}
-                        </span>
-                        {service.description && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {service.description}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      ${service.pricePerPax ?? 0}/pax
-                    </span>
-                  </label>
-                ))
-              )}
+            <div className="flex items-center justify-between">
+              <Label>Gastronomic Services</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setTempServiceIds([...selectedServiceIds]);
+                  setServicesSearch("");
+                  setServicesPage(1);
+                  setServicesDialogOpen(true);
+                }}
+              >
+                <Plus className="size-4 mr-1" />
+                Add Services
+              </Button>
             </div>
+            <button
+              type="button"
+              className="border rounded-md overflow-hidden cursor-pointer hover:border-primary/50 transition-colors w-full text-left"
+              onClick={() => {
+                setTempServiceIds([...selectedServiceIds]);
+                setServicesSearch("");
+                setServicesPage(1);
+                setServicesDialogOpen(true);
+              }}
+            >
+              {selectedServices.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                  <UtensilsCrossed className="size-8 mb-2 opacity-50" />
+                  <p className="text-sm">No services selected</p>
+                  <p className="text-xs mt-1">
+                    Click here to add gastronomic services
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Service</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Price/Pax</TableHead>
+                      <TableHead className="w-[40px]" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedServices.map((service) => (
+                      <TableRow key={service.id}>
+                        <TableCell className="font-medium">
+                          {service.name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate">
+                          {service.description || "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${service.pricePerPax ?? 0}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const current =
+                                form.getValues("serviceIds") || [];
+                              form.setValue(
+                                "serviceIds",
+                                current.filter((id) => id !== service.id),
+                              );
+                            }}
+                          >
+                            <X className="size-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </button>
           </div>
+
+          <Dialog
+            open={servicesDialogOpen}
+            onOpenChange={setServicesDialogOpen}
+          >
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Select Gastronomic Services</DialogTitle>
+                <DialogDescription>
+                  Search and select the services for this reservation.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search services..."
+                    value={servicesSearch}
+                    onChange={(e) => {
+                      setServicesSearch(e.target.value);
+                      setServicesPage(1);
+                    }}
+                    className="pl-9"
+                  />
+                </div>
+
+                <div className="border rounded-md max-h-[350px] overflow-y-auto">
+                  {(() => {
+                    const allServices = dialogServicesData?.data ?? [];
+                    const filtered = servicesSearch
+                      ? allServices.filter(
+                          (s) =>
+                            s.name
+                              .toLowerCase()
+                              .includes(servicesSearch.toLowerCase()) ||
+                            s.description
+                              ?.toLowerCase()
+                              .includes(servicesSearch.toLowerCase()),
+                        )
+                      : allServices;
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                          <Search className="size-8 mb-2 opacity-50" />
+                          <p className="text-sm">
+                            {servicesSearch
+                              ? "No services match your search"
+                              : "No services available"}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((service) => (
+                      <label
+                        key={service.id}
+                        className="flex items-center justify-between p-3 hover:bg-accent border-b last:border-b-0 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={tempServiceIds.includes(service.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTempServiceIds((prev) => [
+                                  ...prev,
+                                  service.id,
+                                ]);
+                              } else {
+                                setTempServiceIds((prev) =>
+                                  prev.filter((id) => id !== service.id),
+                                );
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <div>
+                            <span className="text-sm font-medium">
+                              {service.name}
+                            </span>
+                            {service.description && (
+                              <p className="text-xs text-muted-foreground">
+                                {service.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          ${service.pricePerPax ?? 0}/pax
+                        </span>
+                      </label>
+                    ));
+                  })()}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {tempServiceIds.length} service(s) selected
+                  </span>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setServicesPage((p) => p - 1)}
+                          className={
+                            servicesPage <= 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <span className="flex h-9 items-center px-3 text-sm text-muted-foreground">
+                          Page {servicesPage} of{" "}
+                          {dialogServicesData
+                            ? Math.ceil(
+                                dialogServicesData.total / servicesLimit,
+                              )
+                            : 1}
+                        </span>
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setServicesPage((p) => p + 1)}
+                          className={
+                            !dialogServicesData ||
+                            servicesPage >=
+                              Math.ceil(
+                                dialogServicesData.total / servicesLimit,
+                              )
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setServicesDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    form.setValue("serviceIds", tempServiceIds);
+                    setServicesDialogOpen(false);
+                  }}
+                >
+                  Confirm Selection ({tempServiceIds.length})
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {(selectedTariff || selectedServices.length > 0) && (
             <div className="border rounded-md p-4 bg-muted/30">
@@ -604,14 +903,18 @@ export function ReservationForm({
                 {selectedTariff && (
                   <div className="flex justify-between">
                     <span>
-                      Room ({selectedTariff.sessionType.replace("_", " ")})
+                      Room ({selectedTariff.sessionType.replace("_", " ")}
+                      {pricing.days > 1 ? ` × ${pricing.days} days` : ""})
                     </span>
                     <span>${pricing.tariffPrice.toFixed(2)}</span>
                   </div>
                 )}
                 {selectedServices.length > 0 && (
                   <div className="flex justify-between">
-                    <span>Services ({pricing.totalPax} pax)</span>
+                    <span>
+                      Services ({pricing.totalPax} pax
+                      {pricing.days > 1 ? ` × ${pricing.days} days` : ""})
+                    </span>
                     <span>${pricing.servicesPrice.toFixed(2)}</span>
                   </div>
                 )}
