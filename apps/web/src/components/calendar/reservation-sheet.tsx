@@ -31,7 +31,6 @@ import {
   Phone,
   Trash2,
   Users,
-  UtensilsCrossed,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -305,60 +304,45 @@ function SingleReservationSection({
             </div>
           </div>
 
-          {reservationServices.length > 0 && (
+          {hasPricing && (
             <div className="pt-2 border-t border-border">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                <UtensilsCrossed className="size-4" />
-                <span>Gastronomic Services</span>
+                <DollarSign className="size-4" />
+                <span>Pricing</span>
               </div>
-              <div className="space-y-1">
-                {reservationServices.map((service) => (
-                  <div
-                    key={service.id}
-                    className="flex items-center justify-between text-xs bg-muted/50 p-2 rounded-lg"
-                  >
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-medium truncate">
-                        {service.gastronomicService?.name || "Service"}
+              <div className="text-xs bg-muted/50 p-3 rounded-lg space-y-2">
+                {reservation.totalRoomPrice != null &&
+                  reservation.totalRoomPrice > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Room{days > 1 ? ` (× ${days} days)` : ""}
                       </span>
-                      {service.gastronomicService?.description && (
-                        <span className="text-muted-foreground truncate">
-                          {service.gastronomicService.description}
-                        </span>
-                      )}
+                      <span>${reservation.totalRoomPrice.toFixed(2)}</span>
                     </div>
-                    <span className="text-muted-foreground whitespace-nowrap ml-2">
-                      ${service.unitPrice.toFixed(2)}/pax × {service.quantity}
+                  )}
+                {reservationServices.map((service) => (
+                  <div key={service.id} className="flex justify-between">
+                    <span className="text-muted-foreground truncate mr-2">
+                      {service.gastronomicService?.name || "Service"}
+                      <span className="text-[10px] ml-1">
+                        (${service.unitPrice.toFixed(2)} × {service.quantity}
+                        {days > 1 ? ` × ${days}d` : ""})
+                      </span>
+                    </span>
+                    <span className="whitespace-nowrap">
+                      ${service.totalPrice.toFixed(2)}
                     </span>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {hasPricing && (
-            <div className="pt-2 border-t border-border">
-              <div className="text-xs bg-muted/50 p-3 rounded-lg space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Room
-                    {days > 1 && <span className="ml-1">× {days} days</span>}
-                  </span>
-                  <span>${(reservation.totalRoomPrice ?? 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Services
-                    {days > 1 && totalPax > 0 && (
-                      <span className="ml-1">
-                        ({totalPax} pax × {days} days)
+                {reservationServices.length === 0 &&
+                  (reservation.totalServicePrice ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Services</span>
+                      <span>
+                        ${(reservation.totalServicePrice ?? 0).toFixed(2)}
                       </span>
-                    )}
-                  </span>
-                  <span>
-                    ${(reservation.totalServicePrice ?? 0).toFixed(2)}
-                  </span>
-                </div>
+                    </div>
+                  )}
                 {(reservation.serviceChargeAmount ?? 0) > 0 && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>Service Charge</span>
@@ -367,15 +351,19 @@ function SingleReservationSection({
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between font-medium border-t pt-1 mt-1">
+                <div className="flex justify-between font-medium border-t pt-2 mt-1">
                   <span>Total</span>
                   <span>${(reservation.grandTotal ?? 0).toFixed(2)}</span>
                 </div>
-                {reservation.totalPax && (
-                  <div className="text-muted-foreground text-[10px] pt-1">
-                    ({reservation.totalPax} pax)
-                  </div>
-                )}
+                <div className="flex items-center gap-2 text-muted-foreground text-[10px] pt-0.5">
+                  <span>{totalPax} pax</span>
+                  {days > 1 && (
+                    <>
+                      <span className="size-0.5 rounded-full bg-muted-foreground" />
+                      <span>{days} days</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}

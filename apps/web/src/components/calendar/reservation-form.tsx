@@ -337,6 +337,11 @@ export function ReservationForm({
         adultPax: Number(restFormData.adultPax) || 0,
         childrenPax: Number(restFormData.childrenPax) || 0,
         services,
+        totalPax: pricing.totalPax,
+        totalRoomPrice: pricing.tariffPrice,
+        totalServicePrice: pricing.servicesPrice,
+        serviceChargeAmount: pricing.serviceChargeAmount,
+        grandTotal: pricing.grandTotal,
       };
 
       if (reservationId) {
