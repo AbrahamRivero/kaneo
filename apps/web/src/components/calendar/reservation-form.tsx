@@ -262,17 +262,17 @@ export function ReservationForm({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmitHandler)}>
-      <div className="grid gap-4 py-4">
-        <div className="grid gap-2">
-          <Label htmlFor="title">Title</Label>
-          <Input
-            id="title"
-            placeholder="Event title"
-            {...form.register("title")}
-          />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
+        <div className="space-y-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              placeholder="Event title"
+              {...form.register("title")}
+            />
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="eventRoom">Event Room *</Label>
             <Select
@@ -320,9 +320,7 @@ export function ReservationForm({
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="clientName">Client Name *</Label>
             <Input
@@ -345,9 +343,7 @@ export function ReservationForm({
               {...form.register("companyName")}
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -372,262 +368,271 @@ export function ReservationForm({
               {...form.register("phone")}
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="dateFrom">From</Label>
-            <Popover
-              open={datePickerOpen === "from"}
-              onOpenChange={(open) => setDatePickerOpen(open ? "from" : false)}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateRange.from && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 size-4" />
-                  {dateRange.from ? (
-                    format(dateRange.from, "PPP")
-                  ) : (
-                    <span>Select start date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.from}
-                  onSelect={(date) => {
-                    if (date) {
-                      const newDateRange = { ...dateRange, from: date };
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2">
+              <Label htmlFor="dateFrom">From</Label>
+              <Popover
+                open={datePickerOpen === "from"}
+                onOpenChange={(open) =>
+                  setDatePickerOpen(open ? "from" : false)
+                }
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange.from && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 size-4" />
+                    {dateRange.from ? (
+                      format(dateRange.from, "P")
+                    ) : (
+                      <span>Select</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.from}
+                    onSelect={(date) => {
+                      if (date) {
+                        const newDateRange = { ...dateRange, from: date };
+                        setDateRange(newDateRange);
+                        form.setValue("dateRange", newDateRange);
+                        setDatePickerOpen(false);
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="dateTo">To</Label>
+              <Popover
+                open={datePickerOpen === "to"}
+                onOpenChange={(open) => setDatePickerOpen(open ? "to" : false)}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange.to && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 size-4" />
+                    {dateRange.to ? (
+                      format(dateRange.to, "P")
+                    ) : (
+                      <span>Select</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.to}
+                    onSelect={(date) => {
+                      const newDateRange = { ...dateRange, to: date };
                       setDateRange(newDateRange);
                       form.setValue("dateRange", newDateRange);
                       setDatePickerOpen(false);
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="dateTo">To</Label>
-            <Popover
-              open={datePickerOpen === "to"}
-              onOpenChange={(open) => setDatePickerOpen(open ? "to" : false)}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateRange.to && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 size-4" />
-                  {dateRange.to ? (
-                    format(dateRange.to, "PPP")
-                  ) : (
-                    <span>Select end date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.to}
-                  onSelect={(date) => {
-                    const newDateRange = { ...dateRange, to: date };
-                    setDateRange(newDateRange);
-                    form.setValue("dateRange", newDateRange);
-                    setDatePickerOpen(false);
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="adultPax">Adults</Label>
-            <Input
-              id="adultPax"
-              type="number"
-              min="0"
-              placeholder="0"
-              {...form.register("adultPax", { valueAsNumber: true })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="childrenPax">Children</Label>
-            <Input
-              id="childrenPax"
-              type="number"
-              min="0"
-              placeholder="0"
-              {...form.register("childrenPax", { valueAsNumber: true })}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between py-2">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="paymentConfirmed" className="text-sm font-medium">
-              Payment Confirmed
-            </Label>
-            <span className="text-xs text-muted-foreground">
-              Indicates if the client has paid for the reservation
-            </span>
-          </div>
-          <Controller
-            control={form.control}
-            name="paymentConfirmed"
-            render={({ field }) => (
-              <Switch
-                id="paymentConfirmed"
-                checked={field.value ?? false}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="roomTariff">Room Tariff</Label>
-          <Select
-            value={form.watch("roomTariffId") || ""}
-            onValueChange={(value) =>
-              form.setValue("roomTariffId", value || undefined)
-            }
-            disabled={!selectedEventRoomId || filteredTariffs.length === 0}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue
-                placeholder={
-                  !selectedEventRoomId
-                    ? "Select a room first"
-                    : filteredTariffs.length === 0
-                      ? "No tariffs for this room"
-                      : "Select tariff (optional)"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredTariffs.map((tariff) => (
-                <SelectItem key={tariff.id} value={tariff.id}>
-                  {tariff.sessionType.replace("_", " ")} -{" "}
-                  {tariff.price ? `$${tariff.price}` : "No price"}
-                  {tariff.serviceChargePercent > 0 &&
-                    ` (+${tariff.serviceChargePercent}% svc)`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-2">
-          <Label>Gastronomic Services</Label>
-          <div className="border rounded-md p-3 space-y-2">
-            {gastronomicServices.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No services available
-              </p>
-            ) : (
-              gastronomicServices.map((service) => (
-                <label
-                  key={service.id}
-                  className="flex items-center justify-between p-2 hover:bg-accent rounded cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedServiceIds.includes(service.id)}
-                      onChange={(e) => {
-                        const current = form.getValues("serviceIds") || [];
-                        if (e.target.checked) {
-                          form.setValue("serviceIds", [...current, service.id]);
-                        } else {
-                          form.setValue(
-                            "serviceIds",
-                            current.filter((id) => id !== service.id),
-                          );
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                    <div>
-                      <span className="text-sm font-medium">
-                        {service.name}
-                      </span>
-                      {service.description && (
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {service.description}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    ${service.pricePerPax ?? 0}/pax
-                  </span>
-                </label>
-              ))
-            )}
-          </div>
-        </div>
-
-        {(selectedTariff || selectedServices.length > 0) && (
-          <div className="border rounded-md p-4 bg-muted/30">
-            <div className="flex items-center gap-2 mb-3">
-              <UtensilsCrossed className="size-4" />
-              <Label className="font-medium">Pricing Summary</Label>
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div className="space-y-1 text-sm">
-              {selectedTariff && (
-                <div className="flex justify-between">
-                  <span>
-                    Room ({selectedTariff.sessionType.replace("_", " ")})
-                  </span>
-                  <span>${pricing.tariffPrice.toFixed(2)}</span>
-                </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2">
+              <Label htmlFor="adultPax">Adults</Label>
+              <Input
+                id="adultPax"
+                type="number"
+                min="0"
+                placeholder="0"
+                {...form.register("adultPax", { valueAsNumber: true })}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="childrenPax">Children</Label>
+              <Input
+                id="childrenPax"
+                type="number"
+                min="0"
+                placeholder="0"
+                {...form.register("childrenPax", { valueAsNumber: true })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="paymentConfirmed" className="text-sm font-medium">
+                Payment Confirmed
+              </Label>
+              <span className="text-xs text-muted-foreground">
+                Indicates if paid
+              </span>
+            </div>
+            <Controller
+              control={form.control}
+              name="paymentConfirmed"
+              render={({ field }) => (
+                <Switch
+                  id="paymentConfirmed"
+                  checked={field.value ?? false}
+                  onCheckedChange={field.onChange}
+                />
               )}
-              {selectedServices.length > 0 && (
-                <div className="flex justify-between">
-                  <span>Services ({pricing.totalPax} pax)</span>
-                  <span>${pricing.servicesPrice.toFixed(2)}</span>
-                </div>
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="roomTariff">Room Tariff</Label>
+            <Select
+              value={form.watch("roomTariffId") || ""}
+              onValueChange={(value) =>
+                form.setValue("roomTariffId", value || undefined)
+              }
+              disabled={!selectedEventRoomId || filteredTariffs.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    !selectedEventRoomId
+                      ? "Select a room first"
+                      : filteredTariffs.length === 0
+                        ? "No tariffs"
+                        : "Select tariff (optional)"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredTariffs.map((tariff) => (
+                  <SelectItem key={tariff.id} value={tariff.id}>
+                    {tariff.sessionType.replace("_", " ")} -{" "}
+                    {tariff.price ? `$${tariff.price}` : "No price"}
+                    {tariff.serviceChargePercent > 0 &&
+                      ` (+${tariff.serviceChargePercent}% svc)`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="Additional notes"
+              {...form.register("notes")}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid gap-2">
+            <Label>Gastronomic Services</Label>
+            <div className="border rounded-md p-3 space-y-2 max-h-[280px] overflow-y-auto">
+              {gastronomicServices.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No services available
+                </p>
+              ) : (
+                gastronomicServices.map((service) => (
+                  <label
+                    key={service.id}
+                    className="flex items-center justify-between p-2 hover:bg-accent rounded cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedServiceIds.includes(service.id)}
+                        onChange={(e) => {
+                          const current = form.getValues("serviceIds") || [];
+                          if (e.target.checked) {
+                            form.setValue("serviceIds", [
+                              ...current,
+                              service.id,
+                            ]);
+                          } else {
+                            form.setValue(
+                              "serviceIds",
+                              current.filter((id) => id !== service.id),
+                            );
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <div>
+                        <span className="text-sm font-medium">
+                          {service.name}
+                        </span>
+                        {service.description && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {service.description}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      ${service.pricePerPax ?? 0}/pax
+                    </span>
+                  </label>
+                ))
               )}
-              {pricing.serviceChargePercent > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Service Charge ({pricing.serviceChargePercent}%)</span>
-                  <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {(selectedTariff || selectedServices.length > 0) && (
+            <div className="border rounded-md p-4 bg-muted/30">
+              <div className="flex items-center gap-2 mb-3">
+                <UtensilsCrossed className="size-4" />
+                <Label className="font-medium">Pricing Summary</Label>
+              </div>
+              <div className="space-y-1 text-sm">
+                {selectedTariff && (
+                  <div className="flex justify-between">
+                    <span>
+                      Room ({selectedTariff.sessionType.replace("_", " ")})
+                    </span>
+                    <span>${pricing.tariffPrice.toFixed(2)}</span>
+                  </div>
+                )}
+                {selectedServices.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>Services ({pricing.totalPax} pax)</span>
+                    <span>${pricing.servicesPrice.toFixed(2)}</span>
+                  </div>
+                )}
+                {pricing.serviceChargePercent > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>
+                      Service Charge ({pricing.serviceChargePercent}%)
+                    </span>
+                    <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium border-t pt-2 mt-2">
+                  <span>Total</span>
+                  <span>${pricing.grandTotal.toFixed(2)}</span>
                 </div>
-              )}
-              <div className="flex justify-between font-medium border-t pt-2 mt-2">
-                <span>Total</span>
-                <span>${pricing.grandTotal.toFixed(2)}</span>
               </div>
             </div>
-          </div>
-        )}
-
-        <div className="grid gap-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Additional notes"
-            {...form.register("notes")}
-          />
+          )}
         </div>
       </div>
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 pt-4">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel

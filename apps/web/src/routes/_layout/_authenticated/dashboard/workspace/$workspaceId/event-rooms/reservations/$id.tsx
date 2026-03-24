@@ -32,7 +32,7 @@ function EditReservationPage() {
 
   return (
     <WorkspaceLayout title="Edit Reservation">
-      <div className="p-6 max-w-2xl">
+      <div className="p-6 max-w-7xl">
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-semibold">Edit Reservation</h1>

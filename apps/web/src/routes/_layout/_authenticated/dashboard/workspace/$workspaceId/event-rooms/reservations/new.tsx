@@ -27,7 +27,7 @@ function CreateReservationPage() {
 
   return (
     <WorkspaceLayout title="Create Reservation">
-      <div className="p-6 max-w-2xl">
+      <div className="p-6 max-w-7xl">
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-semibold">Create Reservation</h1>
