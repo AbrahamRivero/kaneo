@@ -136,7 +136,10 @@ export function ServicesTable({
                   </span>
                 </TableCell>
                 <TableCell className="px-4 py-3.5">
-                  <span className="text-muted-foreground">
+                  <span
+                    className="text-muted-foreground max-w-[200px] block truncate"
+                    title={service.description || undefined}
+                  >
                     {service.description || "—"}
                   </span>
                 </TableCell>

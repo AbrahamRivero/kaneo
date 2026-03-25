@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useCreateGastronomicService,
   useUpdateGastronomicService,
@@ -110,7 +111,11 @@ export function GastronomicServiceForm({
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
           <Label htmlFor="name">Name</Label>
-          <Input id="name" placeholder="e.g., Coffee Break" {...form.register("name")} />
+          <Input
+            id="name"
+            placeholder="e.g., Coffee Break"
+            {...form.register("name")}
+          />
           {form.formState.errors.name && (
             <p className="text-xs text-destructive">
               {form.formState.errors.name.message as string}
@@ -130,10 +135,11 @@ export function GastronomicServiceForm({
 
         <div className="grid gap-2">
           <Label htmlFor="description">Description (optional)</Label>
-          <Input
+          <Textarea
             id="description"
             placeholder="Optional description"
             {...form.register("description")}
+            rows={3}
           />
         </div>
       </div>
