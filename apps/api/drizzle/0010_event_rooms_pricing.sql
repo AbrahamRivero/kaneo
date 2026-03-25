@@ -1,5 +1,9 @@
 -- Create enum for session types
-CREATE TYPE "public"."session_type" AS ENUM('half_session', 'full_session', 'social_event', 'flat');
+DO $$ BEGIN
+  CREATE TYPE "public"."session_type" AS ENUM('half_session', 'full_session', 'social_event', 'flat');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 --> statement-breakpoint
 
 -- Create gastronomic_service table
