@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useDeleteReservation } from "@/hooks/mutations/event-room";
-import { format } from "date-fns";
+import queryClient from "@/query-client";
+import { useNavigate } from "@tanstack/react-router";
+import { differenceInDays, format } from "date-fns";
 import {
   Bell,
   Calendar as CalendarIcon,
@@ -31,9 +33,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ReservationDialog } from "./reservation-dialog";
 
 interface ReservationSheetProps {
   reservations: Reservation[] | null;
@@ -68,8 +69,6 @@ function getStatusColor(status?: string): string {
       return "bg-green-500/20 text-green-600 dark:text-green-400";
     case "pending":
       return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
-    case "cancelled":
-      return "bg-red-500/20 text-red-600 dark:text-red-400";
     case "completed":
       return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
     default:
@@ -83,8 +82,6 @@ function getStatusLabel(status?: string): string {
       return "Confirmed";
     case "pending":
       return "Pending";
-    case "cancelled":
-      return "Cancelled";
     case "completed":
       return "Completed";
     default:
@@ -107,9 +104,7 @@ interface SingleReservationSectionProps {
   index: number;
   total: number;
   workspaceId: string;
-  eventRooms: EventRoom[];
   onDeleteSuccess: () => void;
-  onSaveSuccess: () => void;
 }
 
 function SingleReservationSection({
@@ -118,11 +113,9 @@ function SingleReservationSection({
   index,
   total,
   workspaceId,
-  eventRooms,
   onDeleteSuccess,
-  onSaveSuccess,
 }: SingleReservationSectionProps) {
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
   const deleteReservation = useDeleteReservation();
@@ -130,14 +123,16 @@ function SingleReservationSection({
   const dateRange = parseDateRange(reservation.dateRange);
   const dateRangeStr = formatDateRangeFromObject(dateRange);
   const totalPax = reservation.adultPax + reservation.childrenPax;
+  const days =
+    dateRange.to && dateRange.to !== dateRange.from
+      ? differenceInDays(
+          new Date(`${dateRange.to}T00:00:00`),
+          new Date(`${dateRange.from}T00:00:00`),
+        ) + 1
+      : 1;
+  const reservationServices = reservation.services ?? [];
 
-  const services = [
-    { label: "Coffee Break", value: reservation.coffeeBreak },
-    { label: "Lunch", value: reservation.lunch },
-    { label: "Cocktail", value: reservation.cocktail },
-    { label: "Canapés", value: reservation.canapes },
-    { label: "Open Bar", value: reservation.openBar },
-  ].filter((s) => s.value);
+  const hasPricing = reservation.grandTotal != null;
 
   const handleDelete = async () => {
     try {
@@ -150,19 +145,15 @@ function SingleReservationSection({
     }
   };
 
+  const handleEdit = () => {
+    navigate({
+      to: "/dashboard/workspace/$workspaceId/event-rooms/reservations/$id",
+      params: { workspaceId, id: reservation.id },
+    });
+  };
+
   return (
     <>
-      <ReservationDialog
-        open={editDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) onSaveSuccess();
-          setEditDialogOpen(open);
-        }}
-        workspaceId={workspaceId}
-        eventRooms={eventRooms}
-        selectedReservation={reservation}
-      />
-
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -202,7 +193,7 @@ function SingleReservationSection({
               variant="ghost"
               size="icon"
               className="size-7 hover:bg-muted"
-              onClick={() => setEditDialogOpen(true)}
+              onClick={handleEdit}
               title="Edit reservation"
             >
               <Pen className="size-3.5 text-muted-foreground" />
@@ -309,16 +300,67 @@ function SingleReservationSection({
             </div>
           </div>
 
-          {services.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-              {services.map((service) => (
-                <span
-                  key={service.label}
-                  className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md"
-                >
-                  {service.label}
-                </span>
-              ))}
+          {hasPricing && (
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                <DollarSign className="size-4" />
+                <span>Pricing</span>
+              </div>
+              <div className="text-xs bg-muted/50 p-3 rounded-lg space-y-2">
+                {reservation.totalRoomPrice != null &&
+                  reservation.totalRoomPrice > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Room{days > 1 ? ` (× ${days} days)` : ""}
+                      </span>
+                      <span>${reservation.totalRoomPrice.toFixed(2)}</span>
+                    </div>
+                  )}
+                {reservationServices.map((service) => (
+                  <div key={service.id} className="flex justify-between">
+                    <span className="text-muted-foreground truncate mr-2">
+                      {service.gastronomicService?.name || "Service"}
+                      <span className="text-[10px] ml-1">
+                        (${service.unitPrice.toFixed(2)} × {service.quantity}
+                        {days > 1 ? ` × ${days}d` : ""})
+                      </span>
+                    </span>
+                    <span className="whitespace-nowrap">
+                      ${service.totalPrice.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+                {reservationServices.length === 0 &&
+                  (reservation.totalServicePrice ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Services</span>
+                      <span>
+                        ${(reservation.totalServicePrice ?? 0).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                {(reservation.serviceChargeAmount ?? 0) > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Service Charge</span>
+                    <span>
+                      ${(reservation.serviceChargeAmount ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium border-t pt-2 mt-1">
+                  <span>Total</span>
+                  <span>${(reservation.grandTotal ?? 0).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground text-[10px] pt-0.5">
+                  <span>{totalPax} pax</span>
+                  {days > 1 && (
+                    <>
+                      <span className="size-0.5 rounded-full bg-muted-foreground" />
+                      <span>{days} days</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -347,6 +389,12 @@ export function EventSheet({
   eventRooms,
 }: ReservationSheetProps) {
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (open) {
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    }
+  }, [open]);
 
   if (!reservations || reservations.length === 0) return null;
 
@@ -420,9 +468,7 @@ export function EventSheet({
                   index={index}
                   total={reservations.length}
                   workspaceId={workspaceId}
-                  eventRooms={eventRooms}
                   onDeleteSuccess={handleDeleteSuccess}
-                  onSaveSuccess={handleDeleteSuccess}
                 />
               ))}
             </div>

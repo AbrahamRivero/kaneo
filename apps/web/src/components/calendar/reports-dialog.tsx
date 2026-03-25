@@ -96,8 +96,6 @@ function formatStatus(status: string | null): string {
       return "Confirmed";
     case "pending":
       return "Pending";
-    case "cancelled":
-      return "Cancelled";
     case "completed":
       return "Completed";
     default:
@@ -222,7 +220,6 @@ export function ReportsDialog({
             }
             .status-confirmed { background-color: #d1fae5; color: #065f46; }
             .status-pending { background-color: #fef3c7; color: #92400e; }
-            .status-cancelled { background-color: #fee2e2; color: #991b1b; }
             .status-completed { background-color: #e0e7ff; color: #3730a3; }
             .yes { color: #059669; font-weight: 600; }
             .no { color: #dc2626; font-weight: 600; }

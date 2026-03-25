@@ -1,8 +1,10 @@
-import { type SQL, and, eq, gte, lte, ne } from "drizzle-orm";
+import { type SQL, and, eq, gte, lte, ne, or } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
   eventRoomTable,
+  gastronomicServiceTable,
+  reservationServiceTable,
   reservationTable,
   workspaceTable,
   workspaceUserTable,
@@ -10,6 +12,13 @@ import {
 import { publishEvent } from "../../events";
 
 export type DateRange = { from: string; to?: string };
+
+export type ReservationServicePayload = {
+  gastronomicServiceId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+};
 
 export type CreateReservationPayload = {
   workspaceId: string;
@@ -23,11 +32,12 @@ export type CreateReservationPayload = {
   adultPax: number;
   childrenPax: number;
   notes?: string;
-  coffeeBreak?: boolean;
-  lunch?: boolean;
-  cocktail?: boolean;
-  canapes?: boolean;
-  openBar?: boolean;
+  roomTariffId?: string;
+  totalRoomPrice?: number;
+  totalServicePrice?: number;
+  serviceChargeAmount?: number;
+  grandTotal?: number;
+  services?: ReservationServicePayload[];
 };
 
 export type UpdateReservationPayload = {
@@ -42,12 +52,13 @@ export type UpdateReservationPayload = {
   childrenPax?: number;
   notes?: string;
   paymentConfirmed?: boolean;
-  coffeeBreak?: boolean;
-  lunch?: boolean;
-  cocktail?: boolean;
-  canapes?: boolean;
-  openBar?: boolean;
-  status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
+  roomTariffId?: string;
+  totalRoomPrice?: number;
+  totalServicePrice?: number;
+  serviceChargeAmount?: number;
+  grandTotal?: number;
+  status?: "all" | "pending" | "confirmed" | "completed";
+  services?: ReservationServicePayload[];
 };
 
 type NormalizedDateRange = { from: string; to: string };
@@ -281,11 +292,12 @@ async function createReservation(
       adultPax: payload.adultPax,
       childrenPax: payload.childrenPax,
       notes: payload.notes,
-      coffeeBreak: payload.coffeeBreak ?? false,
-      lunch: payload.lunch ?? false,
-      cocktail: payload.cocktail ?? false,
-      canapes: payload.canapes ?? false,
-      openBar: payload.openBar ?? false,
+      roomTariffId: payload.roomTariffId,
+      totalRoomPrice: payload.totalRoomPrice,
+      totalServicePrice: payload.totalServicePrice,
+      serviceChargeAmount: payload.serviceChargeAmount,
+      grandTotal: payload.grandTotal,
+      totalPax: payload.adultPax + payload.childrenPax,
     })
     .returning();
 
@@ -294,6 +306,18 @@ async function createReservation(
   }
 
   const resDateRange = dateRangeFromString(reservation.dateRange);
+
+  if (payload.services && payload.services.length > 0) {
+    await db.insert(reservationServiceTable).values(
+      payload.services.map((service) => ({
+        reservationId: reservation.id,
+        gastronomicServiceId: service.gastronomicServiceId,
+        quantity: service.quantity,
+        unitPrice: service.unitPrice,
+        totalPrice: service.totalPrice,
+      })),
+    );
+  }
 
   await publishEvent("reservation.created", {
     reservationId: reservation.id,
@@ -357,11 +381,12 @@ async function getReservations(
       childrenPax: reservationTable.childrenPax,
       notes: reservationTable.notes,
       paymentConfirmed: reservationTable.paymentConfirmed,
-      coffeeBreak: reservationTable.coffeeBreak,
-      lunch: reservationTable.lunch,
-      cocktail: reservationTable.cocktail,
-      canapes: reservationTable.canapes,
-      openBar: reservationTable.openBar,
+      roomTariffId: reservationTable.roomTariffId,
+      totalRoomPrice: reservationTable.totalRoomPrice,
+      totalServicePrice: reservationTable.totalServicePrice,
+      serviceChargeAmount: reservationTable.serviceChargeAmount,
+      grandTotal: reservationTable.grandTotal,
+      totalPax: reservationTable.totalPax,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
@@ -375,7 +400,83 @@ async function getReservations(
     )
     .where(conditions);
 
-  return reservations;
+  if (reservations.length === 0) return reservations;
+
+  const reservationIds = reservations.map((r) => r.id);
+
+  const services = await db
+    .select({
+      id: reservationServiceTable.id,
+      reservationId: reservationServiceTable.reservationId,
+      gastronomicServiceId: reservationServiceTable.gastronomicServiceId,
+      quantity: reservationServiceTable.quantity,
+      unitPrice: reservationServiceTable.unitPrice,
+      totalPrice: reservationServiceTable.totalPrice,
+      createdAt: reservationServiceTable.createdAt,
+      name: gastronomicServiceTable.name,
+      description: gastronomicServiceTable.description,
+    })
+    .from(reservationServiceTable)
+    .innerJoin(
+      gastronomicServiceTable,
+      eq(
+        reservationServiceTable.gastronomicServiceId,
+        gastronomicServiceTable.id,
+      ),
+    )
+    .where(
+      or(
+        ...reservationIds.map((id) =>
+          eq(reservationServiceTable.reservationId, id),
+        ),
+      ) as SQL<unknown>,
+    );
+
+  const servicesByReservation: Record<
+    string,
+    Array<{
+      id: string;
+      reservationId: string;
+      gastronomicServiceId: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      createdAt: Date;
+      gastronomicService: {
+        id: string;
+        name: string;
+        description: string | null;
+      };
+    }>
+  > = {};
+
+  for (const service of services) {
+    const resId = service.reservationId;
+    let arr = servicesByReservation[resId];
+    if (!arr) {
+      arr = [];
+      servicesByReservation[resId] = arr;
+    }
+    arr.push({
+      id: service.id,
+      reservationId: service.reservationId,
+      gastronomicServiceId: service.gastronomicServiceId,
+      quantity: service.quantity,
+      unitPrice: service.unitPrice,
+      totalPrice: service.totalPrice,
+      createdAt: service.createdAt,
+      gastronomicService: {
+        id: service.gastronomicServiceId,
+        name: service.name,
+        description: service.description,
+      },
+    });
+  }
+
+  return reservations.map((reservation) => ({
+    ...reservation,
+    services: servicesByReservation[reservation.id] || [],
+  }));
 }
 
 async function getReservation(userId: string, reservationId: string) {
@@ -394,11 +495,12 @@ async function getReservation(userId: string, reservationId: string) {
       childrenPax: reservationTable.childrenPax,
       notes: reservationTable.notes,
       paymentConfirmed: reservationTable.paymentConfirmed,
-      coffeeBreak: reservationTable.coffeeBreak,
-      lunch: reservationTable.lunch,
-      cocktail: reservationTable.cocktail,
-      canapes: reservationTable.canapes,
-      openBar: reservationTable.openBar,
+      roomTariffId: reservationTable.roomTariffId,
+      totalRoomPrice: reservationTable.totalRoomPrice,
+      totalServicePrice: reservationTable.totalServicePrice,
+      serviceChargeAmount: reservationTable.serviceChargeAmount,
+      grandTotal: reservationTable.grandTotal,
+      totalPax: reservationTable.totalPax,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
@@ -432,7 +534,45 @@ async function getReservation(userId: string, reservationId: string) {
     throw new HTTPException(403, { message: "Forbidden" });
   }
 
-  return reservation;
+  const services = await db
+    .select({
+      id: reservationServiceTable.id,
+      reservationId: reservationServiceTable.reservationId,
+      gastronomicServiceId: reservationServiceTable.gastronomicServiceId,
+      quantity: reservationServiceTable.quantity,
+      unitPrice: reservationServiceTable.unitPrice,
+      totalPrice: reservationServiceTable.totalPrice,
+      createdAt: reservationServiceTable.createdAt,
+      name: gastronomicServiceTable.name,
+      description: gastronomicServiceTable.description,
+    })
+    .from(reservationServiceTable)
+    .innerJoin(
+      gastronomicServiceTable,
+      eq(
+        reservationServiceTable.gastronomicServiceId,
+        gastronomicServiceTable.id,
+      ),
+    )
+    .where(eq(reservationServiceTable.reservationId, reservationId));
+
+  return {
+    ...reservation,
+    services: services.map((s) => ({
+      id: s.id,
+      reservationId: s.reservationId,
+      gastronomicServiceId: s.gastronomicServiceId,
+      quantity: s.quantity,
+      unitPrice: s.unitPrice,
+      totalPrice: s.totalPrice,
+      createdAt: s.createdAt,
+      gastronomicService: {
+        id: s.gastronomicServiceId,
+        name: s.name,
+        description: s.description,
+      },
+    })),
+  };
 }
 
 async function updateReservation(
@@ -572,7 +712,63 @@ async function updateReservation(
     userId,
   });
 
-  return updated;
+  if (payload.services !== undefined) {
+    await db
+      .delete(reservationServiceTable)
+      .where(eq(reservationServiceTable.reservationId, reservationId));
+
+    if (payload.services.length > 0) {
+      await db.insert(reservationServiceTable).values(
+        payload.services.map((service) => ({
+          reservationId: reservationId,
+          gastronomicServiceId: service.gastronomicServiceId,
+          quantity: service.quantity,
+          unitPrice: service.unitPrice,
+          totalPrice: service.totalPrice,
+        })),
+      );
+    }
+  }
+
+  const services = await db
+    .select({
+      id: reservationServiceTable.id,
+      reservationId: reservationServiceTable.reservationId,
+      gastronomicServiceId: reservationServiceTable.gastronomicServiceId,
+      quantity: reservationServiceTable.quantity,
+      unitPrice: reservationServiceTable.unitPrice,
+      totalPrice: reservationServiceTable.totalPrice,
+      createdAt: reservationServiceTable.createdAt,
+      name: gastronomicServiceTable.name,
+      description: gastronomicServiceTable.description,
+    })
+    .from(reservationServiceTable)
+    .innerJoin(
+      gastronomicServiceTable,
+      eq(
+        reservationServiceTable.gastronomicServiceId,
+        gastronomicServiceTable.id,
+      ),
+    )
+    .where(eq(reservationServiceTable.reservationId, reservationId));
+
+  return {
+    ...updated,
+    services: services.map((s) => ({
+      id: s.id,
+      reservationId: s.reservationId,
+      gastronomicServiceId: s.gastronomicServiceId,
+      quantity: s.quantity,
+      unitPrice: s.unitPrice,
+      totalPrice: s.totalPrice,
+      createdAt: s.createdAt,
+      gastronomicService: {
+        id: s.gastronomicServiceId,
+        name: s.name,
+        description: s.description,
+      },
+    })),
+  };
 }
 
 async function deleteReservation(userId: string, reservationId: string) {

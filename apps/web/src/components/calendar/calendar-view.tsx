@@ -25,9 +25,9 @@ function parseDateRange(dateRangeStr: string): DateRange {
 }
 
 function isDateInRange(dateStr: string, dateRange: DateRange): boolean {
-  const date = new Date(dateStr + "T00:00:00");
-  const from = new Date(dateRange.from + "T00:00:00");
-  const to = new Date((dateRange.to || dateRange.from) + "T00:00:00");
+  const date = new Date(`${dateStr}T00:00:00`);
+  const from = new Date(`${dateRange.from}T00:00:00`);
+  const to = new Date(`${dateRange.to || dateRange.from}T00:00:00`);
   return date >= from && date <= to;
 }
 
