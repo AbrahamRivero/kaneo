@@ -57,7 +57,7 @@ export type UpdateReservationPayload = {
   totalServicePrice?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
-  status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
+  status?: "all" | "pending" | "confirmed" | "completed";
   services?: ReservationServicePayload[];
 };
 

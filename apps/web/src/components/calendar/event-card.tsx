@@ -21,8 +21,6 @@ function getStatusIcon(status?: string) {
       return <CheckCircle className="size-3 text-green-500" />;
     case "pending":
       return <Clock className="size-3 text-amber-500" />;
-    case "cancelled":
-      return <XCircle className="size-3 text-red-500 dark:text-red-400" />;
     case "completed":
       return <CheckCheck className="size-3 text-blue-500" />;
     default:

@@ -79,7 +79,7 @@ export type ReservationFormValues = {
   paymentConfirmed?: boolean;
   roomTariffId?: string;
   serviceIds?: string[];
-  status?: "all" | "pending" | "confirmed" | "cancelled" | "completed";
+  status?: "all" | "pending" | "confirmed" | "completed";
 };
 
 const reservationSchema = z
@@ -104,9 +104,7 @@ const reservationSchema = z
     paymentConfirmed: z.boolean().optional(),
     roomTariffId: z.string().optional(),
     serviceIds: z.array(z.string()).optional(),
-    status: z
-      .enum(["all", "pending", "confirmed", "cancelled", "completed"])
-      .default("all"),
+    status: z.enum(["all", "pending", "confirmed", "completed"]).default("all"),
   })
   .refine(
     () => {
@@ -194,11 +192,8 @@ export function ReservationForm({
       childrenPax: initialData?.childrenPax || 0,
       notes: initialData?.notes || "",
       status:
-        (initialData?.status as
-          | "pending"
-          | "confirmed"
-          | "cancelled"
-          | "completed") || "pending",
+        (initialData?.status as "pending" | "confirmed" | "completed") ||
+        "pending",
       paymentConfirmed: initialData?.paymentConfirmed || false,
       roomTariffId: initialData?.roomTariffId || "",
       serviceIds:
@@ -226,11 +221,8 @@ export function ReservationForm({
         childrenPax: initialData.childrenPax || 0,
         notes: initialData.notes || "",
         status:
-          (initialData.status as
-            | "pending"
-            | "confirmed"
-            | "cancelled"
-            | "completed") || "pending",
+          (initialData.status as "pending" | "confirmed" | "completed") ||
+          "pending",
         paymentConfirmed: initialData.paymentConfirmed || false,
         roomTariffId: initialData.roomTariffId || "",
         serviceIds:
@@ -415,7 +407,7 @@ export function ReservationForm({
               onValueChange={(value) =>
                 form.setValue(
                   "status",
-                  value as "pending" | "confirmed" | "cancelled" | "completed",
+                  value as "pending" | "confirmed" | "completed",
                 )
               }
             >
@@ -425,7 +417,6 @@ export function ReservationForm({
               <SelectContent>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
@@ -692,7 +683,6 @@ export function ReservationForm({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Service</TableHead>
-                      <TableHead>Description</TableHead>
                       <TableHead className="text-right">Price/Pax</TableHead>
                       <TableHead className="w-[40px]" />
                     </TableRow>
@@ -701,10 +691,12 @@ export function ReservationForm({
                     {selectedServices.map((service) => (
                       <TableRow key={service.id}>
                         <TableCell className="font-medium">
-                          {service.name}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate">
-                          {service.description || "—"}
+                          <span
+                            className="max-w-[450px] block truncate"
+                            title={service.name}
+                          >
+                            {service.name}
+                          </span>
                         </TableCell>
                         <TableCell className="text-right">
                           ${service.pricePerPax ?? 0}
@@ -818,7 +810,10 @@ export function ReservationForm({
                               {service.name}
                             </span>
                             {service.description && (
-                              <p className="text-xs text-muted-foreground">
+                              <p
+                                className="text-xs text-muted-foreground max-w-[200px] truncate"
+                                title={service.description}
+                              >
                                 {service.description}
                               </p>
                             )}

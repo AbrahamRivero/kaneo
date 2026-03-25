@@ -69,8 +69,6 @@ function getStatusColor(status?: string): string {
       return "bg-green-500/20 text-green-600 dark:text-green-400";
     case "pending":
       return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
-    case "cancelled":
-      return "bg-red-500/20 text-red-600 dark:text-red-400";
     case "completed":
       return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
     default:
@@ -84,8 +82,6 @@ function getStatusLabel(status?: string): string {
       return "Confirmed";
     case "pending":
       return "Pending";
-    case "cancelled":
-      return "Cancelled";
     case "completed":
       return "Completed";
     default:

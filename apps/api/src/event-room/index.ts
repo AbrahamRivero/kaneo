@@ -177,9 +177,7 @@ const eventRoom = new Hono<{
             }),
           )
           .optional(),
-        status: z
-          .enum(["pending", "confirmed", "cancelled", "completed"])
-          .optional(),
+        status: z.enum(["pending", "confirmed", "completed"]).optional(),
       }),
     ),
     async (c) => {

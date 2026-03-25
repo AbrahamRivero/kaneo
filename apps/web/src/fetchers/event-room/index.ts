@@ -154,7 +154,7 @@ export type UpdateReservationPayload = {
     unitPrice: number;
     totalPrice: number;
   }[];
-  status?: "pending" | "confirmed" | "cancelled" | "completed";
+  status?: "pending" | "confirmed" | "completed";
 };
 
 export const getEventRooms = async (

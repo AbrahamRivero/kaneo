@@ -24,7 +24,6 @@ import {
   Plus,
   Search,
   X,
-  XCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -103,8 +102,6 @@ export function CalendarControls({
         return "Pending";
       case "confirmed":
         return "Confirmed";
-      case "cancelled":
-        return "Cancelled";
       case "completed":
         return "Completed";
       default:
@@ -116,7 +113,7 @@ export function CalendarControls({
 
   const handleAddStatusFilter = (status: string) => {
     setReservationStatusFilter(
-      status as "all" | "pending" | "confirmed" | "cancelled" | "completed",
+      status as "all" | "pending" | "confirmed" | "completed",
     );
     setFilterPopoverOpen(false);
   };
@@ -241,20 +238,6 @@ export function CalendarControls({
                       Confirmed
                     </div>
                     {reservationStatusFilter === "confirmed" && (
-                      <Check className="size-3 text-primary" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-7 px-2 text-xs"
-                    onClick={() => handleAddStatusFilter("cancelled")}
-                  >
-                    <div className="flex items-center">
-                      <XCircle className="size-3 mr-1.5 text-red-500" />
-                      Cancelled
-                    </div>
-                    {reservationStatusFilter === "cancelled" && (
                       <Check className="size-3 text-primary" />
                     )}
                   </Button>
