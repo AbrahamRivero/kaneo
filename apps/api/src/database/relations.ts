@@ -3,14 +3,15 @@ import {
   accountTable,
   activityTable,
   eventRoomTable,
-  gastronomicServiceTable,
   githubIntegrationTable,
   labelTable,
   notificationTable,
   projectTable,
+  reservationDayTariffTable,
   reservationServiceTable,
   reservationTable,
   roomTariffTable,
+  serviceTable,
   sessionTable,
   taskTable,
   timeEntryTable,
@@ -178,14 +179,15 @@ export const reservationTableRelations = relations(
       references: [roomTariffTable.id],
     }),
     services: many(reservationServiceTable),
+    dayTariffs: many(reservationDayTariffTable),
   }),
 );
 
-export const gastronomicServiceTableRelations = relations(
-  gastronomicServiceTable,
+export const serviceTableRelations = relations(
+  serviceTable,
   ({ one, many }) => ({
     workspace: one(workspaceTable, {
-      fields: [gastronomicServiceTable.workspaceId],
+      fields: [serviceTable.workspaceId],
       references: [workspaceTable.id],
     }),
     reservationServices: many(reservationServiceTable),
@@ -214,9 +216,23 @@ export const reservationServiceTableRelations = relations(
       fields: [reservationServiceTable.reservationId],
       references: [reservationTable.id],
     }),
-    gastronomicService: one(gastronomicServiceTable, {
-      fields: [reservationServiceTable.gastronomicServiceId],
-      references: [gastronomicServiceTable.id],
+    service: one(serviceTable, {
+      fields: [reservationServiceTable.serviceId],
+      references: [serviceTable.id],
+    }),
+  }),
+);
+
+export const reservationDayTariffTableRelations = relations(
+  reservationDayTariffTable,
+  ({ one }) => ({
+    reservation: one(reservationTable, {
+      fields: [reservationDayTariffTable.reservationId],
+      references: [reservationTable.id],
+    }),
+    roomTariff: one(roomTariffTable, {
+      fields: [reservationDayTariffTable.roomTariffId],
+      references: [roomTariffTable.id],
     }),
   }),
 );

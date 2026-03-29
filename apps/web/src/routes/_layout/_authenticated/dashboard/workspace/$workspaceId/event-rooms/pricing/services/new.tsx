@@ -1,5 +1,5 @@
 import WorkspaceLayout from "@/components/common/workspace-layout";
-import { GastronomicServiceForm } from "@/components/event-room/gastronomic-service-form";
+import { ServiceForm } from "@/components/event-room/service-form";
 import { Button } from "@/components/ui/button";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -61,12 +61,12 @@ function NewServicePage() {
           <div>
             <h1 className="text-2xl font-semibold">New Service</h1>
             <p className="text-muted-foreground mt-1">
-              Create a new gastronomic service
+              Create a new service
             </p>
           </div>
         </div>
 
-        <GastronomicServiceForm
+        <ServiceForm
           workspaceId={workspaceId}
           onSuccess={() =>
             navigate({

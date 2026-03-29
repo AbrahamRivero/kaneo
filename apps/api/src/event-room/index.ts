@@ -103,8 +103,6 @@ const eventRoom = new Hono<{
           from: z.string(),
           to: z.string().optional(),
         }),
-        adultPax: z.number(),
-        childrenPax: z.number(),
         notes: z.string().optional(),
         roomTariffId: z.string().optional(),
         totalRoomPrice: z.number().optional(),
@@ -114,10 +112,19 @@ const eventRoom = new Hono<{
         services: z
           .array(
             z.object({
-              gastronomicServiceId: z.string(),
-              quantity: z.number(),
+              serviceId: z.string(),
+              pax: z.number(),
               unitPrice: z.number(),
               totalPrice: z.number(),
+            }),
+          )
+          .optional(),
+        dayTariffs: z
+          .array(
+            z.object({
+              date: z.string(),
+              roomTariffId: z.string().optional(),
+              price: z.number(),
             }),
           )
           .optional(),
@@ -158,8 +165,6 @@ const eventRoom = new Hono<{
             to: z.string().optional(),
           })
           .optional(),
-        adultPax: z.number().optional(),
-        childrenPax: z.number().optional(),
         notes: z.string().optional(),
         paymentConfirmed: z.boolean().optional(),
         roomTariffId: z.string().optional(),
@@ -170,10 +175,19 @@ const eventRoom = new Hono<{
         services: z
           .array(
             z.object({
-              gastronomicServiceId: z.string(),
-              quantity: z.number(),
+              serviceId: z.string(),
+              pax: z.number(),
               unitPrice: z.number(),
               totalPrice: z.number(),
+            }),
+          )
+          .optional(),
+        dayTariffs: z
+          .array(
+            z.object({
+              date: z.string(),
+              roomTariffId: z.string().optional(),
+              price: z.number(),
             }),
           )
           .optional(),

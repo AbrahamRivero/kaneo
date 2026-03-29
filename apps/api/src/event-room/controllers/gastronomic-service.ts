@@ -2,12 +2,12 @@ import { and, count, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
-  gastronomicServiceTable,
+  serviceTable,
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
 
-export type CreateGastronomicServicePayload = {
+export type CreateServicePayload = {
   workspaceId: string;
   name: string;
   pricePerPax: number;
@@ -15,14 +15,14 @@ export type CreateGastronomicServicePayload = {
   isActive?: boolean;
 };
 
-export type UpdateGastronomicServicePayload = {
+export type UpdateServicePayload = {
   name?: string;
   pricePerPax?: number;
   description?: string;
   isActive?: boolean;
 };
 
-export type GastronomicServiceWithMaskedPrice = {
+export type ServiceWithMaskedPrice = {
   id: string;
   workspaceId: string;
   name: string;
@@ -34,9 +34,9 @@ export type GastronomicServiceWithMaskedPrice = {
 };
 
 function maskPrice(
-  service: typeof gastronomicServiceTable.$inferSelect,
+  service: typeof serviceTable.$inferSelect,
   isViewer: boolean,
-): GastronomicServiceWithMaskedPrice {
+): ServiceWithMaskedPrice {
   if (isViewer) {
     return {
       ...service,
@@ -49,7 +49,7 @@ function maskPrice(
   };
 }
 
-export interface PaginatedGastronomicServices {
+export interface PaginatedServices {
   data: ReturnType<typeof maskPrice>[];
   total: number;
   page: number;
@@ -61,7 +61,7 @@ export async function getGastronomicServices(
   userId?: string,
   page = 1,
   limit = 10,
-): Promise<PaginatedGastronomicServices> {
+): Promise<PaginatedServices> {
   let isViewer = false;
 
   if (userId) {
@@ -93,14 +93,14 @@ export async function getGastronomicServices(
   const [services, countResult] = await Promise.all([
     db
       .select()
-      .from(gastronomicServiceTable)
-      .where(eq(gastronomicServiceTable.workspaceId, workspaceId))
+      .from(serviceTable)
+      .where(eq(serviceTable.workspaceId, workspaceId))
       .limit(limit)
       .offset(offset),
     db
       .select({ count: count() })
-      .from(gastronomicServiceTable)
-      .where(eq(gastronomicServiceTable.workspaceId, workspaceId)),
+      .from(serviceTable)
+      .where(eq(serviceTable.workspaceId, workspaceId)),
   ]);
 
   const total = countResult[0]?.count ?? 0;
@@ -119,8 +119,8 @@ export async function getGastronomicServiceById(
 ) {
   const [service] = await db
     .select()
-    .from(gastronomicServiceTable)
-    .where(eq(gastronomicServiceTable.id, serviceId))
+    .from(serviceTable)
+    .where(eq(serviceTable.id, serviceId))
     .limit(1);
 
   if (!service) {
@@ -158,7 +158,7 @@ export async function getGastronomicServiceById(
 
 export async function createGastronomicService(
   userId: string,
-  payload: CreateGastronomicServicePayload,
+  payload: CreateServicePayload,
 ) {
   const [workspace] = await db
     .select({ ownerId: workspaceTable.ownerId })
@@ -186,12 +186,12 @@ export async function createGastronomicService(
 
   if (!isOwner && (!member || member.role === "viewer")) {
     throw new HTTPException(403, {
-      message: "Viewers cannot create gastronomic services",
+      message: "Viewers cannot create services",
     });
   }
 
   const [service] = await db
-    .insert(gastronomicServiceTable)
+    .insert(serviceTable)
     .values({
       workspaceId: payload.workspaceId,
       name: payload.name,
@@ -207,12 +207,12 @@ export async function createGastronomicService(
 export async function updateGastronomicService(
   userId: string,
   serviceId: string,
-  payload: UpdateGastronomicServicePayload,
+  payload: UpdateServicePayload,
 ) {
   const [service] = await db
     .select()
-    .from(gastronomicServiceTable)
-    .where(eq(gastronomicServiceTable.id, serviceId))
+    .from(serviceTable)
+    .where(eq(serviceTable.id, serviceId))
     .limit(1);
 
   if (!service) {
@@ -245,17 +245,17 @@ export async function updateGastronomicService(
 
   if (!isOwner && (!member || member.role === "viewer")) {
     throw new HTTPException(403, {
-      message: "Viewers cannot update gastronomic services",
+      message: "Viewers cannot update services",
     });
   }
 
   const [updated] = await db
-    .update(gastronomicServiceTable)
+    .update(serviceTable)
     .set({
       ...payload,
       updatedAt: new Date(),
     })
-    .where(eq(gastronomicServiceTable.id, serviceId))
+    .where(eq(serviceTable.id, serviceId))
     .returning();
 
   return updated;
@@ -267,8 +267,8 @@ export async function deleteGastronomicService(
 ) {
   const [service] = await db
     .select()
-    .from(gastronomicServiceTable)
-    .where(eq(gastronomicServiceTable.id, serviceId))
+    .from(serviceTable)
+    .where(eq(serviceTable.id, serviceId))
     .limit(1);
 
   if (!service) {
@@ -301,13 +301,11 @@ export async function deleteGastronomicService(
 
   if (!isOwner && (!member || member.role === "viewer")) {
     throw new HTTPException(403, {
-      message: "Viewers cannot delete gastronomic services",
+      message: "Viewers cannot delete services",
     });
   }
 
-  await db
-    .delete(gastronomicServiceTable)
-    .where(eq(gastronomicServiceTable.id, serviceId));
+  await db.delete(serviceTable).where(eq(serviceTable.id, serviceId));
 
   return { success: true };
 }

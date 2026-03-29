@@ -122,7 +122,8 @@ function SingleReservationSection({
 
   const dateRange = parseDateRange(reservation.dateRange);
   const dateRangeStr = formatDateRangeFromObject(dateRange);
-  const totalPax = reservation.adultPax + reservation.childrenPax;
+  const totalPax =
+    reservation.services?.reduce((sum, s) => sum + s.pax, 0) ?? 0;
   const days =
     dateRange.to && dateRange.to !== dateRange.from
       ? differenceInDays(
@@ -269,13 +270,7 @@ function SingleReservationSection({
               <div className="p-1">
                 <Users className="size-4" />
               </div>
-              <span>
-                {totalPax} guests
-                <span className="mx-1">•</span>
-                {reservation.adultPax} adults
-                {reservation.childrenPax > 0 &&
-                  `, ${reservation.childrenPax} children`}
-              </span>
+              <span>{totalPax} guests</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="p-1">
@@ -319,9 +314,9 @@ function SingleReservationSection({
                 {reservationServices.map((service) => (
                   <div key={service.id} className="flex justify-between">
                     <span className="text-muted-foreground truncate mr-2">
-                      {service.gastronomicService?.name || "Service"}
+                      {service.service?.name || "Service"}
                       <span className="text-[10px] ml-1">
-                        (${service.unitPrice.toFixed(2)} × {service.quantity}
+                        (${service.unitPrice.toFixed(2)} × {service.pax}
                         {days > 1 ? ` × ${days}d` : ""})
                       </span>
                     </span>

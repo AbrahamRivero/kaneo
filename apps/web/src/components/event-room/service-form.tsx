@@ -3,8 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  useCreateGastronomicService,
-  useUpdateGastronomicService,
+  useCreateService,
+  useUpdateService,
 } from "@/hooks/mutations/event-room";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -36,7 +36,7 @@ interface GastronomicServiceFormProps {
   onCancel?: () => void;
 }
 
-export function GastronomicServiceForm({
+export function ServiceForm({
   workspaceId,
   serviceId,
   initialData,
@@ -44,8 +44,8 @@ export function GastronomicServiceForm({
   onSuccess,
   onCancel,
 }: GastronomicServiceFormProps) {
-  const createService = useCreateGastronomicService();
-  const updateService = useUpdateGastronomicService();
+  const createService = useCreateService();
+  const updateService = useUpdateService();
 
   const form = useForm<GastronomicServiceFormData>({
     resolver: standardSchemaResolver(gastronomicServiceSchema),

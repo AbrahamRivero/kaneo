@@ -17,7 +17,7 @@ export type SessionType =
   | "social_event"
   | "flat";
 
-export interface GastronomicService {
+export interface Service {
   id: string;
   workspaceId: string;
   name: string;
@@ -45,12 +45,22 @@ export interface RoomTariff {
 export interface ReservationService {
   id: string;
   reservationId: string;
-  gastronomicServiceId: string;
-  quantity: number;
+  serviceId: string;
+  pax: number;
   unitPrice: number;
   totalPrice: number;
   createdAt: Date;
-  gastronomicService?: GastronomicService;
+  service?: Service;
+}
+
+export interface DayTariff {
+  id: string;
+  reservationId: string;
+  date: string;
+  roomTariffId: string | null;
+  price: number;
+  createdAt: string;
+  sessionType: string | null;
 }
 
 export interface Reservation {
@@ -63,8 +73,6 @@ export interface Reservation {
   phone?: string | null;
   email?: string | null;
   dateRange: string;
-  adultPax: number;
-  childrenPax: number;
   notes?: string | null;
   paymentConfirmed?: boolean | null;
   roomTariffId?: string | null;
@@ -72,11 +80,11 @@ export interface Reservation {
   totalServicePrice?: number | null;
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
-  totalPax?: number | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
   services?: ReservationService[];
+  dayTariffs?: DayTariff[];
   roomName?: string;
   roomCapacity?: number;
 }

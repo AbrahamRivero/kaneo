@@ -3,9 +3,11 @@ import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
   eventRoomTable,
-  gastronomicServiceTable,
+  reservationDayTariffTable,
   reservationServiceTable,
   reservationTable,
+  roomTariffTable,
+  serviceTable,
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
@@ -14,10 +16,16 @@ import { publishEvent } from "../../events";
 export type DateRange = { from: string; to?: string };
 
 export type ReservationServicePayload = {
-  gastronomicServiceId: string;
-  quantity: number;
+  serviceId: string;
+  pax: number;
   unitPrice: number;
   totalPrice: number;
+};
+
+export type DayTariffPayload = {
+  date: string;
+  roomTariffId?: string;
+  price: number;
 };
 
 export type CreateReservationPayload = {
@@ -29,8 +37,6 @@ export type CreateReservationPayload = {
   phone?: string;
   email?: string;
   dateRange: DateRange;
-  adultPax: number;
-  childrenPax: number;
   notes?: string;
   roomTariffId?: string;
   totalRoomPrice?: number;
@@ -38,6 +44,7 @@ export type CreateReservationPayload = {
   serviceChargeAmount?: number;
   grandTotal?: number;
   services?: ReservationServicePayload[];
+  dayTariffs?: DayTariffPayload[];
 };
 
 export type UpdateReservationPayload = {
@@ -48,8 +55,6 @@ export type UpdateReservationPayload = {
   phone?: string;
   email?: string;
   dateRange?: DateRange;
-  adultPax?: number;
-  childrenPax?: number;
   notes?: string;
   paymentConfirmed?: boolean;
   roomTariffId?: string;
@@ -59,6 +64,7 @@ export type UpdateReservationPayload = {
   grandTotal?: number;
   status?: "all" | "pending" | "confirmed" | "completed";
   services?: ReservationServicePayload[];
+  dayTariffs?: DayTariffPayload[];
 };
 
 type NormalizedDateRange = { from: string; to: string };
@@ -97,20 +103,11 @@ type ConflictResult =
         title: string;
         dateRange: DateRange;
       };
-    }
-  | {
-      hasConflict: true;
-      type: "capacity_exceeded";
-      capacity: number;
-      usedCapacity: number;
-      requestedPax: number;
     };
 
 async function checkReservationConflict(
   eventRoomId: string,
   dateRange: DateRange,
-  adultPax: number,
-  childrenPax: number,
   excludeReservationId?: string,
 ): Promise<ConflictResult> {
   const normalizedDateRange = normalizeDateRange(dateRange);
@@ -134,8 +131,6 @@ async function checkReservationConflict(
       id: reservationTable.id,
       title: reservationTable.title,
       dateRange: reservationTable.dateRange,
-      adultPax: reservationTable.adultPax,
-      childrenPax: reservationTable.childrenPax,
     })
     .from(reservationTable)
     .where(
@@ -147,36 +142,7 @@ async function checkReservationConflict(
       ),
     );
 
-  if (eventRoom.allowsMultipleReservations) {
-    const overlappingReservations = existingReservations.filter((res) => {
-      const resDateRange = normalizeDateRange(
-        dateRangeFromString(res.dateRange),
-      );
-      return datesOverlap(
-        normalizedDateRange.from,
-        normalizedDateRange.to,
-        resDateRange.from,
-        resDateRange.to,
-      );
-    });
-
-    const totalExistingPax = overlappingReservations.reduce((sum, res) => {
-      return sum + res.adultPax + res.childrenPax;
-    }, 0);
-
-    const requestedPax = adultPax + childrenPax;
-    const availableCapacity = eventRoom.capacity - totalExistingPax;
-
-    if (requestedPax > availableCapacity) {
-      return {
-        hasConflict: true,
-        type: "capacity_exceeded",
-        capacity: eventRoom.capacity,
-        usedCapacity: totalExistingPax,
-        requestedPax,
-      };
-    }
-  } else {
+  if (!eventRoom.allowsMultipleReservations) {
     for (const res of existingReservations) {
       const resDateRange = normalizeDateRange(
         dateRangeFromString(res.dateRange),
@@ -249,26 +215,12 @@ async function createReservation(
     throw new HTTPException(404, { message: "Event room not found" });
   }
 
-  const totalPax = payload.adultPax + payload.childrenPax;
-  if (totalPax > room.capacity) {
-    throw new HTTPException(400, {
-      message: `Room capacity exceeded. Maximum capacity is ${room.capacity}`,
-    });
-  }
-
   const conflict = await checkReservationConflict(
     payload.eventRoomId,
     payload.dateRange,
-    payload.adultPax,
-    payload.childrenPax,
   );
 
   if (conflict.hasConflict) {
-    if (conflict.type === "capacity_exceeded") {
-      throw new HTTPException(400, {
-        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different date range.`,
-      });
-    }
     if (conflict.type === "date_overlap") {
       const { title, dateRange } = conflict.conflictingReservation;
       throw new HTTPException(400, {
@@ -289,15 +241,12 @@ async function createReservation(
       phone: payload.phone,
       email: payload.email,
       dateRange: dateRangeToString(payload.dateRange),
-      adultPax: payload.adultPax,
-      childrenPax: payload.childrenPax,
       notes: payload.notes,
       roomTariffId: payload.roomTariffId,
       totalRoomPrice: payload.totalRoomPrice,
       totalServicePrice: payload.totalServicePrice,
       serviceChargeAmount: payload.serviceChargeAmount,
       grandTotal: payload.grandTotal,
-      totalPax: payload.adultPax + payload.childrenPax,
     })
     .returning();
 
@@ -311,13 +260,46 @@ async function createReservation(
     await db.insert(reservationServiceTable).values(
       payload.services.map((service) => ({
         reservationId: reservation.id,
-        gastronomicServiceId: service.gastronomicServiceId,
-        quantity: service.quantity,
+        serviceId: service.serviceId,
+        pax: service.pax,
         unitPrice: service.unitPrice,
         totalPrice: service.totalPrice,
       })),
     );
   }
+
+  if (payload.dayTariffs && payload.dayTariffs.length > 0) {
+    await db.insert(reservationDayTariffTable).values(
+      payload.dayTariffs.map((dt) => ({
+        reservationId: reservation.id,
+        date: dt.date,
+        roomTariffId: dt.roomTariffId,
+        price: dt.price,
+      })),
+    );
+  }
+
+  const services = await db
+    .select({
+      id: reservationServiceTable.id,
+      reservationId: reservationServiceTable.reservationId,
+      serviceId: reservationServiceTable.serviceId,
+      pax: reservationServiceTable.pax,
+      unitPrice: reservationServiceTable.unitPrice,
+      totalPrice: reservationServiceTable.totalPrice,
+      createdAt: reservationServiceTable.createdAt,
+      name: serviceTable.name,
+      description: serviceTable.description,
+      pricePerPax: serviceTable.pricePerPax,
+    })
+    .from(reservationServiceTable)
+    .innerJoin(
+      serviceTable,
+      eq(reservationServiceTable.serviceId, serviceTable.id),
+    )
+    .where(eq(reservationServiceTable.reservationId, reservation.id));
+
+  const totalPax = services.reduce((sum, s) => sum + s.pax, 0);
 
   await publishEvent("reservation.created", {
     reservationId: reservation.id,
@@ -325,12 +307,29 @@ async function createReservation(
     clientName: payload.clientName,
     title: payload.title,
     dateRange: resDateRange,
-    totalPax: payload.adultPax + payload.childrenPax,
+    totalPax,
     roomName: room.name,
     userId,
   });
 
-  return reservation;
+  return {
+    ...reservation,
+    services: services.map((s) => ({
+      id: s.id,
+      reservationId: s.reservationId,
+      serviceId: s.serviceId,
+      pax: s.pax,
+      unitPrice: s.unitPrice,
+      totalPrice: s.totalPrice,
+      createdAt: s.createdAt,
+      service: {
+        id: s.serviceId,
+        name: s.name,
+        description: s.description,
+        pricePerPax: s.pricePerPax,
+      },
+    })),
+  };
 }
 
 async function getReservations(
@@ -377,8 +376,6 @@ async function getReservations(
       phone: reservationTable.phone,
       email: reservationTable.email,
       dateRange: reservationTable.dateRange,
-      adultPax: reservationTable.adultPax,
-      childrenPax: reservationTable.childrenPax,
       notes: reservationTable.notes,
       paymentConfirmed: reservationTable.paymentConfirmed,
       roomTariffId: reservationTable.roomTariffId,
@@ -386,7 +383,6 @@ async function getReservations(
       totalServicePrice: reservationTable.totalServicePrice,
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
-      totalPax: reservationTable.totalPax,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
@@ -408,21 +404,19 @@ async function getReservations(
     .select({
       id: reservationServiceTable.id,
       reservationId: reservationServiceTable.reservationId,
-      gastronomicServiceId: reservationServiceTable.gastronomicServiceId,
-      quantity: reservationServiceTable.quantity,
+      serviceId: reservationServiceTable.serviceId,
+      pax: reservationServiceTable.pax,
       unitPrice: reservationServiceTable.unitPrice,
       totalPrice: reservationServiceTable.totalPrice,
       createdAt: reservationServiceTable.createdAt,
-      name: gastronomicServiceTable.name,
-      description: gastronomicServiceTable.description,
+      name: serviceTable.name,
+      description: serviceTable.description,
+      pricePerPax: serviceTable.pricePerPax,
     })
     .from(reservationServiceTable)
     .innerJoin(
-      gastronomicServiceTable,
-      eq(
-        reservationServiceTable.gastronomicServiceId,
-        gastronomicServiceTable.id,
-      ),
+      serviceTable,
+      eq(reservationServiceTable.serviceId, serviceTable.id),
     )
     .where(
       or(
@@ -432,21 +426,58 @@ async function getReservations(
       ) as SQL<unknown>,
     );
 
+  const dayTariffs = await db
+    .select({
+      id: reservationDayTariffTable.id,
+      reservationId: reservationDayTariffTable.reservationId,
+      date: reservationDayTariffTable.date,
+      roomTariffId: reservationDayTariffTable.roomTariffId,
+      price: reservationDayTariffTable.price,
+      createdAt: reservationDayTariffTable.createdAt,
+      sessionType: roomTariffTable.sessionType,
+    })
+    .from(reservationDayTariffTable)
+    .leftJoin(
+      roomTariffTable,
+      eq(reservationDayTariffTable.roomTariffId, roomTariffTable.id),
+    )
+    .where(
+      or(
+        ...reservationIds.map((id) =>
+          eq(reservationDayTariffTable.reservationId, id),
+        ),
+      ) as SQL<unknown>,
+    );
+
   const servicesByReservation: Record<
     string,
     Array<{
       id: string;
       reservationId: string;
-      gastronomicServiceId: string;
-      quantity: number;
+      serviceId: string;
+      pax: number;
       unitPrice: number;
       totalPrice: number;
       createdAt: Date;
-      gastronomicService: {
+      service: {
         id: string;
         name: string;
         description: string | null;
+        pricePerPax: number | null;
       };
+    }>
+  > = {};
+
+  const dayTariffsByReservation: Record<
+    string,
+    Array<{
+      id: string;
+      reservationId: string;
+      date: string;
+      roomTariffId: string | null;
+      price: number;
+      createdAt: Date;
+      sessionType: string | null;
     }>
   > = {};
 
@@ -460,22 +491,42 @@ async function getReservations(
     arr.push({
       id: service.id,
       reservationId: service.reservationId,
-      gastronomicServiceId: service.gastronomicServiceId,
-      quantity: service.quantity,
+      serviceId: service.serviceId,
+      pax: service.pax,
       unitPrice: service.unitPrice,
       totalPrice: service.totalPrice,
       createdAt: service.createdAt,
-      gastronomicService: {
-        id: service.gastronomicServiceId,
+      service: {
+        id: service.serviceId,
         name: service.name,
         description: service.description,
+        pricePerPax: service.pricePerPax,
       },
+    });
+  }
+
+  for (const dt of dayTariffs) {
+    const resId = dt.reservationId;
+    let arr = dayTariffsByReservation[resId];
+    if (!arr) {
+      arr = [];
+      dayTariffsByReservation[resId] = arr;
+    }
+    arr.push({
+      id: dt.id,
+      reservationId: dt.reservationId,
+      date: dt.date,
+      roomTariffId: dt.roomTariffId,
+      price: dt.price,
+      createdAt: dt.createdAt,
+      sessionType: dt.sessionType,
     });
   }
 
   return reservations.map((reservation) => ({
     ...reservation,
     services: servicesByReservation[reservation.id] || [],
+    dayTariffs: dayTariffsByReservation[reservation.id] || [],
   }));
 }
 
@@ -491,8 +542,6 @@ async function getReservation(userId: string, reservationId: string) {
       phone: reservationTable.phone,
       email: reservationTable.email,
       dateRange: reservationTable.dateRange,
-      adultPax: reservationTable.adultPax,
-      childrenPax: reservationTable.childrenPax,
       notes: reservationTable.notes,
       paymentConfirmed: reservationTable.paymentConfirmed,
       roomTariffId: reservationTable.roomTariffId,
@@ -500,7 +549,6 @@ async function getReservation(userId: string, reservationId: string) {
       totalServicePrice: reservationTable.totalServicePrice,
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
-      totalPax: reservationTable.totalPax,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
@@ -538,39 +586,64 @@ async function getReservation(userId: string, reservationId: string) {
     .select({
       id: reservationServiceTable.id,
       reservationId: reservationServiceTable.reservationId,
-      gastronomicServiceId: reservationServiceTable.gastronomicServiceId,
-      quantity: reservationServiceTable.quantity,
+      serviceId: reservationServiceTable.serviceId,
+      pax: reservationServiceTable.pax,
       unitPrice: reservationServiceTable.unitPrice,
       totalPrice: reservationServiceTable.totalPrice,
       createdAt: reservationServiceTable.createdAt,
-      name: gastronomicServiceTable.name,
-      description: gastronomicServiceTable.description,
+      name: serviceTable.name,
+      description: serviceTable.description,
+      pricePerPax: serviceTable.pricePerPax,
     })
     .from(reservationServiceTable)
     .innerJoin(
-      gastronomicServiceTable,
-      eq(
-        reservationServiceTable.gastronomicServiceId,
-        gastronomicServiceTable.id,
-      ),
+      serviceTable,
+      eq(reservationServiceTable.serviceId, serviceTable.id),
     )
     .where(eq(reservationServiceTable.reservationId, reservationId));
+
+  const dayTariffs = await db
+    .select({
+      id: reservationDayTariffTable.id,
+      reservationId: reservationDayTariffTable.reservationId,
+      date: reservationDayTariffTable.date,
+      roomTariffId: reservationDayTariffTable.roomTariffId,
+      price: reservationDayTariffTable.price,
+      createdAt: reservationDayTariffTable.createdAt,
+      sessionType: roomTariffTable.sessionType,
+    })
+    .from(reservationDayTariffTable)
+    .leftJoin(
+      roomTariffTable,
+      eq(reservationDayTariffTable.roomTariffId, roomTariffTable.id),
+    )
+    .where(eq(reservationDayTariffTable.reservationId, reservationId));
 
   return {
     ...reservation,
     services: services.map((s) => ({
       id: s.id,
       reservationId: s.reservationId,
-      gastronomicServiceId: s.gastronomicServiceId,
-      quantity: s.quantity,
+      serviceId: s.serviceId,
+      pax: s.pax,
       unitPrice: s.unitPrice,
       totalPrice: s.totalPrice,
       createdAt: s.createdAt,
-      gastronomicService: {
-        id: s.gastronomicServiceId,
+      service: {
+        id: s.serviceId,
         name: s.name,
         description: s.description,
+        pricePerPax: s.pricePerPax,
       },
+    })),
+    dayTariffs: dayTariffs.map((dt) => ({
+      id: dt.id,
+      reservationId: dt.reservationId,
+      date: dt.date,
+      roomTariffId: dt.roomTariffId,
+      price: dt.price,
+      createdAt: dt.createdAt,
+      sessionType: dt.sessionType,
     })),
   };
 }
@@ -630,39 +703,20 @@ async function updateReservation(
     if (!room || room.workspaceId !== reservation.workspaceId) {
       throw new HTTPException(404, { message: "Event room not found" });
     }
-
-    const adultPax = payload.adultPax ?? reservation.adultPax;
-    const childrenPax = payload.childrenPax ?? reservation.childrenPax;
-    const totalPax = adultPax + childrenPax;
-
-    if (totalPax > room.capacity) {
-      throw new HTTPException(400, {
-        message: `Room capacity exceeded. Maximum capacity is ${room.capacity}`,
-      });
-    }
   }
 
   const eventRoomId = payload.eventRoomId ?? reservation.eventRoomId;
   const dateRange = payload.dateRange
     ? payload.dateRange
     : dateRangeFromString(reservation.dateRange);
-  const adultPax = payload.adultPax ?? reservation.adultPax;
-  const childrenPax = payload.childrenPax ?? reservation.childrenPax;
 
   const conflict = await checkReservationConflict(
     eventRoomId,
     dateRange,
-    adultPax,
-    childrenPax,
     reservationId,
   );
 
   if (conflict.hasConflict) {
-    if (conflict.type === "capacity_exceeded") {
-      throw new HTTPException(400, {
-        message: `Capacity exceeded: The room has a maximum capacity of ${conflict.capacity} people. Currently used: ${conflict.usedCapacity}/${conflict.capacity}. Requested: ${conflict.requestedPax}. Please reduce the number of guests or choose a different date range.`,
-      });
-    }
     if (conflict.type === "date_overlap") {
       const { title, dateRange: cDateRange } = conflict.conflictingReservation;
       throw new HTTPException(400, {
@@ -701,17 +755,6 @@ async function updateReservation(
 
   const updatedDateRange = dateRangeFromString(updated.dateRange);
 
-  await publishEvent("reservation.updated", {
-    reservationId: updated.id,
-    workspaceId: updated.workspaceId,
-    clientName: updated.clientName,
-    title: updated.title,
-    dateRange: updatedDateRange,
-    totalPax: updated.adultPax + updated.childrenPax,
-    roomName: room?.name || "Unknown",
-    userId,
-  });
-
   if (payload.services !== undefined) {
     await db
       .delete(reservationServiceTable)
@@ -721,10 +764,27 @@ async function updateReservation(
       await db.insert(reservationServiceTable).values(
         payload.services.map((service) => ({
           reservationId: reservationId,
-          gastronomicServiceId: service.gastronomicServiceId,
-          quantity: service.quantity,
+          serviceId: service.serviceId,
+          pax: service.pax,
           unitPrice: service.unitPrice,
           totalPrice: service.totalPrice,
+        })),
+      );
+    }
+  }
+
+  if (payload.dayTariffs !== undefined) {
+    await db
+      .delete(reservationDayTariffTable)
+      .where(eq(reservationDayTariffTable.reservationId, reservationId));
+
+    if (payload.dayTariffs.length > 0) {
+      await db.insert(reservationDayTariffTable).values(
+        payload.dayTariffs.map((dt) => ({
+          reservationId: reservationId,
+          date: dt.date,
+          roomTariffId: dt.roomTariffId,
+          price: dt.price,
         })),
       );
     }
@@ -734,39 +794,77 @@ async function updateReservation(
     .select({
       id: reservationServiceTable.id,
       reservationId: reservationServiceTable.reservationId,
-      gastronomicServiceId: reservationServiceTable.gastronomicServiceId,
-      quantity: reservationServiceTable.quantity,
+      serviceId: reservationServiceTable.serviceId,
+      pax: reservationServiceTable.pax,
       unitPrice: reservationServiceTable.unitPrice,
       totalPrice: reservationServiceTable.totalPrice,
       createdAt: reservationServiceTable.createdAt,
-      name: gastronomicServiceTable.name,
-      description: gastronomicServiceTable.description,
+      name: serviceTable.name,
+      description: serviceTable.description,
+      pricePerPax: serviceTable.pricePerPax,
     })
     .from(reservationServiceTable)
     .innerJoin(
-      gastronomicServiceTable,
-      eq(
-        reservationServiceTable.gastronomicServiceId,
-        gastronomicServiceTable.id,
-      ),
+      serviceTable,
+      eq(reservationServiceTable.serviceId, serviceTable.id),
     )
     .where(eq(reservationServiceTable.reservationId, reservationId));
+
+  const totalPax = services.reduce((sum, s) => sum + s.pax, 0);
+
+  await publishEvent("reservation.updated", {
+    reservationId: updated.id,
+    workspaceId: updated.workspaceId,
+    clientName: updated.clientName,
+    title: updated.title,
+    dateRange: updatedDateRange,
+    totalPax,
+    roomName: room?.name || "Unknown",
+    userId,
+  });
+
+  const dayTariffs = await db
+    .select({
+      id: reservationDayTariffTable.id,
+      reservationId: reservationDayTariffTable.reservationId,
+      date: reservationDayTariffTable.date,
+      roomTariffId: reservationDayTariffTable.roomTariffId,
+      price: reservationDayTariffTable.price,
+      createdAt: reservationDayTariffTable.createdAt,
+      sessionType: roomTariffTable.sessionType,
+    })
+    .from(reservationDayTariffTable)
+    .leftJoin(
+      roomTariffTable,
+      eq(reservationDayTariffTable.roomTariffId, roomTariffTable.id),
+    )
+    .where(eq(reservationDayTariffTable.reservationId, reservationId));
 
   return {
     ...updated,
     services: services.map((s) => ({
       id: s.id,
       reservationId: s.reservationId,
-      gastronomicServiceId: s.gastronomicServiceId,
-      quantity: s.quantity,
+      serviceId: s.serviceId,
+      pax: s.pax,
       unitPrice: s.unitPrice,
       totalPrice: s.totalPrice,
       createdAt: s.createdAt,
-      gastronomicService: {
-        id: s.gastronomicServiceId,
+      service: {
+        id: s.serviceId,
         name: s.name,
         description: s.description,
+        pricePerPax: s.pricePerPax,
       },
+    })),
+    dayTariffs: dayTariffs.map((dt) => ({
+      id: dt.id,
+      reservationId: dt.reservationId,
+      date: dt.date,
+      roomTariffId: dt.roomTariffId,
+      price: dt.price,
+      createdAt: dt.createdAt,
+      sessionType: dt.sessionType,
     })),
   };
 }
@@ -828,7 +926,7 @@ async function deleteReservation(userId: string, reservationId: string) {
     clientName: reservation.clientName,
     title: reservation.title,
     dateRange: resDateRange,
-    totalPax: reservation.adultPax + reservation.childrenPax,
+    totalPax: 0,
     userId,
   });
 

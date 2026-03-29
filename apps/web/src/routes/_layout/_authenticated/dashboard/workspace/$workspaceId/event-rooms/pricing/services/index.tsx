@@ -1,8 +1,8 @@
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { ServicesTable } from "@/components/event-room/services-table";
 import { Button } from "@/components/ui/button";
-import { useDeleteGastronomicService } from "@/hooks/mutations/event-room";
-import { useGetGastronomicServices } from "@/hooks/queries/event-room";
+import { useDeleteService } from "@/hooks/mutations/event-room";
+import { useGetServices } from "@/hooks/queries/event-room";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
@@ -23,12 +23,12 @@ function PricingServicesRoute() {
   const { data: workspace, isLoading: isLoadingWorkspace } = useGetWorkspace({
     id: workspaceId,
   });
-  const { data: servicesData, refetch } = useGetGastronomicServices(
+  const { data: servicesData, refetch } = useGetServices(
     workspaceId,
     pagination.page,
     pagination.limit,
   );
-  const deleteService = useDeleteGastronomicService();
+  const deleteService = useDeleteService();
 
   const handleDelete = async (id: string) => {
     try {
@@ -106,7 +106,9 @@ function PricingServicesRoute() {
             total={total}
             page={pagination.page}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onPageChange={(page) =>
+              setPagination((prev) => ({ ...prev, page }))
+            }
             onLimitChange={(limit) => setPagination({ page: 1, limit })}
             onEdit={(service) =>
               navigate({

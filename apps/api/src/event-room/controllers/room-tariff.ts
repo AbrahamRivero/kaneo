@@ -324,6 +324,10 @@ export async function updateRoomTariff(
     .where(eq(roomTariffTable.id, tariffId))
     .returning();
 
+  if (!updated) {
+    throw new HTTPException(404, { message: "Room tariff not found" });
+  }
+
   const [room] = await db
     .select({ name: eventRoomTable.name })
     .from(eventRoomTable)

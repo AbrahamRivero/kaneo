@@ -1,12 +1,12 @@
 import {
   getEventRoomById,
   getEventRooms,
-  getGastronomicServiceById,
-  getGastronomicServices,
   getReservation,
   getReservations,
   getRoomTariffById,
   getRoomTariffs,
+  getServiceById,
+  getServices,
 } from "@/fetchers/event-room";
 import { useQuery } from "@tanstack/react-query";
 
@@ -42,28 +42,36 @@ export function useGetReservationById(id?: string) {
   });
 }
 
-export function useGetGastronomicServices(
-  workspaceId: string,
-  page = 1,
-  limit = 10,
-) {
+export function useGetServices(workspaceId: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["gastronomic-services", workspaceId, page, limit],
-    queryFn: () => getGastronomicServices(workspaceId, page, limit),
+    queryKey: ["services", workspaceId, page, limit],
+    queryFn: () => getServices(workspaceId, page, limit),
     enabled: !!workspaceId,
     staleTime: 0,
     refetchOnMount: "always",
   });
 }
 
-export function useGetGastronomicServiceById(id?: string) {
+export function useGetServiceById(id?: string) {
   return useQuery({
-    queryKey: ["gastronomic-service", id],
-    queryFn: () => getGastronomicServiceById(id as string),
+    queryKey: ["service", id],
+    queryFn: () => getServiceById(id as string),
     enabled: Boolean(id),
     staleTime: 0,
     refetchOnMount: "always",
   });
+}
+
+export function useGetGastronomicServices(
+  workspaceId: string,
+  page = 1,
+  limit = 10,
+) {
+  return useGetServices(workspaceId, page, limit);
+}
+
+export function useGetGastronomicServiceById(id?: string) {
+  return useGetServiceById(id);
 }
 
 export function useGetRoomTariffs(workspaceId: string, page = 1, limit = 10) {

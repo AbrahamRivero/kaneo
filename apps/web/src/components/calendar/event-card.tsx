@@ -1,13 +1,6 @@
 import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { format } from "date-fns";
-import {
-  Banknote,
-  CheckCheck,
-  CheckCircle,
-  Clock,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { Banknote, CheckCheck, CheckCircle, Clock, Users } from "lucide-react";
 
 interface EventCardProps {
   event: Reservation;
@@ -46,7 +39,7 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
     ? `${event.clientName} - ${event.companyName}`
     : event.clientName;
   const statusIcon = getStatusIcon(event.status);
-  const totalGuests = event.adultPax + event.childrenPax;
+  const totalGuests = event.services?.reduce((sum, s) => sum + s.pax, 0) ?? 0;
   const hasGuests = totalGuests > 0;
 
   return (

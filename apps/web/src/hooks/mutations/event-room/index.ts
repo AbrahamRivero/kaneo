@@ -1,16 +1,16 @@
 import {
   createEventRoom,
-  createGastronomicService,
   createReservation,
   createRoomTariff,
+  createService,
   deleteEventRoom,
-  deleteGastronomicService,
   deleteReservation,
   deleteRoomTariff,
+  deleteService,
   updateEventRoom,
-  updateGastronomicService,
   updateReservation,
   updateRoomTariff,
+  updateService,
 } from "@/fetchers/event-room";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -118,11 +118,11 @@ export function useDeleteReservation() {
   });
 }
 
-export function useCreateGastronomicService() {
+export function useCreateService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createGastronomicService,
+    mutationFn: createService,
     onSuccess: async (data) => {
       toast.success("Gastronomic service created successfully");
       await Promise.all([
@@ -142,7 +142,7 @@ export function useCreateGastronomicService() {
   });
 }
 
-export function useUpdateGastronomicService() {
+export function useUpdateService() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -151,8 +151,8 @@ export function useUpdateGastronomicService() {
       payload,
     }: {
       id: string;
-      payload: Parameters<typeof updateGastronomicService>[1];
-    }) => updateGastronomicService(id, payload),
+      payload: Parameters<typeof updateService>[1];
+    }) => updateService(id, payload),
     onSuccess: async (_data, variables) => {
       toast.success("Gastronomic service updated successfully");
       await Promise.all([
@@ -172,11 +172,11 @@ export function useUpdateGastronomicService() {
   });
 }
 
-export function useDeleteGastronomicService() {
+export function useDeleteService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteGastronomicService,
+    mutationFn: deleteService,
     onSuccess: async () => {
       toast.success("Gastronomic service deleted successfully");
       await queryClient.invalidateQueries({

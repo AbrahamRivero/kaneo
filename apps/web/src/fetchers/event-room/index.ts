@@ -25,7 +25,7 @@ export type SessionType =
   | "social_event"
   | "flat";
 
-export type GastronomicService = {
+export type Service = {
   id: string;
   workspaceId: string;
   name: string;
@@ -39,12 +39,12 @@ export type GastronomicService = {
 export type ReservationService = {
   id: string;
   reservationId: string;
-  gastronomicServiceId: string;
-  quantity: number;
+  serviceId: string;
+  pax: number;
   unitPrice: number;
   totalPrice: number;
   createdAt: string;
-  gastronomicService?: Partial<GastronomicService> & { name: string };
+  service?: Partial<Service> & { name: string };
 };
 
 export type RoomTariff = {
@@ -71,8 +71,6 @@ export type Reservation = {
   phone?: string | null;
   email?: string | null;
   dateRange: string;
-  adultPax: number;
-  childrenPax: number;
   notes?: string | null;
   paymentConfirmed?: boolean | null;
   roomTariffId?: string | null;
@@ -80,13 +78,23 @@ export type Reservation = {
   totalServicePrice?: number | null;
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
-  totalPax?: number | null;
   status: string;
   createdAt: string;
   updatedAt: string;
   roomName?: string;
   roomCapacity?: number;
   services?: ReservationService[];
+  dayTariffs?: DayTariff[];
+};
+
+export type DayTariff = {
+  id: string;
+  reservationId: string;
+  date: string;
+  roomTariffId: string | null;
+  price: number;
+  createdAt: string;
+  sessionType: string | null;
 };
 
 export type DateRange = { from: string; to?: string };
@@ -115,8 +123,6 @@ export type CreateReservationPayload = {
   phone?: string;
   email?: string;
   dateRange: DateRange;
-  adultPax: number;
-  childrenPax: number;
   notes?: string;
   roomTariffId?: string;
   totalRoomPrice?: number;
@@ -124,10 +130,15 @@ export type CreateReservationPayload = {
   serviceChargeAmount?: number;
   grandTotal?: number;
   services?: {
-    gastronomicServiceId: string;
-    quantity: number;
+    serviceId: string;
+    pax: number;
     unitPrice: number;
     totalPrice: number;
+  }[];
+  dayTariffs?: {
+    date: string;
+    roomTariffId: string;
+    price: number;
   }[];
 };
 
@@ -139,8 +150,6 @@ export type UpdateReservationPayload = {
   phone?: string;
   email?: string;
   dateRange?: DateRange;
-  adultPax?: number;
-  childrenPax?: number;
   notes?: string;
   paymentConfirmed?: boolean;
   roomTariffId?: string;
@@ -149,10 +158,15 @@ export type UpdateReservationPayload = {
   serviceChargeAmount?: number;
   grandTotal?: number;
   services?: {
-    gastronomicServiceId: string;
-    quantity: number;
+    serviceId: string;
+    pax: number;
     unitPrice: number;
     totalPrice: number;
+  }[];
+  dayTariffs?: {
+    date: string;
+    roomTariffId: string;
+    price: number;
   }[];
   status?: "pending" | "confirmed" | "completed";
 };
@@ -325,11 +339,11 @@ export const deleteReservation = async (
   return response.json();
 };
 
-export const getGastronomicServices = async (
+export const getServices = async (
   workspaceId: string,
   page = 1,
   limit = 10,
-): Promise<PaginatedResponse<GastronomicService>> => {
+): Promise<PaginatedResponse<Service>> => {
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
@@ -345,9 +359,7 @@ export const getGastronomicServices = async (
   return response.json();
 };
 
-export const getGastronomicServiceById = async (
-  id: string,
-): Promise<GastronomicService> => {
+export const getServiceById = async (id: string): Promise<Service> => {
   const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
   const response = await fetch(url, { credentials: "include" });
 
@@ -359,9 +371,9 @@ export const getGastronomicServiceById = async (
   return response.json();
 };
 
-export const createGastronomicService = async (
-  payload: Omit<GastronomicService, "id" | "createdAt" | "updatedAt">,
-): Promise<GastronomicService> => {
+export const createService = async (
+  payload: Omit<Service, "id" | "createdAt" | "updatedAt">,
+): Promise<Service> => {
   const url = `${base ? base : ""}/event-room/gastronomic-services`;
   const response = await fetch(url, {
     method: "POST",
@@ -378,12 +390,12 @@ export const createGastronomicService = async (
   return response.json();
 };
 
-export const updateGastronomicService = async (
+export const updateService = async (
   id: string,
   payload: Partial<
-    Omit<GastronomicService, "id" | "workspaceId" | "createdAt" | "updatedAt">
+    Omit<Service, "id" | "workspaceId" | "createdAt" | "updatedAt">
   >,
-): Promise<GastronomicService> => {
+): Promise<Service> => {
   const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
   const response = await fetch(url, {
     method: "PUT",
@@ -400,7 +412,7 @@ export const updateGastronomicService = async (
   return response.json();
 };
 
-export const deleteGastronomicService = async (
+export const deleteService = async (
   id: string,
 ): Promise<{ success: boolean }> => {
   const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
