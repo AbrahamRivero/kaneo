@@ -1,18 +1,12 @@
 import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { format } from "date-fns";
-import {
-  Banknote,
-  CheckCheck,
-  CheckCircle,
-  Clock,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { Banknote, CheckCheck, CheckCircle, Clock, Users } from "lucide-react";
 
 interface EventCardProps {
   event: Reservation;
   onClick?: () => void;
   style?: React.CSSProperties;
+  allowsMultipleReservations?: boolean;
 }
 
 function getStatusIcon(status?: string) {
@@ -36,7 +30,12 @@ function parseDateRange(dateRangeStr: string): DateRange {
   }
 }
 
-export function EventCard({ event, onClick, style }: EventCardProps) {
+export function EventCard({
+  event,
+  onClick,
+  style,
+  allowsMultipleReservations,
+}: EventCardProps) {
   const dateRange = parseDateRange(event.dateRange);
   const dateStr =
     dateRange.from === dateRange.to || !dateRange.to
@@ -46,8 +45,6 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
     ? `${event.clientName} - ${event.companyName}`
     : event.clientName;
   const statusIcon = getStatusIcon(event.status);
-  const totalGuests = event.adultPax + event.childrenPax;
-  const hasGuests = totalGuests > 0;
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
@@ -73,14 +70,6 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
           <h4 className="text-xs font-semibold text-foreground mb-1 truncate whitespace-nowrap flex-1">
             {event.title || event.clientName}
           </h4>
-          {hasGuests && (
-            <div className="flex items-center gap-0.5 shrink-0 bg-muted px-1.5 py-0.5 rounded">
-              <Users className="size-3 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground font-medium">
-                {totalGuests}
-              </span>
-            </div>
-          )}
         </div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
           {dateStr}
@@ -94,6 +83,12 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
         <p className="text-[11px] text-muted-foreground font-semibold truncate">
           {event.roomName}
         </p>
+        {allowsMultipleReservations && (event.expectedPax ?? 0) > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Users className="size-3" />
+            <span>{event.expectedPax}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,16 +1,16 @@
 import {
   createEventRoom,
-  createGastronomicService,
   createReservation,
   createRoomTariff,
+  createService,
   deleteEventRoom,
-  deleteGastronomicService,
   deleteReservation,
   deleteRoomTariff,
+  deleteService,
   updateEventRoom,
-  updateGastronomicService,
   updateReservation,
   updateRoomTariff,
+  updateService,
 } from "@/fetchers/event-room";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -118,20 +118,20 @@ export function useDeleteReservation() {
   });
 }
 
-export function useCreateGastronomicService() {
+export function useCreateService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createGastronomicService,
+    mutationFn: createService,
     onSuccess: async (data) => {
-      toast.success("Gastronomic service created successfully");
+      toast.success("Service created successfully");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-services"],
+          queryKey: ["services"],
           refetchType: "all",
         }),
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-service", data.id],
+          queryKey: ["service", data.id],
           refetchType: "all",
         }),
       ]);
@@ -142,7 +142,7 @@ export function useCreateGastronomicService() {
   });
 }
 
-export function useUpdateGastronomicService() {
+export function useUpdateService() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -151,17 +151,17 @@ export function useUpdateGastronomicService() {
       payload,
     }: {
       id: string;
-      payload: Parameters<typeof updateGastronomicService>[1];
-    }) => updateGastronomicService(id, payload),
+      payload: Parameters<typeof updateService>[1];
+    }) => updateService(id, payload),
     onSuccess: async (_data, variables) => {
-      toast.success("Gastronomic service updated successfully");
+      toast.success("Service updated successfully");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-services"],
+          queryKey: ["services"],
           refetchType: "all",
         }),
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-service", variables.id],
+          queryKey: ["service", variables.id],
           refetchType: "all",
         }),
       ]);
@@ -172,15 +172,15 @@ export function useUpdateGastronomicService() {
   });
 }
 
-export function useDeleteGastronomicService() {
+export function useDeleteService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteGastronomicService,
+    mutationFn: deleteService,
     onSuccess: async () => {
-      toast.success("Gastronomic service deleted successfully");
+      toast.success("Service deleted successfully");
       await queryClient.invalidateQueries({
-        queryKey: ["gastronomic-services"],
+        queryKey: ["services"],
         refetchType: "all",
       });
     },

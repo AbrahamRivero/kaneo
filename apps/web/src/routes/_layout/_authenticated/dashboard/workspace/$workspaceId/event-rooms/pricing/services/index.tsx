@@ -1,8 +1,8 @@
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { ServicesTable } from "@/components/event-room/services-table";
 import { Button } from "@/components/ui/button";
-import { useDeleteGastronomicService } from "@/hooks/mutations/event-room";
-import { useGetGastronomicServices } from "@/hooks/queries/event-room";
+import { useDeleteService } from "@/hooks/mutations/event-room";
+import { useGetServices } from "@/hooks/queries/event-room";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
@@ -23,12 +23,12 @@ function PricingServicesRoute() {
   const { data: workspace, isLoading: isLoadingWorkspace } = useGetWorkspace({
     id: workspaceId,
   });
-  const { data: servicesData, refetch } = useGetGastronomicServices(
+  const { data: servicesData, refetch } = useGetServices(
     workspaceId,
     pagination.page,
     pagination.limit,
   );
-  const deleteService = useDeleteGastronomicService();
+  const deleteService = useDeleteService();
 
   const handleDelete = async (id: string) => {
     try {
@@ -42,7 +42,7 @@ function PricingServicesRoute() {
 
   if (isLoadingWorkspace) {
     return (
-      <WorkspaceLayout title="Gastronomic Services">
+      <WorkspaceLayout title="Additional Services">
         <div className="p-6">Loading...</div>
       </WorkspaceLayout>
     );
@@ -55,7 +55,7 @@ function PricingServicesRoute() {
 
   if (!eventRoomsEnabled) {
     return (
-      <WorkspaceLayout title="Gastronomic Services">
+      <WorkspaceLayout title="Additional Services">
         <div className="p-6 text-center text-muted-foreground">
           <p>Event rooms module is not enabled for this workspace.</p>
         </div>
@@ -67,11 +67,11 @@ function PricingServicesRoute() {
   const total = servicesData?.total ?? 0;
 
   return (
-    <WorkspaceLayout title="Gastronomic Services">
+    <WorkspaceLayout title="Additional Services">
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">Gastronomic Services</h1>
+            <h1 className="text-2xl font-semibold">Additional Services</h1>
             <p className="text-muted-foreground mt-1">
               Manage all services offered for event room reservations
             </p>
@@ -106,7 +106,9 @@ function PricingServicesRoute() {
             total={total}
             page={pagination.page}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onPageChange={(page) =>
+              setPagination((prev) => ({ ...prev, page }))
+            }
             onLimitChange={(limit) => setPagination({ page: 1, limit })}
             onEdit={(service) =>
               navigate({

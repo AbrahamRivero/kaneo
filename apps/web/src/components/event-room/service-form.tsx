@@ -3,26 +3,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  useCreateGastronomicService,
-  useUpdateGastronomicService,
+  useCreateService,
+  useUpdateService,
 } from "@/hooks/mutations/event-room";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
-const gastronomicServiceSchema = z.object({
+const serviceSchema = z.object({
   name: z.string().min(1, { error: "Name is required" }),
   pricePerPax: z.string().optional(),
   description: z.string().optional(),
 });
 
-export type GastronomicServiceFormData = {
+export type ServiceFormData = {
   name: string;
   pricePerPax?: string;
   description?: string;
 };
 
-interface GastronomicServiceFormProps {
+interface ServiceFormProps {
   workspaceId: string;
   serviceId?: string;
   initialData?: {
@@ -36,19 +36,19 @@ interface GastronomicServiceFormProps {
   onCancel?: () => void;
 }
 
-export function GastronomicServiceForm({
+export function ServiceForm({
   workspaceId,
   serviceId,
   initialData,
   isLoadingData,
   onSuccess,
   onCancel,
-}: GastronomicServiceFormProps) {
-  const createService = useCreateGastronomicService();
-  const updateService = useUpdateGastronomicService();
+}: ServiceFormProps) {
+  const createService = useCreateService();
+  const updateService = useUpdateService();
 
-  const form = useForm<GastronomicServiceFormData>({
-    resolver: standardSchemaResolver(gastronomicServiceSchema),
+  const form = useForm<ServiceFormData>({
+    resolver: standardSchemaResolver(serviceSchema),
     defaultValues: {
       name: "",
       pricePerPax: "",

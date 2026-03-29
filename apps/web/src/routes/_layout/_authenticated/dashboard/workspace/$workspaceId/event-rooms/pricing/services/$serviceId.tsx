@@ -1,7 +1,7 @@
 import WorkspaceLayout from "@/components/common/workspace-layout";
-import { GastronomicServiceForm } from "@/components/event-room/gastronomic-service-form";
+import { ServiceForm } from "@/components/event-room/service-form";
 import { Button } from "@/components/ui/button";
-import { useGetGastronomicServiceById } from "@/hooks/queries/event-room";
+import { useGetServiceById } from "@/hooks/queries/event-room";
 import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
@@ -25,7 +25,7 @@ function EditServicePage() {
   });
 
   const { data: service, isLoading: isLoadingService } =
-    useGetGastronomicServiceById(serviceId);
+    useGetServiceById(serviceId);
 
   if (isLoadingWorkspace || isLoadingService) {
     return (
@@ -68,13 +68,11 @@ function EditServicePage() {
           </Button>
           <div>
             <h1 className="text-2xl font-semibold">Edit Service</h1>
-            <p className="text-muted-foreground mt-1">
-              Update gastronomic service details
-            </p>
+            <p className="text-muted-foreground mt-1">Update service details</p>
           </div>
         </div>
 
-        <GastronomicServiceForm
+        <ServiceForm
           workspaceId={workspaceId}
           serviceId={serviceId}
           initialData={service ?? null}

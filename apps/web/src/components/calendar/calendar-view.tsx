@@ -108,6 +108,7 @@ export function CalendarView({
                 key={day.toISOString()}
                 reservations={dayReservations}
                 onEventClick={handleEventClick}
+                eventRooms={eventRooms}
               />
             );
           })}

@@ -298,7 +298,7 @@ export const eventRoomTable = pgTable("event_room", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
-export const gastronomicServiceTable = pgTable("gastronomic_service", {
+export const serviceTable = pgTable("service", {
   id: text("id")
     .$defaultFn(() => createId())
     .primaryKey(),
@@ -361,8 +361,6 @@ export const reservationTable = pgTable("reservation", {
   phone: text("phone"),
   email: text("email"),
   dateRange: text("date_range").notNull(),
-  adultPax: integer("adult_pax").notNull().default(0),
-  childrenPax: integer("children_pax").notNull().default(0),
   notes: text("notes"),
   paymentConfirmed: boolean("payment_confirmed").default(false),
   roomTariffId: text("room_tariff_id").references(() => roomTariffTable.id, {
@@ -372,7 +370,7 @@ export const reservationTable = pgTable("reservation", {
   totalServicePrice: integer("total_service_price"),
   serviceChargeAmount: integer("service_charge_amount"),
   grandTotal: integer("grand_total"),
-  totalPax: integer("total_pax"),
+  expectedPax: integer("expected_pax").default(0),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
@@ -387,13 +385,30 @@ export const reservationServiceTable = pgTable("reservation_service", {
     .references(() => reservationTable.id, {
       onDelete: "cascade",
     }),
-  gastronomicServiceId: text("gastronomic_service_id")
+  serviceId: text("service_id")
     .notNull()
-    .references(() => gastronomicServiceTable.id, {
+    .references(() => serviceTable.id, {
       onDelete: "cascade",
     }),
-  quantity: integer("quantity").notNull(),
+  pax: integer("pax").notNull().default(1),
   unitPrice: integer("unit_price").notNull(),
   totalPrice: integer("total_price").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const reservationDayTariffTable = pgTable("reservation_day_tariff", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  reservationId: text("reservation_id")
+    .notNull()
+    .references(() => reservationTable.id, {
+      onDelete: "cascade",
+    }),
+  date: text("date").notNull(),
+  roomTariffId: text("room_tariff_id").references(() => roomTariffTable.id, {
+    onDelete: "set null",
+  }),
+  price: integer("price").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });

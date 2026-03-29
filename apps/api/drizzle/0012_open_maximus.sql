@@ -1,0 +1,1 @@
+ALTER TABLE "reservation" ADD COLUMN "expected_pax" integer DEFAULT 0;
