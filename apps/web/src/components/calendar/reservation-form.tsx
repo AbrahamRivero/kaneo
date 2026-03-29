@@ -195,7 +195,7 @@ export function ReservationForm({
         (initialData?.status as "pending" | "confirmed" | "completed") ||
         "pending",
       paymentConfirmed: initialData?.paymentConfirmed || false,
-      roomTariffId: initialData?.roomTariffId || "",
+      roomTariffId: initialData?.roomTariffId || undefined,
       serviceIds:
         initialData?.serviceIds ||
         initialData?.services?.map((s) => s.gastronomicServiceId) ||
@@ -224,7 +224,7 @@ export function ReservationForm({
           (initialData.status as "pending" | "confirmed" | "completed") ||
           "pending",
         paymentConfirmed: initialData.paymentConfirmed || false,
-        roomTariffId: initialData.roomTariffId || "",
+        roomTariffId: initialData.roomTariffId || undefined,
         serviceIds:
           initialData.serviceIds ||
           initialData.services?.map((s) => s.gastronomicServiceId) ||
@@ -324,16 +324,17 @@ export function ReservationForm({
       const payload = {
         workspaceId,
         ...restFormData,
-        eventRoomId: restFormData.eventRoomId ?? "",
+        eventRoomId: restFormData.eventRoomId || "",
+        roomTariffId: restFormData.roomTariffId || undefined,
         dateRange: dateRangePayload,
         adultPax: Number(restFormData.adultPax) || 0,
         childrenPax: Number(restFormData.childrenPax) || 0,
-        services,
+        services: services.length > 0 ? services : undefined,
         totalPax: pricing.totalPax,
-        totalRoomPrice: pricing.tariffPrice,
-        totalServicePrice: pricing.servicesPrice,
-        serviceChargeAmount: pricing.serviceChargeAmount,
-        grandTotal: pricing.grandTotal,
+        totalRoomPrice: pricing.tariffPrice || undefined,
+        totalServicePrice: pricing.servicesPrice || undefined,
+        serviceChargeAmount: pricing.serviceChargeAmount || undefined,
+        grandTotal: pricing.grandTotal || undefined,
       };
 
       if (reservationId) {
