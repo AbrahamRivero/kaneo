@@ -320,15 +320,42 @@ export function ReservationForm({
       ? differenceInDays(effectiveDateRange.to, effectiveDateRange.from) + 1
       : 1;
     let tariffPrice: number;
+    let roomBreakdown: { sessionType: string; days: number; price: number }[];
     if (useDifferentTariffsPerDay && dayTariffs.length > 0) {
       tariffPrice = dayTariffs.reduce((sum, dt) => sum + (dt.price ?? 0), 0);
+      const grouped = dayTariffs.reduce(
+        (acc, dt) => {
+          const tariff = roomTariffs.find((t) => t.id === dt.roomTariffId);
+          const sessionType = tariff?.sessionType ?? "unknown";
+          if (!acc[sessionType]) {
+            acc[sessionType] = { sessionType, days: 0, price: 0 };
+          }
+          acc[sessionType].days += 1;
+          acc[sessionType].price += dt.price ?? 0;
+          return acc;
+        },
+        {} as Record<
+          string,
+          { sessionType: string; days: number; price: number }
+        >,
+      );
+      roomBreakdown = Object.values(grouped);
     } else {
       tariffPrice = (selectedTariff?.price ?? 0) * days;
+      roomBreakdown = selectedTariff
+        ? [
+            {
+              sessionType: selectedTariff.sessionType,
+              days,
+              price: tariffPrice,
+            },
+          ]
+        : [];
     }
     const servicesPrice = selectedServicesWithPax.reduce(
       (sum: number, sp: ServiceWithPax) => {
         const svc = services.find((s) => s.id === sp.serviceId);
-        return sum + (svc?.pricePerPax ?? 0) * sp.pax * days;
+        return sum + (svc?.pricePerPax ?? 0) * sp.pax;
       },
       0,
     );
@@ -336,18 +363,14 @@ export function ReservationForm({
     const subTotal = tariffPrice + servicesPrice;
     const serviceChargeAmount = subTotal * (serviceChargePercent / 100);
     const grandTotal = subTotal + serviceChargeAmount;
-    const totalPax = selectedServicesWithPax.reduce(
-      (sum: number, sp: ServiceWithPax) => sum + sp.pax,
-      0,
-    );
     return {
       tariffPrice,
       servicesPrice,
       serviceChargePercent,
       serviceChargeAmount,
       grandTotal,
-      totalPax,
       days,
+      roomBreakdown,
     };
   };
 
@@ -383,7 +406,7 @@ export function ReservationForm({
             serviceId: sp.serviceId,
             pax: sp.pax,
             unitPrice,
-            totalPrice: unitPrice * sp.pax * days,
+            totalPrice: unitPrice * sp.pax,
           };
         })
         .filter((s): s is NonNullable<typeof s> => s !== null);
@@ -1070,28 +1093,26 @@ export function ReservationForm({
                 <Label className="font-medium">Pricing Summary</Label>
               </div>
               <div className="space-y-1 text-sm">
-                {selectedTariff && (
-                  <div className="flex justify-between">
+                {pricing.roomBreakdown.map((room) => (
+                  <div key={room.sessionType} className="flex justify-between">
                     <span>
-                      Room ({selectedTariff.sessionType.replace("_", " ")}
-                      {pricing.days > 1 ? ` × ${pricing.days} days` : ""})
+                      Room ({room.sessionType.replace("_", " ")}
+                      {room.days > 1 ? ` × ${room.days} days` : ""})
                     </span>
-                    <span>${pricing.tariffPrice.toFixed(2)}</span>
+                    <span>${room.price.toFixed(2)}</span>
                   </div>
-                )}
+                ))}
                 {selectedServices.length > 0 && (
                   <div className="flex justify-between">
-                    <span>
-                      Services ({pricing.totalPax} pax
-                      {pricing.days > 1 ? ` × ${pricing.days} days` : ""})
-                    </span>
+                    <span>Total Services</span>
                     <span>${pricing.servicesPrice.toFixed(2)}</span>
                   </div>
                 )}
                 {pricing.serviceChargePercent > 0 && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>
-                      Service Charge ({pricing.serviceChargePercent}%)
+                      Service Charge ({pricing.serviceChargePercent}% of Room +
+                      Services)
                     </span>
                     <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
                   </div>

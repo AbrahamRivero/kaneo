@@ -1,6 +1,6 @@
 import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { format } from "date-fns";
-import { Banknote, CheckCheck, CheckCircle, Clock, Users } from "lucide-react";
+import { Banknote, CheckCheck, CheckCircle, Clock } from "lucide-react";
 
 interface EventCardProps {
   event: Reservation;
@@ -39,8 +39,6 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
     ? `${event.clientName} - ${event.companyName}`
     : event.clientName;
   const statusIcon = getStatusIcon(event.status);
-  const totalGuests = event.services?.reduce((sum, s) => sum + s.pax, 0) ?? 0;
-  const hasGuests = totalGuests > 0;
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
@@ -66,14 +64,6 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
           <h4 className="text-xs font-semibold text-foreground mb-1 truncate whitespace-nowrap flex-1">
             {event.title || event.clientName}
           </h4>
-          {hasGuests && (
-            <div className="flex items-center gap-0.5 shrink-0 bg-muted px-1.5 py-0.5 rounded">
-              <Users className="size-3 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground font-medium">
-                {totalGuests}
-              </span>
-            </div>
-          )}
         </div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
           {dateStr}

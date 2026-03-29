@@ -30,7 +30,6 @@ import {
   Pen,
   Phone,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -122,8 +121,6 @@ function SingleReservationSection({
 
   const dateRange = parseDateRange(reservation.dateRange);
   const dateRangeStr = formatDateRangeFromObject(dateRange);
-  const totalPax =
-    reservation.services?.reduce((sum, s) => sum + s.pax, 0) ?? 0;
   const days =
     dateRange.to && dateRange.to !== dateRange.from
       ? differenceInDays(
@@ -131,7 +128,30 @@ function SingleReservationSection({
           new Date(`${dateRange.from}T00:00:00`),
         ) + 1
       : 1;
-  const reservationServices = reservation.services ?? [];
+  const dayTariffs = reservation.dayTariffs ?? [];
+
+  const roomBreakdown =
+    dayTariffs.length > 0
+      ? Object.values(
+          dayTariffs.reduce(
+            (acc, dt) => {
+              const sessionType = dt.sessionType ?? "unknown";
+              if (!acc[sessionType]) {
+                acc[sessionType] = { sessionType, days: 0, price: 0 };
+              }
+              acc[sessionType].days += 1;
+              acc[sessionType].price += dt.price ?? 0;
+              return acc;
+            },
+            {} as Record<
+              string,
+              { sessionType: string; days: number; price: number }
+            >,
+          ),
+        )
+      : reservation.totalRoomPrice
+        ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
+        : [];
 
   const hasPricing = reservation.grandTotal != null;
 
@@ -268,12 +288,6 @@ function SingleReservationSection({
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="p-1">
-                <Users className="size-4" />
-              </div>
-              <span>{totalPax} guests</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="p-1">
                 {reservation.paymentConfirmed ? (
                   <DollarSign className="size-4 text-green-500" />
                 ) : (
@@ -302,58 +316,51 @@ function SingleReservationSection({
                 <span>Pricing</span>
               </div>
               <div className="text-xs bg-muted/50 p-3 rounded-lg space-y-2">
-                {reservation.totalRoomPrice != null &&
-                  reservation.totalRoomPrice > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Room{days > 1 ? ` (× ${days} days)` : ""}
-                      </span>
-                      <span>${reservation.totalRoomPrice.toFixed(2)}</span>
-                    </div>
-                  )}
-                {reservationServices.map((service) => (
-                  <div key={service.id} className="flex justify-between">
-                    <span className="text-muted-foreground truncate mr-2">
-                      {service.service?.name || "Service"}
-                      <span className="text-[10px] ml-1">
-                        (${service.unitPrice.toFixed(2)} × {service.pax}
-                        {days > 1 ? ` × ${days}d` : ""})
-                      </span>
+                {roomBreakdown.map((room) => (
+                  <div key={room.sessionType} className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Room ({room.sessionType.replace("_", " ")}
+                      {room.days > 1 ? ` × ${room.days} days` : ""})
                     </span>
-                    <span className="whitespace-nowrap">
-                      ${service.totalPrice.toFixed(2)}
-                    </span>
+                    <span>${room.price.toFixed(2)}</span>
                   </div>
                 ))}
-                {reservationServices.length === 0 &&
-                  (reservation.totalServicePrice ?? 0) > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Services</span>
-                      <span>
-                        ${(reservation.totalServicePrice ?? 0).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                {(reservation.serviceChargeAmount ?? 0) > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Service Charge</span>
+                {(reservation.totalServicePrice ?? 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Total Services
+                    </span>
                     <span>
-                      ${(reservation.serviceChargeAmount ?? 0).toFixed(2)}
+                      ${(reservation.totalServicePrice ?? 0).toFixed(2)}
                     </span>
                   </div>
                 )}
+                {(() => {
+                  const subTotal =
+                    (reservation.totalRoomPrice ?? 0) +
+                    (reservation.totalServicePrice ?? 0);
+                  const serviceChargePercent =
+                    subTotal > 0 && (reservation.serviceChargeAmount ?? 0) > 0
+                      ? Math.round(
+                          ((reservation.serviceChargeAmount ?? 0) / subTotal) *
+                            100,
+                        )
+                      : 0;
+                  return (reservation.serviceChargeAmount ?? 0) > 0 ? (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>
+                        Service Charge ({serviceChargePercent}% of Room +
+                        Services)
+                      </span>
+                      <span>
+                        ${(reservation.serviceChargeAmount ?? 0).toFixed(2)}
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="flex justify-between font-medium border-t pt-2 mt-1">
                   <span>Total</span>
                   <span>${(reservation.grandTotal ?? 0).toFixed(2)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground text-[10px] pt-0.5">
-                  <span>{totalPax} pax</span>
-                  {days > 1 && (
-                    <>
-                      <span className="size-0.5 rounded-full bg-muted-foreground" />
-                      <span>{days} days</span>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
