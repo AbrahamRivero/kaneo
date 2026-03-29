@@ -1,9 +1,10 @@
-import type { DateRange, Reservation } from "@/fetchers/event-room";
+import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { EventCard } from "./event-card";
 
 interface CalendarDayColumnProps {
   reservations: Reservation[];
   onEventClick: (reservations: Reservation[]) => void;
+  eventRooms: EventRoom[];
 }
 
 function parseDateRange(dateRangeStr: string): DateRange {
@@ -27,6 +28,7 @@ function sortReservations(reservations: Reservation[]) {
 export function CalendarDayColumn({
   reservations,
   onEventClick,
+  eventRooms,
 }: CalendarDayColumnProps) {
   const sortedReservations = sortReservations(reservations);
 
@@ -36,11 +38,15 @@ export function CalendarDayColumn({
       style={{ height: 2880 }}
     >
       {sortedReservations.map((reservation) => {
+        const room = eventRooms.find((r) => r.id === reservation.eventRoomId);
         return (
           <EventCard
             key={reservation.id}
             event={reservation}
             onClick={() => onEventClick([reservation])}
+            allowsMultipleReservations={
+              room?.allowsMultipleReservations ?? false
+            }
           />
         );
       })}

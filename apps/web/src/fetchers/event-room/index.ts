@@ -78,6 +78,7 @@ export type Reservation = {
   totalServicePrice?: number | null;
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
+  expectedPax?: number | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -157,6 +158,7 @@ export type UpdateReservationPayload = {
   totalServicePrice?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
+  expectedPax?: number;
   services?: {
     serviceId: string;
     pax: number;

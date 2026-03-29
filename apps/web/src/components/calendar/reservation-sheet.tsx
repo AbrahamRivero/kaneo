@@ -30,6 +30,7 @@ import {
   Pen,
   Phone,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -103,6 +104,7 @@ interface SingleReservationSectionProps {
   index: number;
   total: number;
   workspaceId: string;
+  eventRooms: EventRoom[];
   onDeleteSuccess: () => void;
 }
 
@@ -112,6 +114,7 @@ function SingleReservationSection({
   index,
   total,
   workspaceId,
+  eventRooms,
   onDeleteSuccess,
 }: SingleReservationSectionProps) {
   const navigate = useNavigate();
@@ -307,6 +310,16 @@ function SingleReservationSection({
                 )}
               </span>
             </div>
+            {eventRooms.find((r) => r.id === reservation.eventRoomId)
+              ?.allowsMultipleReservations &&
+              (reservation.expectedPax ?? 0) > 0 && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="p-1">
+                    <Users className="size-4" />
+                  </div>
+                  <span>Expected Pax: {reservation.expectedPax}</span>
+                </div>
+              )}
           </div>
 
           {hasPricing && (
@@ -470,6 +483,7 @@ export function EventSheet({
                   index={index}
                   total={reservations.length}
                   workspaceId={workspaceId}
+                  eventRooms={eventRooms}
                   onDeleteSuccess={handleDeleteSuccess}
                 />
               ))}

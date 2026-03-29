@@ -109,6 +109,7 @@ const eventRoom = new Hono<{
         totalServicePrice: z.number().optional(),
         serviceChargeAmount: z.number().optional(),
         grandTotal: z.number().optional(),
+        expectedPax: z.number().optional(),
         services: z
           .array(
             z.object({
@@ -172,6 +173,7 @@ const eventRoom = new Hono<{
         totalServicePrice: z.number().optional(),
         serviceChargeAmount: z.number().optional(),
         grandTotal: z.number().optional(),
+        expectedPax: z.number().optional(),
         services: z
           .array(
             z.object({

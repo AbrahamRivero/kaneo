@@ -43,6 +43,7 @@ export type CreateReservationPayload = {
   totalServicePrice?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
+  expectedPax?: number;
   services?: ReservationServicePayload[];
   dayTariffs?: DayTariffPayload[];
 };
@@ -62,6 +63,7 @@ export type UpdateReservationPayload = {
   totalServicePrice?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
+  expectedPax?: number;
   status?: "all" | "pending" | "confirmed" | "completed";
   services?: ReservationServicePayload[];
   dayTariffs?: DayTariffPayload[];
@@ -247,6 +249,7 @@ async function createReservation(
       totalServicePrice: payload.totalServicePrice,
       serviceChargeAmount: payload.serviceChargeAmount,
       grandTotal: payload.grandTotal,
+      expectedPax: payload.expectedPax,
     })
     .returning();
 
@@ -383,6 +386,7 @@ async function getReservations(
       totalServicePrice: reservationTable.totalServicePrice,
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
+      expectedPax: reservationTable.expectedPax,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
@@ -549,6 +553,7 @@ async function getReservation(userId: string, reservationId: string) {
       totalServicePrice: reservationTable.totalServicePrice,
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
+      expectedPax: reservationTable.expectedPax,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,

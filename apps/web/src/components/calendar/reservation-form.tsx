@@ -84,6 +84,7 @@ export type ReservationFormValues = {
     roomTariffId: string;
     price: number;
   }[];
+  expectedPax?: number;
   status?: "all" | "pending" | "confirmed" | "completed";
 };
 
@@ -123,6 +124,7 @@ const reservationSchema = z
         }),
       )
       .optional(),
+    expectedPax: z.number().optional(),
     status: z.enum(["all", "pending", "confirmed", "completed"]).default("all"),
   })
   .refine(
@@ -150,6 +152,7 @@ interface ReservationFormProps {
     roomTariffId?: string | null;
     services?: { serviceId: string; pax: number }[] | null;
     dayTariffs?: { date: string; roomTariffId: string; price: number }[] | null;
+    expectedPax?: number | null;
     status?: string | null;
   } | null;
   onSuccess?: () => void;
@@ -223,6 +226,7 @@ export function ReservationForm({
       roomTariffId: initialData?.roomTariffId || undefined,
       services: initialData?.services || [],
       dayTariffs: initialData?.dayTariffs || [],
+      expectedPax: initialData?.expectedPax ?? 0,
     },
   });
 
@@ -248,6 +252,7 @@ export function ReservationForm({
         roomTariffId: initialData.roomTariffId || undefined,
         services: initialData.services || [],
         dayTariffs: initialData.dayTariffs || [],
+        expectedPax: initialData.expectedPax ?? 0,
       });
     }
   }, [initialData, form.reset]);
@@ -277,7 +282,12 @@ export function ReservationForm({
   const selectedEventRoomId = form.watch("eventRoomId");
   const filteredTariffs = selectedEventRoomId
     ? roomTariffs.filter((tariff) => tariff.eventRoomId === selectedEventRoomId)
-    : roomTariffs;
+    : [];
+  const selectedEventRoom = eventRooms.find(
+    (r) => r.id === selectedEventRoomId,
+  );
+  const allowsMultipleReservations =
+    selectedEventRoom?.allowsMultipleReservations ?? false;
 
   const selectedTariffId = form.watch("roomTariffId");
   const selectedServicesWithPax = form.watch("services") || [];
@@ -430,6 +440,7 @@ export function ReservationForm({
         totalServicePrice: pricing.servicesPrice || undefined,
         serviceChargeAmount: pricing.serviceChargeAmount || undefined,
         grandTotal: pricing.grandTotal || undefined,
+        expectedPax: restFormData.expectedPax || 0,
       };
 
       if (reservationId) {
@@ -669,6 +680,24 @@ export function ReservationForm({
               )}
             />
           </div>
+
+          {allowsMultipleReservations && (
+            <div className="grid gap-2">
+              <Label htmlFor="expectedPax">Expected Pax</Label>
+              <Input
+                id="expectedPax"
+                type="number"
+                min="0"
+                placeholder="Expected number of guests"
+                {...form.register("expectedPax", {
+                  valueAsNumber: true,
+                })}
+              />
+              <span className="text-xs text-muted-foreground">
+                Number of expected guests for this reservation
+              </span>
+            </div>
+          )}
 
           <div className="grid gap-2">
             <Label htmlFor="roomTariff">Room Tariff</Label>

@@ -1,11 +1,12 @@
 import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { format } from "date-fns";
-import { Banknote, CheckCheck, CheckCircle, Clock } from "lucide-react";
+import { Banknote, CheckCheck, CheckCircle, Clock, Users } from "lucide-react";
 
 interface EventCardProps {
   event: Reservation;
   onClick?: () => void;
   style?: React.CSSProperties;
+  allowsMultipleReservations?: boolean;
 }
 
 function getStatusIcon(status?: string) {
@@ -29,7 +30,12 @@ function parseDateRange(dateRangeStr: string): DateRange {
   }
 }
 
-export function EventCard({ event, onClick, style }: EventCardProps) {
+export function EventCard({
+  event,
+  onClick,
+  style,
+  allowsMultipleReservations,
+}: EventCardProps) {
   const dateRange = parseDateRange(event.dateRange);
   const dateStr =
     dateRange.from === dateRange.to || !dateRange.to
@@ -77,6 +83,12 @@ export function EventCard({ event, onClick, style }: EventCardProps) {
         <p className="text-[11px] text-muted-foreground font-semibold truncate">
           {event.roomName}
         </p>
+        {allowsMultipleReservations && (event.expectedPax ?? 0) > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Users className="size-3" />
+            <span>{event.expectedPax}</span>
+          </div>
+        )}
       </div>
     </div>
   );

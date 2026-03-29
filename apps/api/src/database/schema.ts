@@ -370,6 +370,7 @@ export const reservationTable = pgTable("reservation", {
   totalServicePrice: integer("total_service_price"),
   serviceChargeAmount: integer("service_charge_amount"),
   grandTotal: integer("grand_total"),
+  expectedPax: integer("expected_pax").default(0),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
