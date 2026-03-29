@@ -2,9 +2,9 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import eventRoomController from "./controllers/event-room";
-import * as gastronomicServiceController from "./controllers/gastronomic-service";
 import reservationController from "./controllers/reservation";
 import * as roomTariffController from "./controllers/room-tariff";
+import * as serviceController from "./controllers/service";
 
 const eventRoom = new Hono<{
   Variables: {
@@ -214,12 +214,12 @@ const eventRoom = new Hono<{
     return c.json(result);
   })
 
-  .get("/:workspaceId/gastronomic-services", async (c) => {
+  .get("/:workspaceId/services", async (c) => {
     const workspaceId = c.req.param("workspaceId");
     const userId = c.get("userId");
     const page = c.req.query("page");
     const limit = c.req.query("limit");
-    const services = await gastronomicServiceController.getGastronomicServices(
+    const services = await serviceController.getServices(
       workspaceId,
       userId,
       page ? Number.parseInt(page) : undefined,
@@ -229,7 +229,7 @@ const eventRoom = new Hono<{
   })
 
   .post(
-    "/gastronomic-services",
+    "/services",
     zValidator(
       "json",
       z.object({
@@ -243,25 +243,20 @@ const eventRoom = new Hono<{
     async (c) => {
       const userId = c.get("userId");
       const body = c.req.valid("json");
-      const service =
-        await gastronomicServiceController.createGastronomicService(
-          userId,
-          body,
-        );
+      const service = await serviceController.createService(userId, body);
       return c.json(service);
     },
   )
 
-  .get("/gastronomic-services/:id", async (c) => {
+  .get("/services/:id", async (c) => {
     const userId = c.get("userId");
     const id = c.req.param("id");
-    const service =
-      await gastronomicServiceController.getGastronomicServiceById(userId, id);
+    const service = await serviceController.getServiceById(userId, id);
     return c.json(service);
   })
 
   .put(
-    "/gastronomic-services/:id",
+    "/services/:id",
     zValidator(
       "json",
       z.object({
@@ -275,23 +270,15 @@ const eventRoom = new Hono<{
       const userId = c.get("userId");
       const id = c.req.param("id");
       const body = c.req.valid("json");
-      const service =
-        await gastronomicServiceController.updateGastronomicService(
-          userId,
-          id,
-          body,
-        );
+      const service = await serviceController.updateService(userId, id, body);
       return c.json(service);
     },
   )
 
-  .delete("/gastronomic-services/:id", async (c) => {
+  .delete("/services/:id", async (c) => {
     const userId = c.get("userId");
     const id = c.req.param("id");
-    const result = await gastronomicServiceController.deleteGastronomicService(
-      userId,
-      id,
-    );
+    const result = await serviceController.deleteService(userId, id);
     return c.json(result);
   })
 

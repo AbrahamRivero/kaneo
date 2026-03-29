@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
-import type { GastronomicService } from "@/types/event-room";
+import type { Service } from "@/types/event-room";
 import {
   CalendarDays,
   ChevronLeft,
@@ -27,13 +27,13 @@ import {
 const PAGE_SIZES = [5, 10, 15, 25];
 
 export interface ServicesTableProps {
-  services: GastronomicService[];
+  services: Service[];
   total: number;
   page: number;
   limit: number;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
-  onEdit: (service: GastronomicService) => void;
+  onEdit: (service: Service) => void;
   onDelete: (id: string) => void;
 }
 

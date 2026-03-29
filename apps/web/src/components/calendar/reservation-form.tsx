@@ -895,7 +895,7 @@ export function ReservationForm({
           >
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Select Gastronomic Services</DialogTitle>
+                <DialogTitle>Select Additional Services</DialogTitle>
                 <DialogDescription>
                   Search and select the services for this reservation.
                 </DialogDescription>

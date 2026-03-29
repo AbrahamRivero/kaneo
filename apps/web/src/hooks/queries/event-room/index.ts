@@ -62,18 +62,6 @@ export function useGetServiceById(id?: string) {
   });
 }
 
-export function useGetGastronomicServices(
-  workspaceId: string,
-  page = 1,
-  limit = 10,
-) {
-  return useGetServices(workspaceId, page, limit);
-}
-
-export function useGetGastronomicServiceById(id?: string) {
-  return useGetServiceById(id);
-}
-
 export function useGetRoomTariffs(workspaceId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ["room-tariffs", workspaceId, page, limit],

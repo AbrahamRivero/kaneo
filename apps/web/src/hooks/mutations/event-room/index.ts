@@ -124,14 +124,14 @@ export function useCreateService() {
   return useMutation({
     mutationFn: createService,
     onSuccess: async (data) => {
-      toast.success("Gastronomic service created successfully");
+      toast.success("Service created successfully");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-services"],
+          queryKey: ["services"],
           refetchType: "all",
         }),
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-service", data.id],
+          queryKey: ["service", data.id],
           refetchType: "all",
         }),
       ]);
@@ -154,14 +154,14 @@ export function useUpdateService() {
       payload: Parameters<typeof updateService>[1];
     }) => updateService(id, payload),
     onSuccess: async (_data, variables) => {
-      toast.success("Gastronomic service updated successfully");
+      toast.success("Service updated successfully");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-services"],
+          queryKey: ["services"],
           refetchType: "all",
         }),
         queryClient.invalidateQueries({
-          queryKey: ["gastronomic-service", variables.id],
+          queryKey: ["service", variables.id],
           refetchType: "all",
         }),
       ]);
@@ -178,9 +178,9 @@ export function useDeleteService() {
   return useMutation({
     mutationFn: deleteService,
     onSuccess: async () => {
-      toast.success("Gastronomic service deleted successfully");
+      toast.success("Service deleted successfully");
       await queryClient.invalidateQueries({
-        queryKey: ["gastronomic-services"],
+        queryKey: ["services"],
         refetchType: "all",
       });
     },

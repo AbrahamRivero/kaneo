@@ -42,7 +42,7 @@ function PricingServicesRoute() {
 
   if (isLoadingWorkspace) {
     return (
-      <WorkspaceLayout title="Gastronomic Services">
+      <WorkspaceLayout title="Additional Services">
         <div className="p-6">Loading...</div>
       </WorkspaceLayout>
     );
@@ -55,7 +55,7 @@ function PricingServicesRoute() {
 
   if (!eventRoomsEnabled) {
     return (
-      <WorkspaceLayout title="Gastronomic Services">
+      <WorkspaceLayout title="Additional Services">
         <div className="p-6 text-center text-muted-foreground">
           <p>Event rooms module is not enabled for this workspace.</p>
         </div>
@@ -67,11 +67,11 @@ function PricingServicesRoute() {
   const total = servicesData?.total ?? 0;
 
   return (
-    <WorkspaceLayout title="Gastronomic Services">
+    <WorkspaceLayout title="Additional Services">
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">Gastronomic Services</h1>
+            <h1 className="text-2xl font-semibold">Additional Services</h1>
             <p className="text-muted-foreground mt-1">
               Manage all services offered for event room reservations
             </p>

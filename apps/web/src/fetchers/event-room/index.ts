@@ -348,7 +348,7 @@ export const getServices = async (
     page: page.toString(),
     limit: limit.toString(),
   });
-  const url = `${base ? base : ""}/event-room/${workspaceId}/gastronomic-services?${params}`;
+  const url = `${base ? base : ""}/event-room/${workspaceId}/services?${params}`;
   const response = await fetch(url, { credentials: "include" });
 
   if (!response.ok) {
@@ -360,7 +360,7 @@ export const getServices = async (
 };
 
 export const getServiceById = async (id: string): Promise<Service> => {
-  const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
+  const url = `${base ? base : ""}/event-room/services/${id}`;
   const response = await fetch(url, { credentials: "include" });
 
   if (!response.ok) {
@@ -374,7 +374,7 @@ export const getServiceById = async (id: string): Promise<Service> => {
 export const createService = async (
   payload: Omit<Service, "id" | "createdAt" | "updatedAt">,
 ): Promise<Service> => {
-  const url = `${base ? base : ""}/event-room/gastronomic-services`;
+  const url = `${base ? base : ""}/event-room/services`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -396,7 +396,7 @@ export const updateService = async (
     Omit<Service, "id" | "workspaceId" | "createdAt" | "updatedAt">
   >,
 ): Promise<Service> => {
-  const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
+  const url = `${base ? base : ""}/event-room/services/${id}`;
   const response = await fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -415,7 +415,7 @@ export const updateService = async (
 export const deleteService = async (
   id: string,
 ): Promise<{ success: boolean }> => {
-  const url = `${base ? base : ""}/event-room/gastronomic-services/${id}`;
+  const url = `${base ? base : ""}/event-room/services/${id}`;
   const response = await fetch(url, {
     method: "DELETE",
     credentials: "include",

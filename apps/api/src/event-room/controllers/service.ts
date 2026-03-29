@@ -56,7 +56,7 @@ export interface PaginatedServices {
   limit: number;
 }
 
-export async function getGastronomicServices(
+export async function getServices(
   workspaceId: string,
   userId?: string,
   page = 1,
@@ -113,10 +113,7 @@ export async function getGastronomicServices(
   };
 }
 
-export async function getGastronomicServiceById(
-  userId: string,
-  serviceId: string,
-) {
+export async function getServiceById(userId: string, serviceId: string) {
   const [service] = await db
     .select()
     .from(serviceTable)
@@ -156,7 +153,7 @@ export async function getGastronomicServiceById(
   return maskPrice(service, isViewer);
 }
 
-export async function createGastronomicService(
+export async function createService(
   userId: string,
   payload: CreateServicePayload,
 ) {
@@ -204,7 +201,7 @@ export async function createGastronomicService(
   return service;
 }
 
-export async function updateGastronomicService(
+export async function updateService(
   userId: string,
   serviceId: string,
   payload: UpdateServicePayload,
@@ -261,10 +258,7 @@ export async function updateGastronomicService(
   return updated;
 }
 
-export async function deleteGastronomicService(
-  userId: string,
-  serviceId: string,
-) {
+export async function deleteService(userId: string, serviceId: string) {
   const [service] = await db
     .select()
     .from(serviceTable)
