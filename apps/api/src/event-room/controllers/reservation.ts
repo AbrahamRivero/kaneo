@@ -1,4 +1,4 @@
-import { type SQL, and, eq, gte, lte, ne, or } from "drizzle-orm";
+import { type SQL, and, eq, ne, or, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
@@ -347,17 +347,14 @@ async function getReservations(
     conditions = and(
       conditions,
       and(
-        gte(reservationTable.dateRange, startDate),
-        lte(reservationTable.dateRange, endDate),
+        sql`(${reservationTable.dateRange}::jsonb->>'from') <= ${endDate}`,
+        sql`(COALESCE((${reservationTable.dateRange}::jsonb->>'to'), ${reservationTable.dateRange}::jsonb->>'from')) >= ${startDate}`,
       ),
     ) as SQL<unknown>;
   } else if (startDate) {
     conditions = and(
       conditions,
-      and(
-        gte(reservationTable.dateRange, startDate),
-        lte(reservationTable.dateRange, startDate),
-      ),
+      sql`(${reservationTable.dateRange}::jsonb->>'from') = ${startDate}`,
     ) as SQL<unknown>;
   }
 

@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -50,15 +55,25 @@ import { useCalendarStore } from "@/store/calendar-store";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { differenceInDays, format } from "date-fns";
 import {
+  CalendarDays,
   Calendar as CalendarIcon,
+  ChevronDown,
+  ChevronUp,
+  FileText,
   Plus,
   Search,
+  User,
   UtensilsCrossed,
+  Wallet,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
+
+const capitalizeWords = (str: string): string => {
+  return str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 export type DateRange = { from: Date; to?: Date };
 
@@ -205,6 +220,29 @@ export function ReservationForm({
   );
   const servicesLimit = 10;
 
+  const [openSections, setOpenSections] = useState({
+    client: true,
+    event: true,
+    tariff: false,
+    services: true,
+    extras: false,
+  });
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const sectionFields: Record<
+    keyof typeof openSections,
+    (keyof ReservationFormValues)[]
+  > = {
+    client: ["clientName", "companyName", "email", "phone"],
+    event: ["eventRoomId", "status", "title", "expectedPax"],
+    tariff: ["roomTariffId"],
+    services: [],
+    extras: ["notes", "paymentConfirmed"],
+  };
+
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
 
@@ -229,6 +267,35 @@ export function ReservationForm({
       expectedPax: initialData?.expectedPax ?? 0,
     },
   });
+
+  const hasErrorInSection = (section: keyof typeof sectionFields): boolean => {
+    const fields = sectionFields[section];
+    return fields.some((field) => !!form.formState.errors[field]);
+  };
+
+  useEffect(() => {
+    const errors = form.formState.errors;
+    const errorFields = Object.keys(errors) as (keyof ReservationFormValues)[];
+
+    if (errorFields.length > 0) {
+      for (const [section, fields] of Object.entries(sectionFields)) {
+        const hasError = fields.some((field) => errorFields.includes(field));
+        if (hasError) {
+          const sectionKey = section as keyof typeof openSections;
+          if (!openSections[sectionKey]) {
+            setOpenSections((prev) => ({ ...prev, [sectionKey]: true }));
+          }
+          const firstErrorField = fields.find((field) => errors[field]);
+          if (firstErrorField) {
+            setTimeout(() => {
+              form.setFocus(firstErrorField);
+            }, 100);
+          }
+          break;
+        }
+      }
+    }
+  }, [form.formState.errors, form.setFocus, openSections]);
 
   useEffect(() => {
     if (initialData) {
@@ -469,115 +536,234 @@ export function ReservationForm({
   const isEditing = Boolean(reservationId);
   const isPending = createReservation.isPending || updateReservation.isPending;
 
+  const SectionCard = ({
+    open,
+    onToggle,
+    icon: Icon,
+    title,
+    children,
+    badge,
+    hasError,
+  }: {
+    open: boolean;
+    onToggle: () => void;
+    icon: React.ElementType;
+    title: string;
+    children: React.ReactNode;
+    badge?: React.ReactNode;
+    hasError?: boolean;
+  }) => (
+    <div
+      className={cn(
+        "border rounded-lg bg-card overflow-hidden transition-colors",
+        hasError && "border-red-500 ring-1 ring-red-500",
+      )}
+    >
+      <Collapsible open={open} onOpenChange={onToggle}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors",
+              hasError && "bg-red-50",
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "p-2 rounded-lg",
+                  hasError ? "bg-red-100" : "bg-primary/10",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "size-5",
+                    hasError ? "text-red-600" : "text-primary",
+                  )}
+                />
+              </div>
+              <span
+                className={cn(
+                  "font-medium text-lg",
+                  hasError && "text-red-700",
+                )}
+              >
+                {title}
+              </span>
+              {badge}
+            </div>
+            {open ? (
+              <ChevronUp className="size-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="size-5 text-muted-foreground" />
+            )}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 pt-2 space-y-4">{children}</div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmitHandler)}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
-        <div className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              placeholder="Event title"
-              {...form.register("title")}
-            />
+    <form
+      onSubmit={form.handleSubmit(onSubmitHandler)}
+      className="space-y-4 py-4"
+    >
+      <Collapsible
+        open={openSections.client}
+        onOpenChange={() => toggleSection("client")}
+      >
+        <SectionCard
+          open={openSections.client}
+          onToggle={() => toggleSection("client")}
+          icon={User}
+          title="Client"
+          hasError={hasErrorInSection("client")}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="clientName">Client Name *</Label>
+              <Input
+                id="clientName"
+                placeholder="Full name"
+                {...form.register("clientName")}
+              />
+              {form.formState.errors.clientName && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.clientName.message as string}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="companyName">Company</Label>
+              <Input
+                id="companyName"
+                placeholder="Company name"
+                {...form.register("companyName")}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                {...form.register("email")}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.email.message as string}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+53 5xxxxxxx"
+                {...form.register("phone")}
+              />
+            </div>
+          </div>
+        </SectionCard>
+      </Collapsible>
+
+      <Collapsible
+        open={openSections.event}
+        onOpenChange={() => toggleSection("event")}
+      >
+        <SectionCard
+          open={openSections.event}
+          onToggle={() => toggleSection("event")}
+          icon={CalendarDays}
+          title="Event"
+          hasError={hasErrorInSection("event")}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Event Title</Label>
+              <Input
+                id="title"
+                placeholder="Reservation title"
+                {...form.register("title")}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="eventRoom">Event Room *</Label>
+              <Select
+                value={form.watch("eventRoomId") || ""}
+                onValueChange={(value) => form.setValue("eventRoomId", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select room" />
+                </SelectTrigger>
+                <SelectContent>
+                  {eventRooms.map((room) => (
+                    <SelectItem key={room.id} value={room.id}>
+                      {room.name} ({room.capacity} Guests)
+                      {room.allowsMultipleReservations && " - Multiple"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.eventRoomId && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.eventRoomId.message as string}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={form.watch("status") || "pending"}
+                onValueChange={(value) =>
+                  form.setValue(
+                    "status",
+                    value as "pending" | "confirmed" | "completed",
+                  )
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Payment Status</Label>
+              <div className="flex items-center gap-3 h-10">
+                <Controller
+                  control={form.control}
+                  name="paymentConfirmed"
+                  render={({ field }) => (
+                    <Switch
+                      id="paymentConfirmed"
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {form.watch("paymentConfirmed") ? "Paid" : "Pending payment"}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="eventRoom">Event Room *</Label>
-            <Select
-              value={form.watch("eventRoomId") || ""}
-              onValueChange={(value) => form.setValue("eventRoomId", value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select event room" />
-              </SelectTrigger>
-              <SelectContent>
-                {eventRooms.map((room) => (
-                  <SelectItem key={room.id} value={room.id}>
-                    {room.name} (Capacity: {room.capacity})
-                    {room.allowsMultipleReservations && " - Mult"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.eventRoomId && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.eventRoomId.message as string}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={form.watch("status") || "pending"}
-              onValueChange={(value) =>
-                form.setValue(
-                  "status",
-                  value as "pending" | "confirmed" | "completed",
-                )
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="clientName">Client Name *</Label>
-            <Input
-              id="clientName"
-              placeholder="Client name"
-              {...form.register("clientName")}
-            />
-            {form.formState.errors.clientName && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.clientName.message as string}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="companyName">Company</Label>
-            <Input
-              id="companyName"
-              placeholder="Company name"
-              {...form.register("companyName")}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="email@example.com"
-              {...form.register("email")}
-            />
-            {form.formState.errors.email && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.email.message as string}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+53 5xxxxxxx"
-              {...form.register("phone")}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="grid gap-2">
               <Label htmlFor="dateFrom">From</Label>
               <Popover
@@ -659,30 +845,8 @@ export function ReservationForm({
             </div>
           </div>
 
-          <div className="flex items-center justify-between py-2">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="paymentConfirmed" className="text-sm font-medium">
-                Payment Confirmed
-              </Label>
-              <span className="text-xs text-muted-foreground">
-                Indicates if paid
-              </span>
-            </div>
-            <Controller
-              control={form.control}
-              name="paymentConfirmed"
-              render={({ field }) => (
-                <Switch
-                  id="paymentConfirmed"
-                  checked={field.value ?? false}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-          </div>
-
           {allowsMultipleReservations && (
-            <div className="grid gap-2">
+            <div className="grid gap-2 mt-4 max-w-xs">
               <Label htmlFor="expectedPax">Expected Pax</Label>
               <Input
                 id="expectedPax"
@@ -698,137 +862,182 @@ export function ReservationForm({
               </span>
             </div>
           )}
+        </SectionCard>
+      </Collapsible>
 
-          <div className="grid gap-2">
-            <Label htmlFor="roomTariff">Room Tariff</Label>
-            <Select
-              value={form.watch("roomTariffId") || ""}
-              onValueChange={(value) =>
-                form.setValue("roomTariffId", value || undefined)
-              }
-              disabled={!selectedEventRoomId || filteredTariffs.length === 0}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    !selectedEventRoomId
-                      ? "Select a room first"
-                      : filteredTariffs.length === 0
-                        ? "No tariffs"
-                        : "Select tariff (optional)"
+      <Collapsible
+        open={openSections.tariff}
+        onOpenChange={() => toggleSection("tariff")}
+      >
+        <SectionCard
+          open={openSections.tariff}
+          onToggle={() => toggleSection("tariff")}
+          icon={Wallet}
+          title="Rate"
+          hasError={hasErrorInSection("tariff")}
+          badge={
+            selectedTariff && (
+              <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
+                $
+                {pricing.days > 1 && useDifferentTariffsPerDay
+                  ? pricing.tariffPrice.toFixed(2)
+                  : pricing.days > 1
+                    ? ((selectedTariff?.price ?? 0) * pricing.days).toFixed(2)
+                    : (selectedTariff?.price ?? 0)}
+              </span>
+            )
+          }
+        >
+          <div className="grid gap-4">
+            {(!useDifferentTariffsPerDay || pricing.days === 1) && (
+              <div className="grid gap-2">
+                <Label htmlFor="roomTariff">Room Rate</Label>
+                <Select
+                  value={form.watch("roomTariffId") || ""}
+                  onValueChange={(value) =>
+                    form.setValue("roomTariffId", value || undefined)
                   }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredTariffs.map((tariff) => (
-                  <SelectItem key={tariff.id} value={tariff.id}>
-                    {tariff.sessionType.replace("_", " ")} -{" "}
-                    {tariff.price ? `$${tariff.price}` : "No price"}
-                    {tariff.serviceChargePercent > 0 &&
-                      ` (+${tariff.serviceChargePercent}% svc)`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {pricing.days > 1 && (
-            <div className="flex items-center justify-between py-2">
-              <div className="flex flex-col gap-1">
-                <Label
-                  htmlFor="useDifferentTariffsPerDay"
-                  className="text-sm font-medium"
+                  disabled={
+                    !selectedEventRoomId || filteredTariffs.length === 0
+                  }
                 >
-                  Different tariffs per day
-                </Label>
-                <span className="text-xs text-muted-foreground">
-                  Enable to set different tariff for each day
-                </span>
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        !selectedEventRoomId
+                          ? "Select a room first"
+                          : filteredTariffs.length === 0
+                            ? "No tariffs available"
+                            : "Select tariff"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredTariffs.map((tariff) => (
+                      <SelectItem key={tariff.id} value={tariff.id}>
+                        {capitalizeWords(tariff.sessionType)}:{" "}
+                        {tariff.price ? `$${tariff.price}/Day` : "No price"}
+                        {tariff.serviceChargePercent > 0 &&
+                          ` (+${tariff.serviceChargePercent}% Service)`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Switch
-                id="useDifferentTariffsPerDay"
-                checked={useDifferentTariffsPerDay}
-                onCheckedChange={(checked) => {
-                  setUseDifferentTariffsPerDay(checked);
-                  if (checked && dayTariffs.length === 0 && selectedTariffId) {
-                    const initialDayTariffs = daysInRange.map((date) => ({
-                      date,
-                      roomTariffId: selectedTariffId,
-                      price: selectedTariff?.price ?? 0,
-                    }));
-                    setDayTariffs(initialDayTariffs);
-                  }
-                }}
-              />
-            </div>
-          )}
+            )}
 
-          {pricing.days > 1 && useDifferentTariffsPerDay && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Tariff per day</Label>
-              {daysInRange.map((date) => {
-                const currentTariff = dayTariffs.find((dt) => dt.date === date);
-                const tariffOptions = filteredTariffs.map((tariff) => (
-                  <SelectItem key={tariff.id} value={tariff.id}>
-                    {tariff.sessionType} - ${tariff.price}
-                  </SelectItem>
-                ));
-                return (
-                  <div key={date} className="flex items-center gap-2">
-                    <span className="w-24 text-sm text-muted-foreground">
-                      {format(new Date(`${date}T00:00:00`), "MMM dd")}
-                    </span>
-                    <Select
-                      value={currentTariff?.roomTariffId || ""}
-                      onValueChange={(roomTariffId) => {
-                        const tariff = roomTariffs.find(
-                          (t) => t.id === roomTariffId,
-                        );
-                        const newDayTariffs = [...dayTariffs];
-                        const existingIndex = newDayTariffs.findIndex(
-                          (dt) => dt.date === date,
-                        );
-                        const dayTariffEntry = {
-                          date,
-                          roomTariffId,
-                          price: tariff?.price ?? 0,
-                        };
-                        if (existingIndex >= 0) {
-                          newDayTariffs[existingIndex] = dayTariffEntry;
-                        } else {
-                          newDayTariffs.push(dayTariffEntry);
-                        }
-                        setDayTariffs(newDayTariffs);
-                      }}
-                    >
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select tariff" />
-                      </SelectTrigger>
-                      <SelectContent>{tariffOptions}</SelectContent>
-                    </Select>
-                    <span className="text-sm text-muted-foreground w-16 text-right">
-                      ${currentTariff?.price ?? 0}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+            {pricing.days > 1 && (
+              <div className="flex items-center justify-between py-2 border-t">
+                <div className="flex flex-col gap-1">
+                  <Label
+                    htmlFor="useDifferentTariffsPerDay"
+                    className="text-sm font-medium"
+                  >
+                    Different rates per day
+                  </Label>
+                  <span className="text-xs text-muted-foreground">
+                    Enable to set different rate each day
+                  </span>
+                </div>
+                <Switch
+                  id="useDifferentTariffsPerDay"
+                  checked={useDifferentTariffsPerDay}
+                  onCheckedChange={(checked) => {
+                    setUseDifferentTariffsPerDay(checked);
+                    if (
+                      checked &&
+                      dayTariffs.length === 0 &&
+                      selectedTariffId
+                    ) {
+                      const initialDayTariffs = daysInRange.map((date) => ({
+                        date,
+                        roomTariffId: selectedTariffId,
+                        price: selectedTariff?.price ?? 0,
+                      }));
+                      setDayTariffs(initialDayTariffs);
+                    }
+                  }}
+                />
+              </div>
+            )}
 
-          <div className="grid gap-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Additional notes"
-              {...form.register("notes")}
-            />
+            {pricing.days > 1 && useDifferentTariffsPerDay && (
+              <div className="space-y-2 border-t pt-4">
+                <Label className="text-sm font-medium">Rate per day</Label>
+                {daysInRange.map((date) => {
+                  const currentTariff = dayTariffs.find(
+                    (dt) => dt.date === date,
+                  );
+                  const tariffOptions = filteredTariffs.map((tariff) => (
+                    <SelectItem key={tariff.id} value={tariff.id}>
+                      {capitalizeWords(tariff.sessionType)}: ${tariff.price}/Day
+                    </SelectItem>
+                  ));
+                  return (
+                    <div key={date} className="flex items-center gap-2">
+                      <span className="w-24 text-sm text-muted-foreground">
+                        {format(new Date(`${date}T00:00:00`), "MMM dd")}
+                      </span>
+                      <Select
+                        value={currentTariff?.roomTariffId || ""}
+                        onValueChange={(roomTariffId) => {
+                          const tariff = roomTariffs.find(
+                            (t) => t.id === roomTariffId,
+                          );
+                          const newDayTariffs = [...dayTariffs];
+                          const existingIndex = newDayTariffs.findIndex(
+                            (dt) => dt.date === date,
+                          );
+                          const dayTariffEntry = {
+                            date,
+                            roomTariffId,
+                            price: tariff?.price ?? 0,
+                          };
+                          if (existingIndex >= 0) {
+                            newDayTariffs[existingIndex] = dayTariffEntry;
+                          } else {
+                            newDayTariffs.push(dayTariffEntry);
+                          }
+                          setDayTariffs(newDayTariffs);
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select tariff" />
+                        </SelectTrigger>
+                        <SelectContent>{tariffOptions}</SelectContent>
+                      </Select>
+                      <span className="text-sm text-muted-foreground w-16 text-right">
+                        ${currentTariff?.price ?? 0}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
+        </SectionCard>
+      </Collapsible>
 
-        <div className="space-y-4">
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <Label>Services</Label>
+      <Collapsible
+        open={openSections.services}
+        onOpenChange={() => toggleSection("services")}
+      >
+        <SectionCard
+          open={openSections.services}
+          onToggle={() => toggleSection("services")}
+          icon={UtensilsCrossed}
+          title="Additional Services"
+          hasError={hasErrorInSection("services")}
+          badge={
+            selectedServices.length > 0 && (
+              <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
+                {selectedServices.length} service(s)
+              </span>
+            )
+          }
+        >
+          <div className="grid gap-4">
+            <div className="flex justify-end">
               <Button
                 type="button"
                 variant="outline"
@@ -844,9 +1053,10 @@ export function ReservationForm({
                 Add Services
               </Button>
             </div>
+
             <button
               type="button"
-              className="border rounded-md overflow-hidden cursor-pointer hover:border-primary/50 transition-colors w-full text-left"
+              className="border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors w-full text-left p-6"
               onClick={() => {
                 setTempServices([...selectedServicesWithPax]);
                 setServicesSearch("");
@@ -855,9 +1065,9 @@ export function ReservationForm({
               }}
             >
               {selectedServices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <UtensilsCrossed className="size-8 mb-2 opacity-50" />
-                  <p className="text-sm">No services selected</p>
+                <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
+                  <UtensilsCrossed className="size-10 mb-2 opacity-40" />
+                  <p className="text-sm font-medium">No services selected</p>
                   <p className="text-xs mt-1">Click here to add services</p>
                 </div>
               ) : (
@@ -917,244 +1127,261 @@ export function ReservationForm({
               )}
             </button>
           </div>
+        </SectionCard>
+      </Collapsible>
 
-          <Dialog
-            open={servicesDialogOpen}
-            onOpenChange={setServicesDialogOpen}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Select Additional Services</DialogTitle>
-                <DialogDescription>
-                  Search and select the services for this reservation.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search services..."
-                    value={servicesSearch}
-                    onChange={(e) => {
-                      setServicesSearch(e.target.value);
-                      setServicesPage(1);
-                    }}
-                    className="pl-9"
-                  />
-                </div>
-
-                <div className="border rounded-md max-h-[350px] overflow-y-auto">
-                  {(() => {
-                    const allServices = dialogServicesData?.data ?? [];
-                    const filtered = servicesSearch
-                      ? allServices.filter(
-                          (s) =>
-                            s.name
-                              .toLowerCase()
-                              .includes(servicesSearch.toLowerCase()) ||
-                            s.description
-                              ?.toLowerCase()
-                              .includes(servicesSearch.toLowerCase()),
-                        )
-                      : allServices;
-
-                    if (filtered.length === 0) {
-                      return (
-                        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                          <Search className="size-8 mb-2 opacity-50" />
-                          <p className="text-sm">
-                            {servicesSearch
-                              ? "No services match your search"
-                              : "No services available"}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    return filtered.map((service) => (
-                      <label
-                        key={service.id}
-                        className="flex items-center justify-between p-3 hover:bg-accent border-b last:border-b-0 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={tempServices.some(
-                              (sp) => sp.serviceId === service.id,
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setTempServices((prev) => [
-                                  ...prev,
-                                  { serviceId: service.id, pax: 1 },
-                                ]);
-                              } else {
-                                setTempServices((prev) =>
-                                  prev.filter(
-                                    (sp) => sp.serviceId !== service.id,
-                                  ),
-                                );
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <div>
-                            <span className="text-sm font-medium">
-                              {service.name}
-                            </span>
-                            {service.description && (
-                              <p
-                                className="text-xs text-muted-foreground max-w-[200px] truncate"
-                                title={service.description}
-                              >
-                                {service.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {tempServices.some(
-                            (sp) => sp.serviceId === service.id,
-                          ) && (
-                            <Input
-                              type="number"
-                              min="1"
-                              className="w-16 h-8 text-sm"
-                              value={
-                                tempServices.find(
-                                  (sp) => sp.serviceId === service.id,
-                                )?.pax || 1
-                              }
-                              onChange={(e) => {
-                                const pax =
-                                  Number.parseInt(e.target.value) || 1;
-                                setTempServices((prev) =>
-                                  prev.map((sp) =>
-                                    sp.serviceId === service.id
-                                      ? { ...sp, pax }
-                                      : sp,
-                                  ),
-                                );
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          )}
-                          <span className="text-sm text-muted-foreground whitespace-nowrap">
-                            ${service.pricePerPax ?? 0}/pax
-                          </span>
-                        </div>
-                      </label>
-                    ));
-                  })()}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {tempServices.length} service(s) selected
-                  </span>
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setServicesPage((p) => p - 1)}
-                          className={
-                            servicesPage <= 1
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <span className="flex h-9 items-center px-3 text-sm text-muted-foreground">
-                          Page {servicesPage} of{" "}
-                          {dialogServicesData
-                            ? Math.ceil(
-                                dialogServicesData.total / servicesLimit,
-                              )
-                            : 1}
-                        </span>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setServicesPage((p) => p + 1)}
-                          className={
-                            !dialogServicesData ||
-                            servicesPage >=
-                              Math.ceil(
-                                dialogServicesData.total / servicesLimit,
-                              )
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setServicesDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    form.setValue("services", tempServices);
-                    setServicesDialogOpen(false);
-                  }}
-                >
-                  Confirm Selection ({tempServices.length})
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {(selectedTariff || selectedServices.length > 0) && (
-            <div className="border rounded-md p-4 bg-muted/30">
-              <div className="flex items-center gap-2 mb-3">
-                <UtensilsCrossed className="size-4" />
-                <Label className="font-medium">Pricing Summary</Label>
-              </div>
-              <div className="space-y-1 text-sm">
-                {pricing.roomBreakdown.map((room) => (
-                  <div key={room.sessionType} className="flex justify-between">
-                    <span>
-                      Room ({room.sessionType.replace("_", " ")}
-                      {room.days > 1 ? ` × ${room.days} days` : ""})
-                    </span>
-                    <span>${room.price.toFixed(2)}</span>
-                  </div>
-                ))}
-                {selectedServices.length > 0 && (
-                  <div className="flex justify-between">
-                    <span>Total Services</span>
-                    <span>${pricing.servicesPrice.toFixed(2)}</span>
-                  </div>
-                )}
-                {pricing.serviceChargePercent > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>
-                      Service Charge ({pricing.serviceChargePercent}% of Room +
-                      Services)
-                    </span>
-                    <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-medium border-t pt-2 mt-2">
-                  <span>Total</span>
-                  <span>${pricing.grandTotal.toFixed(2)}</span>
-                </div>
-              </div>
+      <Collapsible
+        open={openSections.extras}
+        onOpenChange={() => toggleSection("extras")}
+      >
+        <SectionCard
+          open={openSections.extras}
+          onToggle={() => toggleSection("extras")}
+          icon={FileText}
+          title="Additional Notes"
+          hasError={hasErrorInSection("extras")}
+        >
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Additional notes for the reservation..."
+                className="min-h-[100px]"
+                {...form.register("notes")}
+              />
             </div>
-          )}
+          </div>
+        </SectionCard>
+      </Collapsible>
+
+      <Dialog open={servicesDialogOpen} onOpenChange={setServicesDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Select Additional Services</DialogTitle>
+            <DialogDescription>
+              Search and select the services for this reservation.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search services..."
+                value={servicesSearch}
+                onChange={(e) => {
+                  setServicesSearch(e.target.value);
+                  setServicesPage(1);
+                }}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="border rounded-md max-h-[350px] overflow-y-auto">
+              {(() => {
+                const allServices = dialogServicesData?.data ?? [];
+                const filtered = servicesSearch
+                  ? allServices.filter(
+                      (s) =>
+                        s.name
+                          .toLowerCase()
+                          .includes(servicesSearch.toLowerCase()) ||
+                        s.description
+                          ?.toLowerCase()
+                          .includes(servicesSearch.toLowerCase()),
+                    )
+                  : allServices;
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                      <Search className="size-8 mb-2 opacity-50" />
+                      <p className="text-sm">
+                        {servicesSearch
+                          ? "No services match your search"
+                          : "No services available"}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return filtered.map((service) => (
+                  <label
+                    key={service.id}
+                    className="flex items-center justify-between p-3 hover:bg-accent border-b last:border-b-0 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={tempServices.some(
+                          (sp) => sp.serviceId === service.id,
+                        )}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTempServices((prev) => [
+                              ...prev,
+                              { serviceId: service.id, pax: 1 },
+                            ]);
+                          } else {
+                            setTempServices((prev) =>
+                              prev.filter((sp) => sp.serviceId !== service.id),
+                            );
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <div>
+                        <span className="text-sm font-medium">
+                          {service.name}
+                        </span>
+                        {service.description && (
+                          <p
+                            className="text-xs text-muted-foreground max-w-[200px] truncate"
+                            title={service.description}
+                          >
+                            {service.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {tempServices.some(
+                        (sp) => sp.serviceId === service.id,
+                      ) && (
+                        <Input
+                          type="number"
+                          min="1"
+                          className="w-16 h-8 text-sm"
+                          value={
+                            tempServices.find(
+                              (sp) => sp.serviceId === service.id,
+                            )?.pax || 1
+                          }
+                          onChange={(e) => {
+                            const pax = Number.parseInt(e.target.value) || 1;
+                            setTempServices((prev) =>
+                              prev.map((sp) =>
+                                sp.serviceId === service.id
+                                  ? { ...sp, pax }
+                                  : sp,
+                              ),
+                            );
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        ${service.pricePerPax ?? 0}/pax
+                      </span>
+                    </div>
+                  </label>
+                ));
+              })()}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {tempServices.length} service(s) selected
+              </span>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setServicesPage((p) => p - 1)}
+                      className={
+                        servicesPage <= 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="flex h-9 items-center px-3 text-sm text-muted-foreground">
+                      Page {servicesPage} of{" "}
+                      {dialogServicesData
+                        ? Math.ceil(dialogServicesData.total / servicesLimit)
+                        : 1}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setServicesPage((p) => p + 1)}
+                      className={
+                        !dialogServicesData ||
+                        servicesPage >=
+                          Math.ceil(dialogServicesData.total / servicesLimit)
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setServicesDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                form.setValue("services", tempServices);
+                setServicesDialogOpen(false);
+              }}
+            >
+              Confirm Selection ({tempServices.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {(selectedTariff || selectedServices.length > 0) && (
+        <div className="border rounded-lg p-4 bg-muted/30">
+          <div className="flex items-center gap-2 mb-3">
+            <UtensilsCrossed className="size-5" />
+            <Label className="font-medium text-lg">Pricing Summary</Label>
+          </div>
+          <div className="space-y-2 text-sm">
+            {pricing.roomBreakdown.map((room) => (
+              <div key={room.sessionType} className="flex justify-between">
+                <span>
+                  Room ({capitalizeWords(room.sessionType)}
+                  {room.days > 1 ? ` ${room.days} Days` : ""})
+                </span>
+                <span>${room.price.toFixed(2)}</span>
+              </div>
+            ))}
+            {selectedServices.length > 0 && (
+              <div className="flex justify-between">
+                <span>Total Services</span>
+                <span>${pricing.servicesPrice.toFixed(2)}</span>
+              </div>
+            )}
+            {pricing.serviceChargePercent > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>
+                  Service Charge ({pricing.serviceChargePercent}% of Room +
+                  Services)
+                </span>
+                <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-medium border-t pt-2 mt-2 text-lg">
+              <span>Total</span>
+              <span className="text-primary">
+                ${pricing.grandTotal.toFixed(2)}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
       <div className="flex justify-end gap-3 pt-4">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>
