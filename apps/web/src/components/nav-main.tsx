@@ -18,9 +18,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { cn } from "@/lib/cn";
 import useWorkspaceStore from "@/store/workspace";
 import { useState } from "react";
@@ -43,16 +41,12 @@ export function NavMain() {
       strict: false,
     });
 
-  const { data: workspaceData, isLoading: isWorkspaceLoading } =
-    useGetWorkspace({
-      id: currentWorkspaceId ?? "",
-    });
   const phoneBoardEnabled = Boolean(
-    (workspaceData as { phoneBoardEnabled?: boolean } | undefined)
+    (workspace as { phoneBoardEnabled?: boolean } | undefined)
       ?.phoneBoardEnabled,
   );
   const eventRoomsEnabled = Boolean(
-    (workspaceData as { eventRoomsEnabled?: boolean } | undefined)
+    (workspace as { eventRoomsEnabled?: boolean } | undefined)
       ?.eventRoomsEnabled,
   );
 
@@ -147,151 +141,143 @@ export function NavMain() {
             </SidebarMenuItem>
           ))}
 
-          {currentWorkspaceId && (
+          {workspace?.id && phoneBoardEnabled && (
             <SidebarMenuItem>
-              {isWorkspaceLoading ? (
-                <SidebarMenuSkeleton showIcon className="w-full" />
-              ) : phoneBoardEnabled ? (
-                <SidebarMenuButton
-                  asChild
-                  tooltip="Phone Board"
-                  className="w-full flex gap-2 justify-start items-start"
+              <SidebarMenuButton
+                asChild
+                tooltip="Phone Board"
+                className="w-full flex gap-2 justify-start items-start"
+              >
+                <Button
+                  onClick={() =>
+                    handleNavClick(
+                      `/dashboard/workspace/${workspace.id}/phone-board`,
+                    )
+                  }
+                  variant="ghost"
+                  className={cn(
+                    "w-full",
+                    window.location.pathname ===
+                      `/dashboard/workspace/${workspace.id}/phone-board` &&
+                      "bg-accent",
+                  )}
                 >
-                  <Button
-                    onClick={() =>
-                      handleNavClick(
-                        `/dashboard/workspace/${workspace.id}/phone-board`,
-                      )
-                    }
-                    variant="ghost"
-                    className={cn(
-                      "w-full",
-                      window.location.pathname ===
-                        `/dashboard/workspace/${workspace.id}/phone-board` &&
-                        "bg-accent",
-                    )}
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span>Phone Board</span>
-                  </Button>
-                </SidebarMenuButton>
-              ) : null}
+                  <Phone className="w-4 h-4" />
+                  <span>Phone Board</span>
+                </Button>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           )}
 
-          {currentWorkspaceId && (
+          {workspace?.id && eventRoomsEnabled && (
             <SidebarMenuItem>
-              {isWorkspaceLoading ? (
-                <SidebarMenuSkeleton showIcon className="w-full" />
-              ) : eventRoomsEnabled ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "w-full flex items-center gap-2 justify-between",
-                        window.location.pathname.includes("/event-rooms") &&
-                          "bg-accent",
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="w-4 h-4" />
-                        <span>Event Rooms</span>
-                      </div>
-                      <ChevronDown className="w-3 h-3 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleNavClick(
-                          `/dashboard/workspace/${workspace.id}/event-rooms`,
-                        )
-                      }
-                      className={cn(
-                        "cursor-pointer",
-                        window.location.pathname ===
-                          `/dashboard/workspace/${workspace.id}/event-rooms` &&
-                          "bg-accent",
-                      )}
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">Calendar</span>
-                        <span className="text-xs text-muted-foreground">
-                          View reservations
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full flex items-center gap-2 justify-between",
+                      window.location.pathname.includes("/event-rooms") &&
+                        "bg-accent",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4" />
+                      <span>Event Rooms</span>
+                    </div>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/event-rooms`,
+                      )
+                    }
+                    className={cn(
+                      "cursor-pointer",
+                      window.location.pathname ===
+                        `/dashboard/workspace/${workspace.id}/event-rooms` &&
+                        "bg-accent",
+                    )}
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Calendar</span>
+                      <span className="text-xs text-muted-foreground">
+                        View reservations
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleNavClick(
-                          `/dashboard/workspace/${workspace.id}/event-rooms/manage`,
-                        )
-                      }
-                      className={cn(
-                        "cursor-pointer",
-                        window.location.pathname.includes(
-                          "/event-rooms/manage",
-                        ) && "bg-accent",
-                      )}
-                    >
-                      <CalendarDays className="w-4 h-4 mr-2" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">Manage Rooms</span>
-                        <span className="text-xs text-muted-foreground">
-                          Create and edit rooms
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/event-rooms/manage`,
+                      )
+                    }
+                    className={cn(
+                      "cursor-pointer",
+                      window.location.pathname.includes(
+                        "/event-rooms/manage",
+                      ) && "bg-accent",
+                    )}
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Manage Rooms</span>
+                      <span className="text-xs text-muted-foreground">
+                        Create and edit rooms
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleNavClick(
-                          `/dashboard/workspace/${workspace.id}/event-rooms/pricing/services`,
-                        )
-                      }
-                      className={cn(
-                        "cursor-pointer",
-                        window.location.pathname.includes(
-                          "/event-rooms/pricing/services",
-                        ) && "bg-accent",
-                      )}
-                    >
-                      <Tag className="w-4 h-4 mr-2" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">Additional Services</span>
-                        <span className="text-xs text-muted-foreground">
-                          Manage service catalog
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/event-rooms/pricing/services`,
+                      )
+                    }
+                    className={cn(
+                      "cursor-pointer",
+                      window.location.pathname.includes(
+                        "/event-rooms/pricing/services",
+                      ) && "bg-accent",
+                    )}
+                  >
+                    <Tag className="w-4 h-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Additional Services</span>
+                      <span className="text-xs text-muted-foreground">
+                        Manage service catalog
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleNavClick(
-                          `/dashboard/workspace/${workspace.id}/event-rooms/pricing/tariffs`,
-                        )
-                      }
-                      className={cn(
-                        "cursor-pointer",
-                        window.location.pathname.includes(
-                          "/event-rooms/pricing/tariffs",
-                        ) && "bg-accent",
-                      )}
-                    >
-                      <Tag className="w-4 h-4 mr-2" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">Room Tariffs</span>
-                        <span className="text-xs text-muted-foreground">
-                          Manage room prices
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : null}
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/event-rooms/pricing/tariffs`,
+                      )
+                    }
+                    className={cn(
+                      "cursor-pointer",
+                      window.location.pathname.includes(
+                        "/event-rooms/pricing/tariffs",
+                      ) && "bg-accent",
+                    )}
+                  >
+                    <Tag className="w-4 h-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Room Tariffs</span>
+                      <span className="text-xs text-muted-foreground">
+                        Manage room prices
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </SidebarMenuItem>
           )}
 
