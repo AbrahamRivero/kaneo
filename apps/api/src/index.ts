@@ -11,10 +11,16 @@ import { auth } from "./auth";
 import config from "./config";
 import db from "./database";
 import eventRoom from "./event-room";
+import {
+  checkAndNotifyUnpaidReservations,
+  formatCurrency,
+  getDateRangeFromString,
+} from "./event-room/services/check-unpaid-reservations";
 import { publishEvent } from "./events";
 import githubIntegration from "./github-integration";
 import label from "./label";
 import notification from "./notification";
+import createNotification from "./notification/controllers/create-notification";
 import project from "./project";
 import { getPublicProject } from "./project/controllers/get-public-project";
 import search from "./search";
@@ -26,6 +32,7 @@ import purgeDemoData from "./utils/purge-demo-data";
 import workspace from "./workspace";
 import workspaceUser from "./workspace-user";
 import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users";
+import getActiveWorkspaceUsers from "./workspace-user/controllers/get-active-workspace-users";
 
 const app = new Hono<{
   Variables: {
@@ -188,6 +195,253 @@ if (isDemoMode) {
     await purgeDemoData();
   });
 }
+
+new Cron("0 9 * * *", async () => {
+  console.log("[CRON] Checking unpaid reservations at 9:00 AM...");
+  try {
+    const unpaidReservations = await checkAndNotifyUnpaidReservations();
+
+    const uniqueById = Array.from(
+      new Map(unpaidReservations.map((r) => [r.id, r])).values(),
+    );
+
+    for (const reservation of uniqueById) {
+      const dateRange = getDateRangeFromString(reservation.dateRange);
+      const dateFormatted =
+        dateRange.from === dateRange.to
+          ? dateRange.from
+          : dateRange.from + " - " + dateRange.to;
+
+      const workspaceUsers = await getActiveWorkspaceUsers(
+        reservation.workspaceId,
+      );
+
+      const daysUntilStart = reservation.daysUntilStart;
+      const currentDay = reservation.currentDay;
+      const totalDays = reservation.totalEventDays;
+
+      let dayDescription: string;
+      if (daysUntilStart > 0) {
+        dayDescription =
+          "Faltan " + daysUntilStart + " día" + (daysUntilStart > 1 ? "s" : "");
+      } else if (daysUntilStart === 0) {
+        dayDescription = "Hoy inicia";
+      } else {
+        dayDescription = "Día " + currentDay + " de " + totalDays;
+      }
+
+      const titlePrefix = reservation.title ? reservation.title + " - " : "";
+
+      const notificationTitle =
+        "Reserva sin pagar: " + titlePrefix + dayDescription;
+
+      const companyPart = reservation.companyName
+        ? " (" + reservation.companyName + ")"
+        : "";
+      const notificationContent =
+        "Cliente: " +
+        reservation.clientName +
+        companyPart +
+        "\nFecha: " +
+        dateFormatted +
+        "\nMonto: " +
+        formatCurrency(reservation.grandTotal) +
+        "\nEspacio: " +
+        reservation.eventRoomName;
+
+      const promises = workspaceUsers.map((user) =>
+        createNotification({
+          userId: user.userId,
+          title: notificationTitle,
+          content: notificationContent,
+          type: "reservation_unpaid_reminder",
+          resourceId: reservation.id,
+          resourceType: "reservation",
+        }),
+      );
+      await Promise.all(promises);
+
+      console.log(
+        "[CRON] Notified " +
+          workspaceUsers.length +
+          " users about unpaid reservation " +
+          reservation.id,
+      );
+    }
+
+    console.log(
+      "[CRON] Processed " + uniqueById.length + " unpaid reservations",
+    );
+  } catch (error) {
+    console.error("[CRON] Error checking unpaid reservations:", error);
+  }
+});
+
+new Cron("0 12 * * *", async () => {
+  console.log("[CRON] TEST - Checking unpaid reservations at 12:00 PM...");
+  try {
+    const unpaidReservations = await checkAndNotifyUnpaidReservations();
+
+    const uniqueById = Array.from(
+      new Map(unpaidReservations.map((r) => [r.id, r])).values(),
+    );
+
+    console.log(
+      "[CRON] TEST - Found " + uniqueById.length + " unpaid reservations",
+    );
+
+    for (const reservation of uniqueById) {
+      const dateRange = getDateRangeFromString(reservation.dateRange);
+      const dateFormatted =
+        dateRange.from === dateRange.to
+          ? dateRange.from
+          : dateRange.from + " - " + dateRange.to;
+
+      const workspaceUsers = await getActiveWorkspaceUsers(
+        reservation.workspaceId,
+      );
+
+      const daysUntilStart = reservation.daysUntilStart;
+      const currentDay = reservation.currentDay;
+      const totalDays = reservation.totalEventDays;
+
+      let dayDescription: string;
+      if (daysUntilStart > 0) {
+        dayDescription =
+          "Faltan " + daysUntilStart + " día" + (daysUntilStart > 1 ? "s" : "");
+      } else if (daysUntilStart === 0) {
+        dayDescription = "Hoy inicia";
+      } else {
+        dayDescription = "Día " + currentDay + " de " + totalDays;
+      }
+
+      const titlePrefix = reservation.title ? reservation.title + " - " : "";
+
+      const notificationTitle =
+        "Reserva sin pagar: " + titlePrefix + dayDescription;
+
+      const companyPart = reservation.companyName
+        ? " (" + reservation.companyName + ")"
+        : "";
+      const notificationContent =
+        "Cliente: " +
+        reservation.clientName +
+        companyPart +
+        "\nFecha: " +
+        dateFormatted +
+        "\nMonto: " +
+        formatCurrency(reservation.grandTotal) +
+        "\nEspacio: " +
+        reservation.eventRoomName;
+
+      const promises = workspaceUsers.map((user) =>
+        createNotification({
+          userId: user.userId,
+          title: notificationTitle,
+          content: notificationContent,
+          type: "reservation_unpaid_reminder",
+          resourceId: reservation.id,
+          resourceType: "reservation",
+        }),
+      );
+      await Promise.all(promises);
+
+      console.log(
+        "[CRON] TEST - Notified " +
+          workspaceUsers.length +
+          " users about unpaid reservation " +
+          reservation.id,
+      );
+    }
+
+    console.log(
+      "[CRON] TEST - Processed " + uniqueById.length + " unpaid reservations",
+    );
+  } catch (error) {
+    console.error("[CRON] TEST - Error checking unpaid reservations:", error);
+  }
+});
+
+new Cron("0 16 * * *", async () => {
+  console.log("[CRON] Checking unpaid reservations at 4:00 PM...");
+  try {
+    const unpaidReservations = await checkAndNotifyUnpaidReservations();
+
+    const uniqueById = Array.from(
+      new Map(unpaidReservations.map((r) => [r.id, r])).values(),
+    );
+
+    for (const reservation of uniqueById) {
+      const dateRange = getDateRangeFromString(reservation.dateRange);
+      const dateFormatted =
+        dateRange.from === dateRange.to
+          ? dateRange.from
+          : dateRange.from + " - " + dateRange.to;
+
+      const workspaceUsers = await getActiveWorkspaceUsers(
+        reservation.workspaceId,
+      );
+
+      const daysUntilStart = reservation.daysUntilStart;
+      const currentDay = reservation.currentDay;
+      const totalDays = reservation.totalEventDays;
+
+      let dayDescription: string;
+      if (daysUntilStart > 0) {
+        dayDescription =
+          "Faltan " + daysUntilStart + " día" + (daysUntilStart > 1 ? "s" : "");
+      } else if (daysUntilStart === 0) {
+        dayDescription = "Hoy inicia";
+      } else {
+        dayDescription = "Día " + currentDay + " de " + totalDays;
+      }
+
+      const titlePrefix = reservation.title ? reservation.title + " - " : "";
+
+      const notificationTitle =
+        "Reserva sin pagar: " + titlePrefix + dayDescription;
+
+      const companyPart = reservation.companyName
+        ? " (" + reservation.companyName + ")"
+        : "";
+      const notificationContent =
+        "Cliente: " +
+        reservation.clientName +
+        companyPart +
+        "\nFecha: " +
+        dateFormatted +
+        "\nMonto: " +
+        formatCurrency(reservation.grandTotal) +
+        "\nEspacio: " +
+        reservation.eventRoomName;
+
+      const promises = workspaceUsers.map((user) =>
+        createNotification({
+          userId: user.userId,
+          title: notificationTitle,
+          content: notificationContent,
+          type: "reservation_unpaid_reminder",
+          resourceId: reservation.id,
+          resourceType: "reservation",
+        }),
+      );
+      await Promise.all(promises);
+
+      console.log(
+        "[CRON] Notified " +
+          workspaceUsers.length +
+          " users about unpaid reservation " +
+          reservation.id,
+      );
+    }
+
+    console.log(
+      "[CRON] Processed " + uniqueById.length + " unpaid reservations",
+    );
+  } catch (error) {
+    console.error("[CRON] Error checking unpaid reservations:", error);
+  }
+});
 
 const workspaceRoute = app.route("/workspace", workspace);
 const workspaceUserRoute = app.route("/workspace-user", workspaceUser);

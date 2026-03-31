@@ -5,6 +5,7 @@ function useGetNotifications() {
   return useQuery({
     queryKey: ["notifications"],
     queryFn: getNotifications,
+    refetchInterval: 30000,
   });
 }
 
