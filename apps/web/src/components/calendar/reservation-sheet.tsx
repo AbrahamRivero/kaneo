@@ -27,6 +27,7 @@ import {
   Calendar as CalendarIcon,
   CheckCircle2,
   DollarSign,
+  FileDown,
   Pen,
   Phone,
   Trash2,
@@ -176,6 +177,296 @@ function SingleReservationSection({
     });
   };
 
+  const handleReport = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups to print");
+      return;
+    }
+
+    const dateRange = parseDateRange(reservation.dateRange);
+    const startDate = dateRange.from
+      ? format(new Date(`${dateRange.from}T00:00:00`), "MMMM dd, yyyy")
+      : "-";
+    const endDate = dateRange.to
+      ? format(new Date(`${dateRange.to}T00:00:00`), "MMMM dd, yyyy")
+      : startDate;
+    const dateRangeStr =
+      dateRange.from === dateRange.to || !dateRange.to
+        ? startDate
+        : `${startDate} - ${endDate}`;
+    const days =
+      dateRange.to && dateRange.to !== dateRange.from
+        ? differenceInDays(
+            new Date(`${dateRange.to}T00:00:00`),
+            new Date(`${dateRange.from}T00:00:00`),
+          ) + 1
+        : 1;
+
+    const dayTariffs = reservation.dayTariffs ?? [];
+    const services = reservation.services ?? [];
+    const roomBreakdown =
+      dayTariffs.length > 0
+        ? Object.values(
+            dayTariffs.reduce(
+              (acc, dt) => {
+                const sessionType = dt.sessionType ?? "unknown";
+                if (!acc[sessionType]) {
+                  acc[sessionType] = { sessionType, days: 0, price: 0 };
+                }
+                acc[sessionType].days += 1;
+                acc[sessionType].price += dt.price ?? 0;
+                return acc;
+              },
+              {} as Record<
+                string,
+                { sessionType: string; days: number; price: number }
+              >,
+            ),
+          )
+        : reservation.totalRoomPrice
+          ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
+          : [];
+
+    const roomName =
+      eventRooms.find((r) => r.id === reservation.eventRoomId)?.name ||
+      "Event Room";
+
+    const getStatusLabel = (status?: string) => {
+      switch (status) {
+        case "confirmed":
+          return "Confirmed";
+        case "pending":
+          return "Pending";
+        case "completed":
+          return "Completed";
+        default:
+          return "Unknown";
+      }
+    };
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Reservation Report - ${reservation.title || reservation.clientName}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Calibri', 'Segoe UI', sans-serif; padding: 20px; color: #333; }
+          .header { margin-bottom: 20px; border-bottom: 2px solid #4472c4; padding-bottom: 10px; }
+          .header h1 { font-size: 24px; color: #4472c4; margin-bottom: 5px; }
+          .header .subtitle { font-size: 14px; color: #666; }
+          .section { margin-bottom: 20px; }
+          .section-title { font-size: 14px; font-weight: 600; color: #4472c4; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+          .info-item { display: flex; flex-direction: column; }
+          .info-label { font-size: 10px; color: #888; text-transform: uppercase; }
+          .info-value { font-size: 14px; font-weight: 500; }
+          .status { padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 500; }
+          .status-confirmed { background-color: #d1fae5; color: #065f46; }
+          .status-pending { background-color: #fef3c7; color: #92400e; }
+          .status-completed { background-color: #e0e7ff; color: #3730a3; }
+          .yes { color: #059669; font-weight: 600; }
+          .no { color: #dc2626; font-weight: 600; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+          th { background-color: #4472c4; color: white; padding: 8px; text-align: left; font-weight: 600; border: 1px solid #365a8a; }
+          td { padding: 8px; border: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f8f9fa; }
+          .total-row { font-weight: 600; background-color: #e8f0fe; }
+          .notes { background-color: #f8f9fa; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; }
+          .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
+          .no-print { margin-top: 20px; text-align: center; }
+          .no-print button { background: #4472c4; color: white; border: none; padding: 10px 20px; font-size: 14px; cursor: pointer; border-radius: 5px; margin-right: 10px; }
+          .no-print button.close { background: #6b7280; }
+          @media print { body { padding: 0; } .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Reservation Report</h1>
+          <div class="subtitle">Generated on ${format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}</div>
+        </div>
+
+        <div class="section">
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Room</span>
+              <span class="info-value">${roomName}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Client Information</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Title / Event Name</span>
+              <span class="info-value">${reservation.title || "-"}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Client Name</span>
+              <span class="info-value">${reservation.clientName || "-"}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Company</span>
+              <span class="info-value">${reservation.companyName || "-"}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Phone</span>
+              <span class="info-value">${reservation.phone ? "+53 " + reservation.phone : "-"}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email</span>
+              <span class="info-value">${reservation.email || "-"}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Expected Pax</span>
+              <span class="info-value">${reservation.expectedPax ?? "-"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Reservation Details</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Date Range</span>
+              <span class="info-value">${dateRangeStr}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Duration</span>
+              <span class="info-value">${days} day${days !== 1 ? "s" : ""}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Status</span>
+              <span class="info-value"><span class="status status-${reservation.status || "pending"}">${getStatusLabel(reservation.status)}</span></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Payment Confirmed</span>
+              <span class="info-value ${reservation.paymentConfirmed ? "yes" : "no"}">${reservation.paymentConfirmed ? "Yes" : "No"}</span>
+            </div>
+          </div>
+        </div>
+
+        ${
+          reservation.grandTotal
+            ? `
+        <div class="section">
+          <div class="section-title">Pricing</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Details</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${roomBreakdown
+                .map(
+                  (room) => `
+                <tr>
+                  <td>Room (${room.sessionType.replace("_", " ")})</td>
+                  <td>${room.days > 1 ? room.days + " days" : "1 day"}</td>
+                  <td style="text-align: right;">$${room.price.toFixed(2)}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+              ${
+                (reservation.totalServicePrice ?? 0) > 0
+                  ? `
+                <tr>
+                  <td>Total Services</td>
+                  <td></td>
+                  <td style="text-align: right;">$${(reservation.totalServicePrice ?? 0).toFixed(2)}</td>
+                </tr>
+              `
+                  : ""
+              }
+              ${
+                (reservation.serviceChargeAmount ?? 0) > 0
+                  ? `
+                <tr>
+                  <td>Service Charge</td>
+                  <td></td>
+                  <td style="text-align: right;">$${(reservation.serviceChargeAmount ?? 0).toFixed(2)}</td>
+                </tr>
+              `
+                  : ""
+              }
+              <tr class="total-row">
+                <td>Grand Total</td>
+                <td></td>
+                <td style="text-align: right;">$${(reservation.grandTotal ?? 0).toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        `
+            : ""
+        }
+
+        ${
+          services.length > 0
+            ? `
+        <div class="section">
+          <div class="section-title">Services</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th style="text-align: center;">Pax</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${services
+                .map(
+                  (service) => `
+                <tr>
+                  <td>${service.service?.name || "Service"}</td>
+                  <td style="text-align: center;">${service.pax}</td>
+                  <td style="text-align: right;">$${(service.unitPrice ?? 0).toFixed(2)}</td>
+                  <td style="text-align: right;">$${(service.totalPrice ?? 0).toFixed(2)}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+        `
+            : ""
+        }
+
+        ${
+          reservation.notes
+            ? `
+        <div class="section">
+          <div class="section-title">Notes</div>
+          <div class="notes">${reservation.notes}</div>
+        </div>
+        `
+            : ""
+        }
+
+        <div class="footer">
+          <span>Kaneo - Event Room Management</span>
+          <span>Page 1</span>
+        </div>
+
+        <div class="no-print">
+          <button onclick="window.print()">Print / Save as PDF</button>
+          <button class="close" onclick="window.close()">Close</button>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <>
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
@@ -221,6 +512,15 @@ function SingleReservationSection({
               title="Edit reservation"
             >
               <Pen className="size-3.5 text-muted-foreground" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 hover:bg-muted"
+              onClick={handleReport}
+              title="Generate Report"
+            >
+              <FileDown className="size-3.5 text-muted-foreground" />
             </Button>
             <Button
               variant="ghost"
