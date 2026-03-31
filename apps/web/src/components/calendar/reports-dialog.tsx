@@ -18,6 +18,7 @@ import {
   getReservations,
 } from "@/fetchers/event-room";
 import {
+  addMonths,
   endOfMonth,
   endOfQuarter,
   endOfWeek,
@@ -29,7 +30,12 @@ import {
 import { FileDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
-export type ReportPeriod = "weekly" | "monthly" | "quarterly";
+export type ReportPeriod =
+  | "weekly"
+  | "monthly"
+  | "quarterly"
+  | "next_month"
+  | "last_month";
 
 function parseDateRange(dateRangeStr: string): DateRange {
   try {
@@ -75,6 +81,22 @@ function getDateRange(period: ReportPeriod): {
         endDate: format(endOfQuarter(today), "yyyy-MM-dd"),
         label: `Q${Math.ceil((today.getMonth() + 1) / 3)} ${format(today, "yyyy")}`,
       };
+    case "last_month": {
+      const lastMonth = addMonths(today, -1);
+      return {
+        startDate: format(startOfMonth(lastMonth), "yyyy-MM-dd"),
+        endDate: format(endOfMonth(lastMonth), "yyyy-MM-dd"),
+        label: format(lastMonth, "MMMM yyyy"),
+      };
+    }
+    case "next_month": {
+      const nextMonth = addMonths(today, 1);
+      return {
+        startDate: format(startOfMonth(nextMonth), "yyyy-MM-dd"),
+        endDate: format(endOfMonth(nextMonth), "yyyy-MM-dd"),
+        label: format(nextMonth, "MMMM yyyy"),
+      };
+    }
   }
 }
 
@@ -105,6 +127,18 @@ function formatStatus(status: string | null): string {
 
 function formatPayment(paymentConfirmed: boolean | null | undefined): string {
   return paymentConfirmed ? "Yes" : "No";
+}
+
+function formatDateRange(dateRange: DateRange): string {
+  const fromDate = format(
+    new Date(`${dateRange.from}T00:00:00`),
+    "MMM dd, yyyy",
+  );
+  if (dateRange.to && dateRange.to !== dateRange.from) {
+    const toDate = format(new Date(`${dateRange.to}T00:00:00`), "MMM dd, yyyy");
+    return `${fromDate} - ${toDate}`;
+  }
+  return fromDate;
 }
 
 export function ReportsDialog({
@@ -290,10 +324,7 @@ export function ReportsDialog({
                   <td>${formatEventInfo(res)}</td>
                   <td>${(() => {
                     const dr = parseDateRange(res.dateRange);
-                    return format(
-                      new Date(`${dr.from}T00:00:00`),
-                      "MMM dd, yyyy",
-                    );
+                    return formatDateRange(dr);
                   })()}</td>
                   <td>${res.roomName}</td>
                   <td><span class="status status-${res.status || "pending"}">${formatStatus(res.status)}</span></td>
@@ -362,6 +393,8 @@ export function ReportsDialog({
             <SelectContent>
               <SelectItem value="weekly">This Week</SelectItem>
               <SelectItem value="monthly">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+              <SelectItem value="next_month">Next Month</SelectItem>
               <SelectItem value="quarterly">This Quarter</SelectItem>
             </SelectContent>
           </Select>
