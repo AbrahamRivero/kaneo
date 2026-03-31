@@ -130,6 +130,9 @@ export type CreateReservationPayload = {
   totalServicePrice?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
+  expectedPax?: number;
+  paymentConfirmed?: boolean;
+  status?: "pending" | "confirmed" | "completed";
   services?: {
     serviceId: string;
     pax: number;

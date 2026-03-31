@@ -44,6 +44,8 @@ export type CreateReservationPayload = {
   serviceChargeAmount?: number;
   grandTotal?: number;
   expectedPax?: number;
+  paymentConfirmed?: boolean;
+  status?: "pending" | "confirmed" | "completed";
   services?: ReservationServicePayload[];
   dayTariffs?: DayTariffPayload[];
 };
@@ -250,6 +252,8 @@ async function createReservation(
       serviceChargeAmount: payload.serviceChargeAmount,
       grandTotal: payload.grandTotal,
       expectedPax: payload.expectedPax,
+      paymentConfirmed: payload.paymentConfirmed,
+      status: payload.status,
     })
     .returning();
 

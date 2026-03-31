@@ -110,6 +110,8 @@ const eventRoom = new Hono<{
         serviceChargeAmount: z.number().optional(),
         grandTotal: z.number().optional(),
         expectedPax: z.number().optional(),
+        paymentConfirmed: z.boolean().optional(),
+        status: z.enum(["pending", "confirmed", "completed"]).optional(),
         services: z
           .array(
             z.object({
