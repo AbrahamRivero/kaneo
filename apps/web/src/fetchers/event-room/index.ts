@@ -348,11 +348,13 @@ export const getServices = async (
   workspaceId: string,
   page = 1,
   limit = 10,
+  search?: string,
 ): Promise<PaginatedResponse<Service>> => {
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
   });
+  if (search) params.append("search", search);
   const url = `${base ? base : ""}/event-room/${workspaceId}/services?${params}`;
   const response = await fetch(url, { credentials: "include" });
 
@@ -362,6 +364,27 @@ export const getServices = async (
   }
 
   return response.json();
+};
+
+export const getAllServices = async (
+  workspaceId: string,
+  search?: string,
+): Promise<Service[]> => {
+  const params = new URLSearchParams({
+    page: "1",
+    limit: "1000",
+  });
+  if (search) params.append("search", search);
+  const url = `${base ? base : ""}/event-room/${workspaceId}/services?${params}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  const data = await response.json();
+  return data.data ?? [];
 };
 
 export const getServiceById = async (id: string): Promise<Service> => {

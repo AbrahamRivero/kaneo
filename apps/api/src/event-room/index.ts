@@ -223,11 +223,13 @@ const eventRoom = new Hono<{
     const userId = c.get("userId");
     const page = c.req.query("page");
     const limit = c.req.query("limit");
+    const search = c.req.query("search") || undefined;
     const services = await serviceController.getServices(
       workspaceId,
       userId,
       page ? Number.parseInt(page) : undefined,
       limit ? Number.parseInt(limit) : undefined,
+      search,
     );
     return c.json(services);
   })
