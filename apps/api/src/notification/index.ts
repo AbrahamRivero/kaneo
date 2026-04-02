@@ -232,16 +232,16 @@ subscribeToEvent(
     reservationId,
     workspaceId,
     clientName,
-    date,
-    totalPax,
+    dateRange,
+    expectedPax,
     roomName,
     userId,
   }: {
     reservationId: string;
     workspaceId: string;
     clientName: string;
-    date: string;
-    totalPax: number;
+    dateRange: { from: string; to?: string };
+    expectedPax?: number;
     roomName: string;
     userId: string;
   }) => {
@@ -249,14 +249,24 @@ subscribeToEvent(
       return;
     }
 
+    const to = dateRange.to || dateRange.from;
+    const dateFormatted =
+      dateRange.from === to
+        ? dateRange.from
+        : `${dateRange.from} - ${to}`;
+
+    const paxText = expectedPax ? `${expectedPax} guests` : "";
+
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
       .filter((u) => u.userId !== userId)
       .map((u) =>
         createNotification({
           userId: u.userId,
-          title: "Nueva Reserva",
-          content: `"${clientName}" - ${totalPax} personas en "${roomName}" el ${date}`,
+          title: "New Reservation",
+          content: paxText
+            ? `"${clientName}" - ${paxText} at "${roomName}" on ${dateFormatted}`
+            : `"${clientName}" at "${roomName}" on ${dateFormatted}`,
           type: "reservation",
           resourceId: reservationId,
           resourceType: "reservation",
@@ -272,16 +282,16 @@ subscribeToEvent(
     reservationId,
     workspaceId,
     clientName,
-    date,
-    totalPax,
+    dateRange,
+    expectedPax,
     roomName,
     userId,
   }: {
     reservationId: string;
     workspaceId: string;
     clientName: string;
-    date: string;
-    totalPax: number;
+    dateRange: { from: string; to?: string };
+    expectedPax?: number;
     roomName: string;
     userId: string;
   }) => {
@@ -289,14 +299,24 @@ subscribeToEvent(
       return;
     }
 
+    const to = dateRange.to || dateRange.from;
+    const dateFormatted =
+      dateRange.from === to
+        ? dateRange.from
+        : `${dateRange.from} - ${to}`;
+
+    const paxText = expectedPax ? `${expectedPax} guests` : "";
+
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
       .filter((u) => u.userId !== userId)
       .map((u) =>
         createNotification({
           userId: u.userId,
-          title: "Reserva Actualizada",
-          content: `"${clientName}" - ${totalPax} personas en "${roomName}" el ${date}`,
+          title: "Reservation Updated",
+          content: paxText
+            ? `"${clientName}" - ${paxText} at "${roomName}" on ${dateFormatted}`
+            : `"${clientName}" at "${roomName}" on ${dateFormatted}`,
           type: "reservation",
           resourceId: reservationId,
           resourceType: "reservation",
@@ -313,18 +333,28 @@ subscribeToEvent(
     workspaceId,
     clientName,
     userId,
+    dateRange,
+    expectedPax,
   }: {
     reservationId: string;
     workspaceId: string;
     clientName: string;
     title?: string;
-    date: string;
-    totalPax: number;
+    dateRange: { from: string; to?: string };
+    expectedPax?: number;
     userId: string;
   }) => {
     if (!reservationId || !workspaceId) {
       return;
     }
+
+    const to = dateRange.to || dateRange.from;
+    const dateFormatted =
+      dateRange.from === to
+        ? dateRange.from
+        : `${dateRange.from} - ${to}`;
+
+    const paxText = expectedPax ? ` (${expectedPax} guests)` : "";
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
@@ -332,8 +362,8 @@ subscribeToEvent(
       .map((u) =>
         createNotification({
           userId: u.userId,
-          title: "Reserva Eliminada",
-          content: `"${clientName}" ha sido eliminada`,
+          title: "Reservation Deleted",
+          content: `"${clientName}"${paxText} on ${dateFormatted} has been deleted`,
           type: "reservation",
           resourceId: reservationId,
           resourceType: "reservation",

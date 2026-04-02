@@ -34,7 +34,7 @@ export function CalendarDayColumn({
 
   return (
     <div
-      className="flex-1 border-r border-border last:border-r-0 p-1.5 md:p-2 min-w-44 flex flex-col gap-2 overflow-y-auto relative"
+      className="w-44 border-r border-border last:border-r-0 p-1.5 md:p-2 flex flex-col gap-2 overflow-y-auto relative"
       style={{ height: 2880 }}
     >
       {sortedReservations.map((reservation) => {

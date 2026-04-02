@@ -41,15 +41,12 @@ export function EventCard({
     dateRange.from === dateRange.to || !dateRange.to
       ? format(new Date(`${dateRange.from}T00:00:00`), "MMM d")
       : `${format(new Date(`${dateRange.from}T00:00:00`), "MMM d")} - ${format(new Date(`${dateRange.to}T00:00:00`), "MMM d")}`;
-  const subtitle = event.companyName
-    ? `${event.clientName} - ${event.companyName}`
-    : event.clientName;
   const statusIcon = getStatusIcon(event.status);
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
     <div
-      className="relative bg-card border border-border rounded-lg p-3 z-10 cursor-pointer hover:bg-muted transition-colors"
+      className="relative bg-card border border-border rounded-lg p-2 z-10 cursor-pointer hover:bg-muted transition-colors w-full"
       style={style}
       onClick={onClick}
     >
@@ -65,26 +62,35 @@ export function EventCard({
           </div>
         )}
       </div>
-      <div className="flex flex-col gap-1 h-full">
-        <div className="flex items-start justify-between gap-1">
-          <h4 className="text-xs font-semibold text-foreground mb-1 truncate whitespace-nowrap flex-1">
-            {event.title || event.clientName}
-          </h4>
-        </div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-          {dateStr}
-        </p>
-        {subtitle && (
-          <p className="text-[10px] text-muted-foreground truncate">
-            {subtitle}
+      <div className="flex flex-col gap-0.5 h-full">
+        {event.title ? (
+          <>
+            <h4 className="text-xs font-semibold text-foreground truncate">
+              {event.title}
+            </h4>
+            <p className="text-[9px] text-muted-foreground truncate">
+              {event.clientName}
+            </p>
+            {event.companyName && (
+              <p className="text-[9px] text-muted-foreground truncate">
+                {event.companyName}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs font-semibold text-foreground truncate">
+            {event.clientName}
           </p>
         )}
 
-        <p className="text-[11px] text-muted-foreground font-semibold truncate">
+        <p className="text-[10px] text-muted-foreground font-semibold truncate">
           {event.roomName}
         </p>
+        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
+          {dateStr}
+        </p>
         {allowsMultipleReservations && (event.expectedPax ?? 0) > 0 && (
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
             <Users className="size-3" />
             <span>{event.expectedPax}</span>
           </div>
