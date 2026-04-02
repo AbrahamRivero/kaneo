@@ -314,7 +314,7 @@ async function createReservation(
     clientName: payload.clientName,
     title: payload.title,
     dateRange: resDateRange,
-    totalPax,
+    expectedPax: payload.expectedPax,
     roomName: room.name,
     userId,
   });
@@ -824,7 +824,7 @@ async function updateReservation(
     clientName: updated.clientName,
     title: updated.title,
     dateRange: updatedDateRange,
-    totalPax,
+    expectedPax: updated.expectedPax ?? undefined,
     roomName: room?.name || "Unknown",
     userId,
   });
@@ -932,7 +932,7 @@ async function deleteReservation(userId: string, reservationId: string) {
     clientName: reservation.clientName,
     title: reservation.title,
     dateRange: resDateRange,
-    totalPax: 0,
+    expectedPax: reservation.expectedPax ?? undefined,
     userId,
   });
 
