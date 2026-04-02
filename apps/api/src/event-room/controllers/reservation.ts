@@ -918,9 +918,9 @@ async function deleteReservation(userId: string, reservationId: string) {
     });
   }
 
-  if (!isOwner && reservation.userId !== userId) {
+  if (!isOwner && !workspaceUser) {
     throw new HTTPException(403, {
-      message: "You can only delete your own reservations",
+      message: "You must be a workspace member to delete reservations",
     });
   }
 
