@@ -49,7 +49,7 @@ import {
   useCreateReservation,
   useUpdateReservation,
 } from "@/hooks/mutations/event-room";
-import { useGetRoomTariffs, useGetServices } from "@/hooks/queries/event-room";
+import { useGetAllServices, useGetRoomTariffs, useGetServices } from "@/hooks/queries/event-room";
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -336,15 +336,16 @@ export function ReservationForm({
     }
   }, [dayTariffs, useDifferentTariffsPerDay, form]);
 
-  const { data: servicesData } = useGetServices(workspaceId);
+  const { data: allServicesData } = useGetAllServices(workspaceId);
   const { data: dialogServicesData } = useGetServices(
     workspaceId,
     servicesPage,
     servicesLimit,
+    servicesSearch || undefined,
   );
   const { data: roomTariffsData } = useGetRoomTariffs(workspaceId);
 
-  const services = servicesData?.data ?? [];
+  const services = allServicesData ?? [];
   const roomTariffs = roomTariffsData?.data ?? [];
   const selectedEventRoomId = form.watch("eventRoomId");
   const filteredTariffs = selectedEventRoomId
@@ -1181,19 +1182,8 @@ export function ReservationForm({
             <div className="border rounded-md max-h-[350px] overflow-y-auto">
               {(() => {
                 const allServices = dialogServicesData?.data ?? [];
-                const filtered = servicesSearch
-                  ? allServices.filter(
-                      (s) =>
-                        s.name
-                          .toLowerCase()
-                          .includes(servicesSearch.toLowerCase()) ||
-                        s.description
-                          ?.toLowerCase()
-                          .includes(servicesSearch.toLowerCase()),
-                    )
-                  : allServices;
 
-                if (filtered.length === 0) {
+                if (allServices.length === 0) {
                   return (
                     <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                       <Search className="size-8 mb-2 opacity-50" />
@@ -1206,7 +1196,7 @@ export function ReservationForm({
                   );
                 }
 
-                return filtered.map((service) => (
+                return allServices.map((service) => (
                   <label
                     key={service.id}
                     className="flex items-center justify-between p-3 hover:bg-accent border-b last:border-b-0 cursor-pointer"

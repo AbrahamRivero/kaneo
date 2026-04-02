@@ -1,4 +1,5 @@
 import {
+  getAllServices,
   getEventRoomById,
   getEventRooms,
   getReservation,
@@ -42,10 +43,10 @@ export function useGetReservationById(id?: string) {
   });
 }
 
-export function useGetServices(workspaceId: string, page = 1, limit = 10) {
+export function useGetServices(workspaceId: string, page = 1, limit = 10, search?: string) {
   return useQuery({
-    queryKey: ["services", workspaceId, page, limit],
-    queryFn: () => getServices(workspaceId, page, limit),
+    queryKey: ["services", workspaceId, page, limit, search],
+    queryFn: () => getServices(workspaceId, page, limit, search),
     enabled: !!workspaceId,
     staleTime: 0,
     refetchOnMount: "always",
@@ -75,5 +76,15 @@ export function useGetRoomTariffById(id?: string) {
     queryKey: ["room-tariff", id],
     queryFn: () => getRoomTariffById(id as string),
     enabled: Boolean(id),
+  });
+}
+
+export function useGetAllServices(workspaceId: string, search?: string) {
+  return useQuery({
+    queryKey: ["all-services", workspaceId, search],
+    queryFn: () => getAllServices(workspaceId, search),
+    enabled: !!workspaceId,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }

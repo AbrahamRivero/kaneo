@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, ilike, or } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import {
@@ -61,6 +61,7 @@ export async function getServices(
   userId?: string,
   page = 1,
   limit = 10,
+  search?: string,
 ): Promise<PaginatedServices> {
   let isViewer = false;
 
@@ -90,17 +91,28 @@ export async function getServices(
 
   const offset = (page - 1) * limit;
 
+  const baseCondition = eq(serviceTable.workspaceId, workspaceId);
+  const searchCondition = search
+    ? and(
+        baseCondition,
+        or(
+          ilike(serviceTable.name, `%${search}%`),
+          ilike(serviceTable.description, `%${search}%`),
+        ),
+      )
+    : baseCondition;
+
   const [services, countResult] = await Promise.all([
     db
       .select()
       .from(serviceTable)
-      .where(eq(serviceTable.workspaceId, workspaceId))
+      .where(searchCondition)
       .limit(limit)
       .offset(offset),
     db
       .select({ count: count() })
       .from(serviceTable)
-      .where(eq(serviceTable.workspaceId, workspaceId)),
+      .where(baseCondition),
   ]);
 
   const total = countResult[0]?.count ?? 0;
