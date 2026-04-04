@@ -45,7 +45,7 @@ function FilterPill({ label, value, onRemove, icon }: FilterPillProps) {
   return (
     <div className="flex items-center gap-1 h-7 px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full hover:bg-secondary/80 transition-colors">
       {icon && <span className="size-3 shrink-0">{icon}</span>}
-      <span className="font-medium truncate max-w-[100px]">
+      <span className="font-medium truncate min-w-0">
         {label}: {value}
       </span>
       <button
@@ -264,8 +264,8 @@ export function CalendarControls({
                 <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
                   Space
                 </h4>
-                <div className="space-y-0.5">
-                  {eventRooms.slice(0, 5).map((room) => (
+                <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                  {eventRooms.map((room) => (
                     <Button
                       key={room.id}
                       variant="ghost"
@@ -273,12 +273,12 @@ export function CalendarControls({
                       className="w-full justify-between h-7 px-2 text-xs"
                       onClick={() => handleAddSpaceFilter(room.id)}
                     >
-                      <div className="flex items-center">
-                        <DoorOpen className="size-3 mr-1.5 text-muted-foreground" />
-                        {room.name}
+                      <div className="flex items-center min-w-0">
+                        <DoorOpen className="size-3 mr-1.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{room.name}</span>
                       </div>
                       {eventRoomFilter === room.id && (
-                        <Check className="size-3 text-primary" />
+                        <Check className="size-3 text-primary shrink-0" />
                       )}
                     </Button>
                   ))}
