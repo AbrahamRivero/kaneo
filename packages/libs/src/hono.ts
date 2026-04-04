@@ -1,6 +1,6 @@
 /// <reference types="vite/types/importMeta.d.ts" />
 
-import type { AppType } from "@kaneo/api";
+import type { AppType } from "@palcodesk/api";
 import { hc } from "hono/client";
 
 const API_URL =

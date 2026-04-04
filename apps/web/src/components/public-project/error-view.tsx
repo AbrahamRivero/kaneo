@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { KaneoBranding } from "./kaneo-branding";
+import { PalcoDeskBranding } from "./palcodesk-branding";
 
 export function ErrorView() {
   return (
@@ -17,7 +17,7 @@ export function ErrorView() {
               This project doesn't exist or is not publicly accessible.
             </p>
           </div>
-          <KaneoBranding />
+          <PalcoDeskBranding />
         </div>
       </div>
     </div>

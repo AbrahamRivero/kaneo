@@ -82,7 +82,7 @@ function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProps) {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="text-zinc-600 dark:text-zinc-400 font-semibold tracking-wider text-sm">
-                  KANEO
+                  PalcoDesk
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem className="text-zinc-700 dark:text-zinc-300 font-medium text-sm">

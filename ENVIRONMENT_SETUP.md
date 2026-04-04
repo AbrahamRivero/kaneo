@@ -1,6 +1,6 @@
 # Environment Setup Guide
 
-This guide will help you set up the Kaneo development environment and troubleshoot common issues.
+This guide will help you set up the PalcoDesk development environment and troubleshoot common issues.
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ Create `apps/api/.env` with the following variables:
 
 - `DATABASE_URL`: PostgreSQL connection string
   ```
-  DATABASE_URL=postgresql://kaneo_user:kaneo_password@localhost:5432/kaneo
+  DATABASE_URL=postgresql://palcodesk_user:palcodesk_password@localhost:5432/palcodesk
   ```
 
 - `JWT_ACCESS`: Secret key for JWT token generation
@@ -109,7 +109,7 @@ Create `apps/web/.env` with the following variables:
 1. **Check PostgreSQL:**
    - Ensure PostgreSQL is running
    - Verify database exists and credentials are correct
-   - Test connection: `psql postgresql://kaneo_user:kaneo_password@localhost:5432/kaneo`
+   - Test connection: `psql postgresql://palcodesk_user:palcodesk_password@localhost:5432/palcodesk`
 
 2. **Update DATABASE_URL:**
    - Ensure the connection string format is correct
@@ -177,4 +177,4 @@ The application now includes enhanced error handling that will provide specific 
 
 ## Testing Error Handling
 
-You can test the error handling by visiting `/test-error` in your browser. This will show you how the error display component looks and what troubleshooting steps are provided for different types of errors. 
+You can test the error handling by visiting `/test-error` in your browser. This will show you how the error display component looks and what troubleshooting steps are provided for different types of errors.

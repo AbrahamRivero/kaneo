@@ -28,7 +28,7 @@ export default function Footer() {
                   strokeLinejoin="round"
                   className="lucide lucide-layout-grid w-5 h-5 text-indigo-600 dark:text-indigo-400"
                 >
-                  <title>Kaneo Logo</title>
+                  <title>PalcoDesk Logo</title>
                   <rect width="7" height="7" x="3" y="3" rx="1" />
                   <rect width="7" height="7" x="14" y="3" rx="1" />
                   <rect width="7" height="7" x="14" y="14" rx="1" />
@@ -36,12 +36,12 @@ export default function Footer() {
                 </svg>
               </div>
               <span className="text-zinc-900 dark:text-white font-medium text-xl">
-                Kaneo
+                PalcoDesk
               </span>
             </div>
             <p className="mt-4 text-zinc-600 dark:text-zinc-400 text-sm">
               <a
-                href="https://kaneo.openstatus.dev/"
+                href="https://PalcoDesk.openstatus.dev/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-2.5 py-1 bg-green-50/50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-800/50 rounded-md text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200"

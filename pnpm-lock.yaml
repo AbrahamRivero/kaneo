@@ -336,7 +336,7 @@ importers:
         specifier: ^5.0.4
         version: 5.0.6(@types/react@19.1.9)(immer@10.1.1)(react@19.1.1)(use-sync-external-store@1.6.0(react@19.1.1))
     devDependencies:
-      '@kaneo/libs':
+      '@palcodesk/libs':
         specifier: workspace:*
         version: link:../../packages/libs
       '@tailwindcss/postcss':
@@ -369,10 +369,10 @@ importers:
 
   packages/libs:
     devDependencies:
-      '@kaneo/api':
+      '@palcodesk/api':
         specifier: workspace:*
         version: link:../../apps/api
-      '@kaneo/typescript-config':
+      '@palcodesk/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/react':

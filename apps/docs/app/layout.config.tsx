@@ -23,13 +23,13 @@ export const baseOptions: BaseLayoutProps = {
           strokeLinejoin="round"
           className="lucide lucide-layout-grid w-5 h-5 text-indigo-600 dark:text-indigo-400"
         >
-          <title>Kaneo Logo</title>
+          <title>PalcoDesk Logo</title>
           <rect width="7" height="7" x="3" y="3" rx="1" />
           <rect width="7" height="7" x="14" y="3" rx="1" />
           <rect width="7" height="7" x="14" y="14" rx="1" />
           <rect width="7" height="7" x="3" y="14" rx="1" />
         </svg>
-        Kaneo
+        PalcoDesk
       </>
     ),
     transparentMode: "top",

@@ -18,8 +18,8 @@ export const handleIssueClosed: HandlerFunction<
   { octokit: Octokit }
 > = async ({ payload }): Promise<void> => {
   try {
-    if (payload.issue.title.startsWith("[Kaneo]")) {
-      console.log("Skipping Kaneo-created issue to avoid loop");
+    if (payload.issue.title.startsWith("[PalcoDesk]")) {
+      console.log("Skipping PalcoDesk-created issue to avoid loop");
       return;
     }
 
@@ -30,7 +30,7 @@ export const handleIssueClosed: HandlerFunction<
 
     if (!integration || !integration.isActive) {
       console.log(
-        "No active Kaneo integration found for repository:",
+        "No active PalcoDesk integration found for repository:",
         payload.repository.full_name,
       );
       return;
@@ -40,15 +40,15 @@ export const handleIssueClosed: HandlerFunction<
       where: eq(taskTable.projectId, integration.projectId),
     });
 
-    const kaneoTask = tasks.find((task) =>
+    const palcodeskTask = tasks.find((task) =>
       task.description?.includes(
         `Created from GitHub issue: ${payload.issue.html_url}`,
       ),
     );
 
-    if (!kaneoTask) {
+    if (!palcodeskTask) {
       console.log(
-        "Kaneo task not found for GitHub issue:",
+        "PalcoDesk task not found for GitHub issue:",
         payload.issue.html_url,
       );
       return;
@@ -60,11 +60,13 @@ export const handleIssueClosed: HandlerFunction<
         .set({
           status: "completed",
         })
-        .where(eq(taskTable.id, kaneoTask.id));
+        .where(eq(taskTable.id, palcodeskTask.id));
 
-      console.log(`Updated Kaneo task ${kaneoTask.id} status to "completed"`);
+      console.log(
+        `Updated PalcoDesk task ${palcodeskTask.id} status to "completed"`,
+      );
     } catch (error) {
-      console.error("Failed to update Kaneo task status:", error);
+      console.error("Failed to update PalcoDesk task status:", error);
     }
   } catch (error) {
     console.error("Failed to handle GitHub issue closed:", error);

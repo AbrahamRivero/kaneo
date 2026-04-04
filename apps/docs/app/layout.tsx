@@ -3,15 +3,11 @@ import { RootProvider } from "fumadocs-ui/provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
-
-const inter = Inter({
-  subsets: ["latin"],
-});
-
+const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
-  metadataBase: new URL("https://kaneo.app"),
+  metadataBase: new URL("https://palcodesk.app"),
   title: {
-    default: "Kaneo - Project management made simple",
+    default: "PalcoDesk - Project management made simple",
     template: "%s",
   },
   description:
@@ -46,36 +42,32 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Andrej Acevski" }],
   creator: "Andrej Acevski",
-  publisher: "Kaneo",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
+  publisher: "PalcoDesk",
+  formatDetection: { email: false, address: false, telephone: false },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://kaneo.app",
-    title: "Kaneo - Project management made simple",
+    url: "https://palcodesk.app",
+    title: "PalcoDesk - Project management made simple",
     description:
       "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com with kanban boards, time tracking, and team collaboration.",
-    siteName: "Kaneo",
+    siteName: "PalcoDesk",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Kaneo - Free Open Source Project Management Software",
+        alt: "PalcoDesk - Free Open Source Project Management Software",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kaneo - Project management made simple",
+    title: "PalcoDesk - Project management made simple",
     description:
       "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com with kanban boards, time tracking, and team collaboration.",
     images: ["/og-image.png"],
-    creator: "@usekaneo",
+    creator: "@usepalcodesk",
   },
   robots: {
     index: true,
@@ -89,16 +81,15 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://kaneo.app",
+    canonical: "https://palcodesk.app",
     types: {
       "application/rss+xml": [
-        { url: "/feed.xml", title: "Kaneo Blog RSS Feed" },
+        { url: "/feed.xml", title: "PalcoDesk Blog RSS Feed" },
       ],
     },
   },
   category: "technology",
 };
-
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
@@ -112,13 +103,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <meta name="color-scheme" content="light dark" />
       </head>
       <body className="flex flex-col min-h-screen">
-        <RootProvider
-          search={{
-            options: {
-              type: "static",
-            },
-          }}
-        >
+        <RootProvider search={{ options: { type: "static" } }}>
           {children}
         </RootProvider>
       </body>

@@ -49,7 +49,7 @@ dotenv.config();
 const pool = new Pool({
   connectionString:
     process.env.DATABASE_URL ||
-    "postgresql://kaneo_user:kaneo_password@localhost:5432/kaneo",
+    "postgresql://palcodesk_user:palcodesk_password@localhost:5432/palcodesk",
 });
 
 export const schema = {

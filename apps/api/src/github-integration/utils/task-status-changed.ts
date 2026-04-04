@@ -39,12 +39,14 @@ export async function handleTaskStatusChanged(data: {
       return;
     }
 
-    const hasKaneoLink = task.description?.includes("Linked to GitHub issue:");
+    const hasPalcoDeskLink = task.description?.includes(
+      "Linked to GitHub issue:",
+    );
     const hasGitHubLink = task.description?.includes(
       "Created from GitHub issue:",
     );
 
-    if (!hasKaneoLink && !hasGitHubLink) {
+    if (!hasPalcoDeskLink && !hasGitHubLink) {
       console.log(
         "Skipping GitHub issue update - task has no GitHub issue link:",
         taskId,

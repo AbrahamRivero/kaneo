@@ -467,7 +467,7 @@ export function GitHubIntegrationSettings({
                     verificationResult.missingPermissions && (
                       <div className="mt-2">
                         <p className="text-xs mb-2">
-                          Missing permissions:{" "}
+                          Missing permissions:
                           <strong>
                             {verificationResult.missingPermissions.join(", ")}
                           </strong>

@@ -453,7 +453,7 @@ function SingleReservationSection({
         }
 
         <div class="footer">
-          <span>Kaneo - Event Room Management</span>
+          <span>PalcoDesk - Event Room Management</span>
           <span>Page 1</span>
         </div>
 
@@ -474,8 +474,8 @@ function SingleReservationSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Reservation?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this reservation for{" "}
-              <strong>{reservation.title || reservation.clientName}</strong> on{" "}
+              Are you sure you want to delete this reservation for
+              <strong>{reservation.title || reservation.clientName}</strong> on
               {dateStr}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -598,7 +598,7 @@ function SingleReservationSection({
                 )}
               </div>
               <span>
-                Payment:{" "}
+                Payment:
                 {reservation.paymentConfirmed ? (
                   <span className="text-green-600 dark:text-green-400 font-medium">
                     Confirmed

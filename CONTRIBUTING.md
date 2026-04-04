@@ -1,6 +1,6 @@
-# Contributing to Kaneo
+# Contributing to PalcoDesk
 
-Thanks for wanting to contribute to Kaneo! Whether you're fixing bugs, adding features, or improving docs, we appreciate your help.
+Thanks for wanting to contribute to PalcoDesk! Whether you're fixing bugs, adding features, or improving docs, we appreciate your help.
 
 ## Table of Contents
 
@@ -35,8 +35,8 @@ We want everyone to feel welcome here. Please be respectful and follow our [Code
 
 1. **Fork and clone the repo**:
 ```bash
-git clone https://github.com/yourusername/kaneo.git
-cd kaneo
+git clone https://github.com/yourusername/palcodesk.git
+cd palcodesk
 ```
 
 2. **Install dependencies**:
@@ -69,7 +69,7 @@ This starts both the API (port 1337) and web app (port 5173). Both will automati
 
 ### Finding Something to Work On
 
-- **Browse [open issues](https://github.com/usekaneo/kaneo/issues)** - look for "good first issue" labels
+- **Browse [open issues](https://github.com/AbrahamRivero/kaneo/issues)** - look for "good first issue" labels
 - **Check our [Discord](https://discord.gg/rU4tSyhXXU)** - we often discuss features and bugs there
 - **Found a bug?** Feel free to fix it and open a PR
 
@@ -125,7 +125,7 @@ We use [conventional commits](https://www.conventionalcommits.org/) to keep our 
 ### Project Structure
 
 ```
-kaneo/
+palcodesk/
 ├── apps/
 │   ├── api/          # Backend API (Node.js/Hono)
 │   └── web/          # Frontend app (React/Vite)
@@ -146,16 +146,16 @@ If you're adding new features, please include tests.
 ## Need Help?
 
 - **Discord**: Join our [Discord server](https://discord.gg/rU4tSyhXXU) for real-time help
-- **Issues**: Open a [GitHub issue](https://github.com/usekaneo/kaneo/issues) for bugs or feature requests
+- **Issues**: Open a [GitHub issue](https://github.com/AbrahamRivero/kaneo/issues) for bugs or feature requests
 - **Discussions**: Use GitHub Discussions for questions about contributing
 
 ## Types of Contributions We Love
 
 - **Bug fixes** - Found something broken? Fix it!
 - **New features** - Have an idea? Let's discuss it first
-- **Documentation** - Help others understand how to use Kaneo
+- **Documentation** - Help others understand how to use PalcoDesk
 - **Performance improvements** - Make things faster
-- **Accessibility** - Help make Kaneo usable for everyone
+- **Accessibility** - Help make PalcoDesk usable for everyone
 - **Testing** - More tests = more confidence
 
-Thanks for contributing to Kaneo! 🚀
+Thanks for contributing to PalcoDesk! 🚀

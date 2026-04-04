@@ -30,9 +30,9 @@ postgresql:
     pullPolicy: IfNotPresent
   # Database configuration
   auth:
-    database: kaneo
-    username: kaneo_user
-    password: kaneo_password
+    database: palcodesk
+    username: palcodesk_user
+    password: palcodesk_password
     # Use existing secret for database credentials (optional)
     existingSecret: ""
     secretKeys:
@@ -60,7 +60,7 @@ postgresql:
 # API backend configuration
 api:
   image:
-    repository: ghcr.io/usekaneo/api
+    repository: ghcr.io/usepalcodesk/api
     tag: latest
     pullPolicy: IfNotPresent
   securityContext: {}
@@ -90,19 +90,19 @@ api:
     database:
       # Use external PostgreSQL (set postgresql.enabled to false)
       # Important: when using external postgres, make sure you have set up the db user correctly:
-      #   CREATE DATABASE kaneo;
-      #   CREATE USER kaneo_user WITH PASSWORD 'your_password';
-      #   GRANT ALL PRIVILEGES ON DATABASE kaneo TO kaneo_user;
-      #   \c kaneo;
-      #   GRANT USAGE ON SCHEMA public TO kaneo_user;
-      #   GRANT CREATE ON SCHEMA public TO kaneo_user;
-      #   ALTER SCHEMA public OWNER TO kaneo_user;
+      #   CREATE DATABASE palcodesk;
+      #   CREATE USER palcodesk_user WITH PASSWORD 'your_password';
+      #   GRANT ALL PRIVILEGES ON DATABASE palcodesk TO palcodesk_user;
+      #   \c palcodesk;
+      #   GRANT USAGE ON SCHEMA public TO palcodesk_user;
+      #   GRANT CREATE ON SCHEMA public TO palcodesk_user;
+      #   ALTER SCHEMA public OWNER TO palcodesk_user;
       external:
         enabled: false
         host: ""
         port: 5432
-        database: kaneo
-        username: kaneo_user
+        database: palcodesk
+        username: palcodesk_user
         password: ""
         # Use existing secret for external database credentials in the form of a uri, e.g.: "postgresql://user:pass@host:port/db"
         existingSecret:
@@ -124,7 +124,7 @@ api:
 # Web frontend configuration
 web:
   image:
-    repository: ghcr.io/usekaneo/web
+    repository: ghcr.io/usepalcodesk/web
     tag: latest
     pullPolicy: IfNotPresent
   # Environment variables for the Web
@@ -132,7 +132,7 @@ web:
     # Optional: Override the default API URL (http://localhost:1337)
     # The /api path will be automatically appended to the URL
     # Make sure this url matches the ingress host
-    # apiUrl: "https://kaneo.example.com"
+    # apiUrl: "https://palcodesk.example.com"
     apiUrl: ""
   securityContext: {}
   service:
@@ -176,7 +176,7 @@ ingress:
     # because it can break the API calls from the frontend to the backend
   hosts:
     # Use the same host in the web env variable apiUrl (with http:// or https://)
-    - host: kaneo.local
+    - host: palcodesk.local
       paths:
         - path: /?(.*)
           pathType: ImplementationSpecific

@@ -171,8 +171,8 @@ export function PeriodTasksTable({ tasks }: PeriodTasksTableProps) {
             {(currentPage - 1) * pageSize + 1}
             &ndash;
             {Math.min(currentPage * pageSize, tasks.length)}
-          </span>{" "}
-          of <span className="font-medium text-foreground">{tasks.length}</span>{" "}
+          </span>
+          of <span className="font-medium text-foreground">{tasks.length}</span>
           tasks
         </p>
         <Select

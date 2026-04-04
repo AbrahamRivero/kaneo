@@ -29,9 +29,9 @@ export default function StructuredData({
         return {
           ...baseData,
           "@type": "Organization",
-          name: "Kaneo",
-          url: "https://kaneo.app",
-          logo: "https://kaneo.app/logo.png",
+          name: "PalcoDesk",
+          url: "https://palcodesk.app",
+          logo: "https://palcodesk.app/logo.png",
           description:
             "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com.",
           foundingDate: "2024",
@@ -42,7 +42,7 @@ export default function StructuredData({
           },
           sameAs: [
             "https://github.com/AbrahamRivero/kaneo",
-            "https://twitter.com/usekaneo",
+            "https://twitter.com/usePalcoDesk",
             "https://discord.gg/rU4tSyhXXU",
           ],
         };
@@ -51,20 +51,20 @@ export default function StructuredData({
         return {
           ...baseData,
           "@type": "SoftwareApplication",
-          name: "Kaneo",
+          name: "PalcoDesk",
           description:
             "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com with kanban boards, time tracking, and team collaboration.",
-          url: "https://kaneo.app",
+          url: "https://palcodesk.app",
           downloadUrl: "https://github.com/AbrahamRivero/kaneo",
-          screenshot: "https://kaneo.app/screenshot.png",
+          screenshot: "https://palcodesk.app/screenshot.png",
           applicationCategory: "ProjectManagementApplication",
           operatingSystem: "Linux, macOS, Windows",
           softwareVersion: "latest",
           license: "https://opensource.org/licenses/MIT",
           author: {
             "@type": "Organization",
-            name: "Kaneo",
-            url: "https://kaneo.app",
+            name: "PalcoDesk",
+            url: "https://palcodesk.app",
           },
           offers: {
             "@type": "Offer",
@@ -93,22 +93,22 @@ export default function StructuredData({
             data?.title || "Free Open Source Project Management Software",
           description:
             data?.description ||
-            "Complete guide to Kaneo - the free, open source project management software",
+            "Complete guide to PalcoDesk - the free, open source project management software",
           author: {
             "@type": "Organization",
-            name: "Kaneo",
+            name: "PalcoDesk",
           },
           publisher: {
             "@type": "Organization",
-            name: "Kaneo",
+            name: "PalcoDesk",
             logo: {
               "@type": "ImageObject",
-              url: "https://kaneo.app/logo.png",
+              url: "https://palcodesk.app/logo.png",
             },
           },
           datePublished: data?.datePublished || new Date().toISOString(),
           dateModified: data?.dateModified || new Date().toISOString(),
-          mainEntityOfPage: data?.url || "https://kaneo.app",
+          mainEntityOfPage: data?.url || "https://palcodesk.app",
         };
 
       case "faq":
@@ -118,26 +118,26 @@ export default function StructuredData({
           mainEntity: data?.questions || [
             {
               "@type": "Question",
-              name: "Is Kaneo really free?",
+              name: "Is PalcoDesk really free?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Yes, Kaneo is completely free and open source under the MIT license. There are no user limits or hidden costs.",
+                text: "Yes, PalcoDesk is completely free and open source under the MIT license. There are no user limits or hidden costs.",
               },
             },
             {
               "@type": "Question",
-              name: "How does Kaneo compare to Jira?",
+              name: "How does PalcoDesk compare to Jira?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Kaneo is a free, open source alternative to Jira with similar features like issue tracking, project management, and team collaboration, but without licensing costs.",
+                text: "PalcoDesk is a free, open source alternative to Jira with similar features like issue tracking, project management, and team collaboration, but without licensing costs.",
               },
             },
             {
               "@type": "Question",
-              name: "Can I self-host Kaneo?",
+              name: "Can I self-host PalcoDesk?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Yes, Kaneo is designed for self-hosting. You can deploy it with Docker in minutes and have complete control over your data.",
+                text: "Yes, PalcoDesk is designed for self-hosting. You can deploy it with Docker in minutes and have complete control over your data.",
               },
             },
           ],

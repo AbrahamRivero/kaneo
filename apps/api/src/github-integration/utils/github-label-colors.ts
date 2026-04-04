@@ -10,7 +10,7 @@ export const githubLabelColors = {
   "status:backlog": "8B5CF6", // Purple
   "status:archived": "6B7280", // Gray
 
-  kaneo: "6366F1", // Indigo
+  palcodesk: "6366F1", // Indigo
 };
 
 export function getLabelColor(labelName: string): string {

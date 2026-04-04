@@ -246,7 +246,7 @@ export function RepositoryBrowserModal({
                                 <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-500">
                                   <div className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
-                                    Updated{" "}
+                                    Updated
                                     {formatTimeAgo(repository.updated_at)}
                                   </div>
                                 </div>
@@ -296,7 +296,7 @@ export function RepositoryBrowserModal({
               <div className="flex-shrink-0 border-t border-zinc-200 dark:border-zinc-800 p-4">
                 <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
                   <span>
-                    {data.repositories.length} repositories across{" "}
+                    {data.repositories.length} repositories across
                     {data.installations.length} installations
                   </span>
                   <Button

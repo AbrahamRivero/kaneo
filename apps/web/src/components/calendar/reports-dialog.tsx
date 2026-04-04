@@ -338,7 +338,7 @@ export function ReportsDialog({
           </table>
 
           <div class="footer">
-            <span>Kaneo - Event Room Management</span>
+            <span>PalcoDesk - Event Room Management</span>
             <span>Page 1</span>
           </div>
 

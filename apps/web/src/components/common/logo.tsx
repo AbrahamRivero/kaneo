@@ -24,7 +24,7 @@ export function Logo({ className = "" }: LogoProps) {
         <LayoutGrid className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
       </div>
       <span className="text-lg text-zinc-900 dark:text-white font-semibold">
-        Kaneo
+        PalcoDesk
       </span>
     </Link>
   );

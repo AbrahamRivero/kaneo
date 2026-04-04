@@ -1,4 +1,4 @@
-import { client } from "@kaneo/libs";
+import { client } from "@palcodesk/libs";
 const base = import.meta.env.VITE_API_URL || "";
 
 export interface PaginatedResponse<T> {
