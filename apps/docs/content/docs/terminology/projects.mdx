@@ -27,21 +27,67 @@ Click the "New Project" button
 Enter a name and optional description for your project
 </Step>
 <Step>
-Click "Create"
+Choose an icon for your project
 </Step>
 <Step>
-The project will be created and you will be redirected to the board view 🎉
+Click "Create"
 </Step>
 </Steps>
+
+The project will be created and you will be redirected to the board view.
 
 ## Project Views
 
 Each project in PalcoDesk can be viewed in different ways:
 
-- **List View**: Displays tasks in a simple list format
-- **Board View**: Shows tasks organized by status in a Kanban-style board
+### Board View
+Displays tasks organized by status in a Kanban-style board. You can drag and drop tasks between columns to change their status.
+
+### Backlog View
+Shows tasks that are not yet started or are in the backlog. Useful for planning and prioritizing future work.
+
+### List View
+Displays tasks in a simple list format with columns for all task properties. Ideal for bulk operations and sorting.
 
 To switch between views, use the view selector in the project header.
+
+## Public Projects
+
+PalcoDesk allows you to share projects with external users who don't have access to your workspace. When enabled, the project becomes publicly accessible via a shareable link.
+
+### Enabling Public Access
+
+<Steps>
+<Step>
+Navigate to the project
+</Step>
+<Step>
+Click on the "Settings" button in the project header
+</Step>
+<Step>
+Find the "Public Access" section
+</Step>
+<Step>
+Toggle "Public" to enable
+</Step>
+</Steps>
+
+External users can now view the project (read-only) using the public URL. They will see:
+- All tasks in the project
+- Task details (title, description, status, priority, assignees)
+- Kanban board or list view
+
+They cannot:
+- Edit or create tasks
+- Access other workspace projects
+- See workspace members
+
+### Sharing a Public Project
+
+Once public, share the project URL with external stakeholders:
+```
+https://your-domain.com/public-project/{project-id}
+```
 
 ## Project Settings
 
@@ -54,20 +100,72 @@ Navigate to the project
 <Step>
 Click on the "Settings" button in the project header
 </Step>
-<Step>
-You will be redirected to the project settings page
-</Step>
 </Steps>
 
 From the settings page, you can:
 - Update the project name and description
-- Configure project-specific settings
+- Change the project icon
+- Enable/disable public access
+- Delete the project
 
-## Archiving and Deleting Projects
+## GitHub Integration
 
-When a project is completed or no longer needed, you can:
+Projects can be integrated with GitHub repositories:
 
-- **Archive**: Keeps the project data but removes it from the active projects list
-- **Delete**: Permanently removes the project and all its tasks
+- Link a GitHub repository to the project
+- Import GitHub issues as PalcoDesk tasks
+- Sync task status with GitHub issues
+- Sync priority with GitHub labels
 
-To archive or delete a project, go to the project settings and scroll to the bottom of the page.
+See [GitHub Integration](/docs/features/github-integration) for details.
+
+## Project Analytics
+
+Each project has its own analytics dashboard showing:
+- Task completion rates
+- Tasks by status
+- Tasks by priority
+- Overdue tasks
+
+Access analytics from the project header by clicking "Analytics".
+
+## Task Numbers
+
+Each task in a project has a sequential number (e.g., PROJ-1, PROJ-2). This provides a unique identifier that stakeholders can reference.
+
+## Importing Tasks
+
+You can import tasks into a project from JSON format:
+
+<Steps>
+<Step>
+Navigate to the project
+</Step>
+<Step>
+Click on the settings icon in the project header
+</Step>
+<Step>
+Select "Import Tasks"
+</Step>
+<Step>
+Upload a JSON file with task data
+</Step>
+</Steps>
+
+## Exporting Tasks
+
+Export project tasks for backup or analysis:
+
+<Steps>
+<Step>
+Navigate to the project
+</Step>
+<Step>
+Click on the settings icon in the project header
+</Step>
+<Step>
+Select "Export Tasks"
+</Step>
+</Steps>
+
+Tasks will be downloaded as a JSON file.

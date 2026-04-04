@@ -1,0 +1,241 @@
+---
+title: Event Rooms
+description: Learn how to manage room reservations in PalcoDesk
+icon: Calendar
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+PalcoDesk includes a comprehensive event room reservation system. This feature allows you to manage physical spaces, set up pricing, and handle client bookings.
+
+## Overview
+
+The event room system consists of several components:
+
+- **Event Rooms**: Physical or virtual spaces available for reservation
+- **Services**: Additional offerings (catering, equipment) that can be added to reservations
+- **Tariffs**: Pricing rules for different session types
+- **Reservations**: Bookings with client details and payment status
+
+## Managing Event Rooms
+
+### Creating a Room
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms" in the sidebar
+</Step>
+<Step>
+Click "Manage" then "New Room"
+</Step>
+<Step>
+Fill in room details:
+  - Name
+  - Capacity (number of people)
+  - Description
+  - Allow multiple reservations (toggle)
+</Step>
+<Step>
+Click "Create"
+</Step>
+</Steps>
+
+### Room Properties
+
+| Property | Description |
+| -------- | ----------- |
+| **Name** | Display name for the room |
+| **Capacity** | Maximum number of guests |
+| **Description** | Room details and amenities |
+| **Allow Multiple** | Whether to allow overlapping reservations |
+
+## Managing Services
+
+Services are additional offerings that can be added to reservations (e.g., catering, equipment rental).
+
+### Creating a Service
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms" > "Pricing" > "Services"
+</Step>
+<Step>
+Click "New Service"
+</Step>
+<Step>
+Fill in service details:
+  - Name
+  - Price per person
+  - Description
+  - Active status
+</Step>
+<Step>
+Click "Create"
+</Step>
+</Steps>
+
+## Managing Tariffs
+
+Tariffs define pricing for different session types and time periods.
+
+### Creating a Tariff
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms" > "Pricing" > "Tariffs"
+</Step>
+<Step>
+Click "New Tariff"
+</Step>
+<Step>
+Fill in tariff details:
+  - Room selection
+  - Session type (half session, full session, social event, flat)
+  - Base price
+  - Service charge percentage
+  - Modification charge
+</Step>
+<Step>
+Click "Create"
+</Step>
+</Steps>
+
+### Session Types
+
+| Type | Description |
+| ---- | ----------- |
+| **Half Session** | Typically 3-4 hours |
+| **Full Session** | Full day booking |
+| **Social Event** | Evening events |
+| **Flat** | Flat rate regardless of duration |
+
+## Making Reservations
+
+### Creating a Reservation
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms"
+</Step>
+<Step>
+Click "New Reservation"
+</Step>
+<Step>
+Fill in reservation details:
+  - Room selection
+  - Client name and company
+  - Contact information (phone, email)
+  - Date and time range
+  - Number of guests
+</Step>
+<Step>
+Add services if needed
+</Step>
+<Step>
+Click "Create"
+</Step>
+</Steps>
+
+### Reservation Properties
+
+| Property | Description |
+| -------- | ----------- |
+| **Client Name** | Name of the client or contact person |
+| **Company** | Company name (optional) |
+| **Phone** | Contact phone number |
+| **Email** | Contact email address |
+| **Date Range** | Start and end date/time |
+| **Guests** | Number of attendees |
+| **Services** | Additional services selected |
+| **Grand Total** | Total price including services and charges |
+| **Payment Status** | Whether payment has been confirmed |
+
+## Reservation Calendar
+
+The event rooms calendar shows all reservations in a calendar view:
+
+- **Month View**: Overview of all reservations for the month
+- **Day View**: Detailed schedule for a specific day
+- **Color Coding**: Reservations color-coded by status
+
+### Accessing the Calendar
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms" (main section)
+</Step>
+</Steps>
+
+The calendar displays reservations with:
+- Room name
+- Client name
+- Time range
+- Status indicator
+
+## Payment Reminders
+
+PalcoDesk automatically sends payment reminders for unpaid reservations:
+
+- **9:00 AM**: First reminder
+- **12:00 PM**: Second reminder  
+- **4:00 PM**: Final reminder
+
+These reminders are sent for reservations that have not had payment confirmed.
+
+## Viewing and Editing Reservations
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms"
+</Step>
+<Step>
+Click on a reservation to view details
+</Step>
+<Step>
+From the detail view, you can:
+  - Edit reservation details
+  - Add or remove services
+  - Update payment status
+  - Cancel the reservation
+</Step>
+</Steps>
+
+## Reports
+
+Generate reports for reservations:
+
+<Steps>
+<Step>
+Navigate to the workspace
+</Step>
+<Step>
+Go to "Event Rooms"
+</Step>
+<Step>
+Click "Reports"
+</Step>
+<Step>
+Select date range and room
+</Step>
+<Step>
+Generate report
+</Step>
+</Steps>
