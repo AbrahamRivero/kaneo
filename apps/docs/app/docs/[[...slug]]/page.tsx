@@ -20,8 +20,8 @@ export default async function Page(props: {
   return (
     <DocsPage
       editOnGithub={{
-        owner: "usekaneo",
-        repo: "kaneo",
+        owner: "AbrahamRivero",
+        repo: "palcodesk",
         sha: "main",
         path: `apps/docs/content/docs/${page.file.path}`,
       }}
@@ -53,30 +53,32 @@ export async function generateMetadata({
   const page = source.getPage(slug);
   if (!page) notFound();
 
-  const image = ["https://kaneo.app/docs-og", ...slug, "image.png"].join("/");
+  const image = ["https://palcodesk.app/docs-og", ...slug, "image.png"].join(
+    "/",
+  );
 
   return {
-    title: `${page.data.title} | Kaneo`,
+    title: `${page.data.title} | PalcoDesk`,
     description: page.data.description,
     alternates: {
       canonical: `/docs/${page.slugs.join("/")}`,
     },
     openGraph: {
       images: image,
-      title: `${page.data.title} | Kaneo`,
+      title: `${page.data.title} | PalcoDesk`,
       description: page.data.description,
       url: `/docs/${page.slugs.join("/")}`,
-      siteName: "Kaneo",
+      siteName: "PalcoDesk",
       locale: "en_US",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       images: image,
-      title: `${page.data.title} | Kaneo`,
+      title: `${page.data.title} | PalcoDesk`,
       description: page.data.description,
       creator: "@aacevski",
-      site: "https://kaneo.app",
+      site: "https://palcodesk.app",
     },
   } satisfies Metadata;
 }

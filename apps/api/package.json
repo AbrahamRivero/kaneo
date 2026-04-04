@@ -1,5 +1,5 @@
 {
-  "name": "@kaneo/api",
+  "name": "@palcodesk/api",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./src/index.ts",

@@ -48,7 +48,7 @@ export async function importIssues(userId: string, projectId: string) {
       where: and(
         eq(taskTable.number, issue.number),
         eq(taskTable.projectId, projectId),
-        notLike(taskTable.title, "[Kaneo]%"),
+        notLike(taskTable.title, "[PalcoDesk]%"),
       ),
     });
 

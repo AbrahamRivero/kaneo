@@ -3,10 +3,10 @@ import { GitFork, Github, Users } from "lucide-react";
 async function fetchGitHubStats() {
   try {
     const [repoData, contributors] = await Promise.all([
-      fetch("https://api.github.com/repos/usekaneo/kaneo", {
+      fetch("https://api.github.com/repos/AbrahamRivero/palcodesk", {
         next: { revalidate: 86400 },
       }),
-      fetch("https://api.github.com/repos/usekaneo/kaneo/contributors", {
+      fetch("https://api.github.com/repos/AbrahamRivero/palcodesk/contributors", {
         next: { revalidate: 86400 },
       }),
     ]);

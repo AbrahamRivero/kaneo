@@ -48,10 +48,10 @@ function DeleteTeamMemberModal({
 
             <div className="p-4">
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
-                Are you sure you want to remove{" "}
+                Are you sure you want to remove
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
                   {userId}
-                </span>{" "}
+                </span>
                 from the team? This action cannot be undone.
               </p>
 

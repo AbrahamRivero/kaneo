@@ -62,8 +62,8 @@ export async function handleTaskCreated(data: {
     const createdIssue = await octokit.rest.issues.create({
       owner: repositoryOwner,
       repo: repositoryName,
-      title: `[Kaneo] ${title}`,
-      body: `**Task created in Kaneo**
+      title: `[PalcoDesk] ${title}`,
+      body: `**Task created in PalcoDesk**
 
 **Description:** ${description || "No description provided"}
 
@@ -74,11 +74,11 @@ export async function handleTaskCreated(data: {
 - Assigned to: ${userId || "Unassigned"}
 
 ---
-*This issue was automatically created from Kaneo task management system.*`,
+*This issue was automatically created from PalcoDesk task management system.*`,
     });
 
     const labelsToAdd = [
-      "kaneo",
+      "palcodesk",
       `priority:${priority || "low"}`,
       `status:${status}`,
     ];

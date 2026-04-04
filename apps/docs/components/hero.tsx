@@ -36,10 +36,10 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 text-center lg:pt-32">
         <div id="headline" className="mb-8">
           <h1 className="mx-auto mt-8 max-w-4xl font-display text-4xl font-medium tracking-tight text-zinc-900 dark:text-white sm:text-7xl animate-fade-in">
-            Project management{" "}
+            Project management
             <span className="relative whitespace-nowrap text-indigo-600 dark:text-indigo-400">
-              <span className="relative">made simple</span>
-            </span>{" "}
+              <span className="relative"> made simple </span>
+            </span>
             for teams
           </h1>
 

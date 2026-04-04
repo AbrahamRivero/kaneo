@@ -916,7 +916,7 @@ export function ReservationForm({
                   <SelectContent>
                     {filteredTariffs.map((tariff) => (
                       <SelectItem key={tariff.id} value={tariff.id}>
-                        {capitalizeWords(tariff.sessionType)}:{" "}
+                        {capitalizeWords(tariff.sessionType)}:
                         {tariff.price ? `$${tariff.price}/Day` : "No price"}
                         {tariff.serviceChargePercent > 0 &&
                           ` (+${tariff.serviceChargePercent}% Service)`}
@@ -1288,7 +1288,7 @@ export function ReservationForm({
                   </PaginationItem>
                   <PaginationItem>
                     <span className="flex h-9 items-center px-3 text-sm text-muted-foreground">
-                      Page {servicesPage} of{" "}
+                      Page {servicesPage} of
                       {dialogServicesData
                         ? Math.ceil(dialogServicesData.total / servicesLimit)
                         : 1}

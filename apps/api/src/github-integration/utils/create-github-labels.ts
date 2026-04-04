@@ -23,7 +23,7 @@ export async function createGitHubLabels(
           repo,
           name: labelName,
           color,
-          description: `Kaneo ${labelName.replace(":", " ")} label`,
+          description: `PalcoDesk ${labelName.replace(":", " ")} label`,
         });
         console.log(`Created label "${labelName}" with color ${color}`);
       }

@@ -1,9 +1,9 @@
 import { CopyUrlButton } from "@/components/public-project/copy-url-button";
 import { ErrorView } from "@/components/public-project/error-view";
 import { PublicKanbanView } from "@/components/public-project/kanban-view";
-import { KaneoBranding } from "@/components/public-project/kaneo-branding";
 import { PublicListView } from "@/components/public-project/list-view";
 import { LoadingSkeleton } from "@/components/public-project/loading-skeleton";
+import { PalcoDeskBranding } from "@/components/public-project/palcodesk-branding";
 import { PublicTaskDetailModal } from "@/components/public-project/task-detail-modal";
 import { ThemeToggle } from "@/components/public-project/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -116,7 +116,7 @@ function RouteComponent() {
       <footer className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 py-4">
         <div className="px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <KaneoBranding />
+            <PalcoDeskBranding />
             <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center md:text-right">
               This is a read-only public view of the project.
             </p>

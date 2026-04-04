@@ -27,31 +27,31 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: kaneo
-      POSTGRES_USER: kaneo_user
-      POSTGRES_PASSWORD: kaneo_password
+      POSTGRES_DB: palcodesk
+      POSTGRES_USER: palcodesk_user
+      POSTGRES_PASSWORD: palcodesk_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - traefik-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kaneo_user -d kaneo"]
+      test: ["CMD-SHELL", "pg_isready -U palcodesk_user -d palcodesk"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
-    image: ghcr.io/usekaneo/api:latest
+    image: ghcr.io/usepalcodesk/api:latest
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`demo-api.kaneo.app`)"
+      - "traefik.http.routers.backend.rule=Host(`demo-api.palcodesk.app`)"
       - "traefik.http.routers.backend.entrypoints=web"
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.enable-volume-preservation=true"
     environment:
       JWT_ACCESS: "change_me"
-      DATABASE_URL: "postgresql://kaneo_user:kaneo_password@postgres:5432/kaneo"
+      DATABASE_URL: "postgresql://palcodesk_user:palcodesk_password@postgres:5432/palcodesk"
       DEMO_MODE: "true"
     depends_on:
       postgres:
@@ -61,12 +61,12 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/usekaneo/web:latest
+    image: ghcr.io/usepalcodesk/web:latest
     environment:
-      KANEO_API_URL: "https://demo-api.kaneo.app"
+      KANEO_API_URL: "https://demo-api.palcodesk.app"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`demo.kaneo.app`)"
+      - "traefik.http.routers.frontend.rule=Host(`demo.palcodesk.app`)"
       - "traefik.http.routers.frontend.entrypoints=web"
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
@@ -79,4 +79,4 @@ networks:
 
 volumes:
   postgres_data:
-    name: kaneo_postgres_data
+    name: palcodesk_postgres_data

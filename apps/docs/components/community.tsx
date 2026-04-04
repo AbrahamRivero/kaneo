@@ -17,7 +17,7 @@ export default function Community() {
 
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
           <a
-            href="https://github.com/orgs/usekaneo/discussions"
+            href="https://github.com/AbrahamRivero/kaneo/discussions"
             target="_blank"
             rel="noopener noreferrer"
             className="community-item group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-100 animate-fade-in-up-0"
@@ -28,7 +28,7 @@ export default function Community() {
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 window.open(
-                  "https://github.com/orgs/usekaneo/discussions",
+                  "https://github.com/AbrahamRivero/kaneo/discussions",
                   "_blank",
                 );
               }
@@ -68,7 +68,7 @@ export default function Community() {
           </a>
 
           <a
-            href="https://x.com/usekaneo"
+            href="https://x.com/usepalcodesk"
             target="_blank"
             rel="noopener noreferrer"
             className="community-item group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-100 animate-fade-in-up-2"
@@ -78,7 +78,7 @@ export default function Community() {
             role="button"
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
-                window.open("https://x.com/usekaneo", "_blank");
+                window.open("https://x.com/usepalcodesk", "_blank");
               }
             }}
           >
@@ -94,7 +94,7 @@ export default function Community() {
 
         <div className="mt-12 text-center animate-fade-in-delay-2">
           <a
-            href="https://github.com/usekaneo/kaneo"
+            href="https://github.com/AbrahamRivero/kaneo"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
@@ -104,7 +104,7 @@ export default function Community() {
             role="button"
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
-                window.open("https://github.com/usekaneo/kaneo", "_blank");
+                window.open("https://github.com/AbrahamRivero/kaneo", "_blank");
               }
             }}
           >

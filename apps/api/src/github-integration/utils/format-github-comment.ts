@@ -18,6 +18,6 @@ export function formatGitHubComment({
 - **Status:** ${status}
 
 
-*This issue is automatically synchronized with your Kaneo project.*
+*This issue is automatically synchronized with your PalcoDesk project.*
 </details>`;
 }

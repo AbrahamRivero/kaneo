@@ -1,13 +1,13 @@
 ---
 title: Tasks
-description: Understanding tasks in Kaneo
+description: Understanding tasks in PalcoDesk
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## What are Tasks?
 
-Tasks are the fundamental work items in Kaneo. They represent specific actions that need to be completed within a project. Each task can have various attributes such as assignees, due dates, status, and time tracking.
+Tasks are the fundamental work items in PalcoDesk. They represent specific actions that need to be completed within a project. Each task can have various attributes such as assignees, due dates, status, priority, time tracking, and labels.
 
 ## Creating Tasks
 
@@ -24,27 +24,88 @@ Click the "New Task" button
 Enter a title for your task
 </Step>
 <Step>
-Add any additional details
+Add any additional details (description, assignee, due date, priority)
 </Step>
 <Step>
 Click "Create"
 </Step>
-<Step>
-The task will be added to the project's task list 🎉
-</Step>
 </Steps>
+
+The task will be added to the project's task list.
 
 ## Task Properties
 
-Tasks in Kaneo have several properties that help you track and manage your work:
+Tasks in PalcoDesk have several properties that help you track and manage your work:
 
-- **Title**: A brief description of the task
-- **Description**: Detailed information about what needs to be done
-- **Status**: The current state of the task (e.g., Todo, In Progress, Done)
-- **Assignee**: The person responsible for completing the task
-- **Due Date**: When the task should be completed
-- **Priority**: The importance level of the task
-- **Time Tracking**: Record time spent working on the task
+| Property | Description |
+| -------- | ----------- |
+| **Title** | A brief description of the task |
+| **Description** | Detailed information about what needs to be done (supports Markdown) |
+| **Status** | The current state (Backlog, To Do, In Progress, Technical Review, Completed, Archived) |
+| **Assignee** | The person responsible for completing the task |
+| **Due Date** | When the task should be completed |
+| **Priority** | The importance level (No Priority, Low, Medium, High, Urgent) |
+| **Labels** | Color-coded tags for categorization |
+| **Time Tracking** | Record time spent working on the task |
+| **Task Number** | Sequential identifier within the project |
+
+## Task Views
+
+PalcoDesk provides multiple ways to view your tasks:
+
+### Board View (Kanban)
+The Board view displays tasks organized by status in columns. You can drag and drop tasks between columns to update their status.
+
+### Backlog View
+The Backlog view shows tasks that are not yet started or are in the backlog. This is useful for planning future work.
+
+### List View
+The List view displays all tasks in a tabular format with columns for all task properties. This is ideal for bulk operations and sorting.
+
+## Time Tracking
+
+PalcoDesk includes built-in time tracking:
+
+### Starting a Timer
+1. Open a task
+2. Click the timer icon in the time tracking section
+3. The timer starts recording time
+
+### Manual Time Entry
+1. Open a task
+2. Click "Add time entry"
+3. Enter the duration and optional description
+4. Save the entry
+
+### Viewing Time Entries
+All time entries for a task are displayed in the task detail view, showing:
+- Start/end times
+- Duration
+- User who logged the time
+
+## Labels
+
+Labels help you categorize and filter tasks:
+
+### Creating Labels
+1. Open a task
+2. Go to the Labels section
+3. Click "Add Label"
+4. Enter a name and select a color
+
+### Filtering by Labels
+Use the task filters to show only tasks with specific labels.
+
+## Task Activities
+
+Every change to a task is logged in the activity feed:
+- Task created/updated/deleted
+- Status changes
+- Assignee changes
+- Comments added
+- Time entries logged
+
+This provides a complete audit trail for each task.
 
 ## Managing Tasks
 
@@ -55,3 +116,13 @@ You can manage tasks in several ways:
 - **Assign**: Assign or reassign tasks to team members
 - **Comment**: Add comments to discuss the task with your team
 - **Track Time**: Start and stop time tracking to record work duration
+
+## Keyboard Shortcuts
+
+When viewing tasks, you can use keyboard shortcuts for quick actions (see [Keyboard Shortcuts](/docs/features/keyboard-shortcuts) for full list).
+
+## Related Features
+
+- **[Time Tracking](/docs/features/time-tracking)** - Detailed time tracking guide
+- **[Analytics](/docs/features/analytics)** - Track task completion metrics
+- **[GitHub Integration](/docs/features/github-integration)** - Sync tasks with GitHub issues

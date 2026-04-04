@@ -1,24 +1,27 @@
 ---
 title: Quick Start Guide
-description: Get started with Kaneo in minutes. Learn how to deploy the open source project management platform using Docker Compose, configure PostgreSQL, and set up your first project.
+description: Get started with PalcoDesk in minutes. Learn how to deploy the open source project management platform using Docker Compose, configure PostgreSQL, and set up your first project.
 icon: Rocket
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Kaneo is an open source project management platform focused on simplicity and efficiency. This comprehensive guide will help you get up and running quickly with a production-ready setup.
+PalcoDesk is an open source project management platform focused on simplicity and efficiency. This comprehensive guide will help you get up and running quickly with a production-ready setup.
 
-## Why Choose Kaneo?
+## Why Choose PalcoDesk?
 
 - **🚀 Fast Setup**: Get running in under 5 minutes with Docker Compose
 - **🔒 Self-Hosted**: Your data stays on your infrastructure
 - **🛠️ Customizable**: Open source and built for extensibility
 - **📊 PostgreSQL**: Reliable database with proper data integrity
-- **🔧 Production Ready**: Built with Docker, Kubernetes, and modern DevOps practices
+- **📅 Event Rooms**: Built-in room reservation and booking system
+- **📞 Phone Board**: Digital telephone extension board
+- **📈 Analytics**: Real-time workspace and project analytics
+- **🔗 GitHub Integration**: Sync tasks with GitHub issues
 
 ## Docker Compose Installation
 
-The easiest way to get started with Kaneo is using Docker Compose. This setup includes PostgreSQL for reliable data storage:
+The easiest way to get started with PalcoDesk is using Docker Compose:
 
 <Steps>
 <Step>
@@ -32,32 +35,46 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: kaneo
-      POSTGRES_USER: kaneo_user
-      POSTGRES_PASSWORD: kaneo_password
+      POSTGRES_DB: PalcoDesk
+      POSTGRES_USER: PalcoDesk_user
+      POSTGRES_PASSWORD: PalcoDesk_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  backend:
-    image: ghcr.io/usekaneo/api:latest
+  api:
+    image: ghcr.io/kaneo/api:latest
     environment:
       JWT_ACCESS: "your_secure_jwt_token"
-      DATABASE_URL: "postgresql://kaneo_user:kaneo_password@postgres:5432/kaneo"
+      DATABASE_URL: "postgresql://PalcoDesk_user:PalcoDesk_password@postgres:5432/PalcoDesk"
+      DISCORD_CLIENT_ID: ""
+      DISCORD_CLIENT_SECRET: ""
+      GITHUB_CLIENT_ID: ""
+      GITHUB_CLIENT_SECRET: ""
+      DEMO_MODE: "false"
+      CORS_ORIGIN: "http://localhost:5173"
     ports:
       - 1337:1337
     depends_on:
       - postgres
     restart: unless-stopped
 
-  frontend:
-    image: ghcr.io/usekaneo/web:latest
+  web:
+    image: ghcr.io/kaneo/web:latest
     environment:
-      KANEO_API_URL: "http://localhost:1337"
+      PalcoDesk_API_URL: "http://localhost:1337"
     ports:
       - 5173:5173
     depends_on:
-      - backend
+      - api
+    restart: unless-stopped
+
+  docs:
+    image: ghcr.io/kaneo/docs:latest
+    ports:
+      - 5174:5173
+    depends_on:
+      - api
     restart: unless-stopped
 
 volumes:
@@ -77,20 +94,21 @@ This will download the images and start the containers in the background.
 </Step>
 
 <Step>
-**Access your Kaneo instance**
+**Access your PalcoDesk instance**
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 </Step>
 
 <Step>
-**Create your first project**
+**Create your first workspace**
 
-Create your first project and start managing your tasks! 🎉
+After signing up, you'll be guided through creating your first workspace where you can organize projects and team members.
 
 You'll be able to:
 - Create projects and organize tasks
 - Assign team members and set priorities
 - Track progress with kanban boards
+- Manage event room reservations
 - Collaborate with your team in real-time
 </Step>
 
@@ -100,14 +118,40 @@ You'll be able to:
 
 | Variable | Description | Required | Default |
 | -------- | ----------- | -------- | ------- |
-| `KANEO_API_URL` | The URL where the API is accessible | Yes | - |
+| `PalcoDesk_API_URL` | The URL where the API is accessible | Yes | - |
 | `JWT_ACCESS` | Secret key for generating JWT tokens | Yes | - |
 | `DATABASE_URL` | PostgreSQL connection string | Yes | - |
 | `DISABLE_REGISTRATION` | Enable/disable new user registration | No | `false` |
+| `DEMO_MODE` | Enable demo mode with sample data | No | `false` |
+| `CORS_ORIGIN` | Allowed CORS origins | No | `*` |
+| `DISCORD_CLIENT_ID` | Discord OAuth client ID | No | - |
+| `DISCORD_CLIENT_SECRET` | Discord OAuth client secret | No | - |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | No | - |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | No | - |
+
+## Demo Mode
+
+PalcoDesk supports a demo mode that loads sample data so you can explore the platform without setting up a database:
+
+```yaml
+services:
+  api:
+    image: ghcr.io/kaneo/api:latest
+    environment:
+      JWT_ACCESS: "demo_secret_key"
+      DEMO_MODE: "true"
+    # ... other config
+```
+
+Demo mode includes:
+- Sample workspaces, projects, and tasks
+- Example event rooms and reservations
+- Pre-configured labels and team members
+- Analytics with sample data
 
 ## Database Setup
 
-Kaneo uses PostgreSQL for reliable data storage with proper relational integrity. The Docker Compose setup above handles this automatically, but if you're running Kaneo outside of Docker, you'll need to:
+PalcoDesk uses PostgreSQL for reliable data storage. The Docker Compose setup above handles this automatically:
 
 ### Manual PostgreSQL Setup
 
@@ -122,14 +166,14 @@ Kaneo uses PostgreSQL for reliable data storage with proper relational integrity
 
 2. **Create a database and user:**
    ```sql
-   CREATE DATABASE kaneo;
-   CREATE USER kaneo_user WITH PASSWORD 'your_password';
-   GRANT ALL PRIVILEGES ON DATABASE kaneo TO kaneo_user;
+   CREATE DATABASE PalcoDesk;
+   CREATE USER PalcoDesk_user WITH PASSWORD 'your_password';
+   GRANT ALL PRIVILEGES ON DATABASE PalcoDesk TO PalcoDesk_user;
    ```
 
 3. **Set the DATABASE_URL environment variable:**
    ```bash
-   export DATABASE_URL="postgresql://kaneo_user:your_password@localhost:5432/kaneo"
+   export DATABASE_URL="postgresql://PalcoDesk_user:your_password@localhost:5432/PalcoDesk"
    ```
 
 ## Security Considerations
@@ -139,24 +183,44 @@ For production deployments, make sure to:
 - **Change default passwords**: Use strong, unique passwords for JWT_ACCESS and database credentials
 - **Use HTTPS**: Deploy behind a reverse proxy with SSL/TLS certificates
 - **Regular backups**: Set up automated database backups
-- **Update regularly**: Keep your Kaneo installation up to date
+- **Update regularly**: Keep your PalcoDesk installation up to date
+- **Configure CORS**: Set CORS_ORIGIN to your specific domain in production
 
-## Migration from SQLite
+## PalcoDesk Features Overview
 
-If you're upgrading from a previous version that used SQLite, you'll need to migrate your data to PostgreSQL. We recommend:
+PalcoDesk offers a comprehensive set of features for project management:
 
-1. **Export your data** from the old SQLite database
-2. **Set up PostgreSQL** using the new Docker Compose configuration
-3. **Import your data** into the new PostgreSQL database
+### Core Features
+- **Workspaces**: Top-level organization for teams and projects
+- **Projects**: Group related tasks together
+- **Tasks**: Kanban boards, backlog views, time tracking
+- **Teams**: Role-based access control (owner, member, viewer)
 
-Contact us on [Discord](https://discord.gg/rU4tSyhXXU) if you need help with the migration process.
+### Advanced Features
+- **Event Rooms**: Room reservation and booking system
+- **Phone Board**: Digital telephone extension board
+- **Analytics**: Real-time workspace and project metrics
+- **GitHub Integration**: Sync tasks with GitHub issues
+- **Global Search**: Find tasks, projects, and more across workspaces
+- **Public Projects**: Share projects with external users
+
+### User Experience
+- **Keyboard Shortcuts**: Navigate quickly with keyboard commands
+- **Theme Settings**: Light/dark mode support
+- **Notifications**: Stay updated on task changes and reservations
+- **Import/Export**: Import tasks from JSON, export for analysis
 
 ## Next Steps
 
-Now that you have Kaneo running, explore these features and deployment options:
+Now that you have PalcoDesk running, explore these resources:
 
-- **[Terminology](/docs/terminology)** - Learn about Kaneo's core concepts and features
+- **[Core Concepts](/docs/terminology)** - Learn about PalcoDesk's core concepts
+- **[Time Tracking](/docs/features/time-tracking)** - Track time spent on tasks
+- **[Event Rooms](/docs/features/event-rooms)** - Set up room reservations
+- **[GitHub Integration](/docs/features/github-integration)** - Connect your repositories
+- **[Analytics](/docs/features/analytics)** - Monitor project progress
 
 ## Getting Help
 
 - **[Documentation](/docs)** - Browse the complete documentation
+- **[GitHub](https://github.com/AbrahamRivero/kaneo)** - Report issues and contribute

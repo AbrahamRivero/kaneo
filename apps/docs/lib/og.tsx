@@ -154,7 +154,7 @@ function generate(options: GenerateProps): ReactElement {
             fontFamily: "Inter",
           }}
         >
-          Kaneo
+          PalcoDesk
         </span>
       </div>
     </div>

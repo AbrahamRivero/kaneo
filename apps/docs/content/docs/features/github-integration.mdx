@@ -1,0 +1,121 @@
+---
+title: GitHub Integration
+description: Learn how to connect PalcoDesk with GitHub repositories
+icon: Github
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+PalcoDesk integrates with GitHub to sync tasks with issues. This helps development teams keep track of work across both platforms.
+
+## Features
+
+- **Link Repositories**: Connect a GitHub repository to a PalcoDesk project
+- **Import Issues**: Import GitHub issues as PalcoDesk tasks
+- **Sync Status**: Update task status when GitHub issues change
+- **Sync Priority**: Map GitHub labels to task priorities
+- **Webhook Support**: Automatic updates when issues are modified
+
+## Setting Up GitHub Integration
+
+### Prerequisites
+- GitHub account
+- Admin access to the repository you want to connect
+
+### Configuration
+
+Set the following environment variables for the PalcoDesk API:
+
+```bash
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+```
+
+You need to create a GitHub OAuth app:
+1. Go to GitHub Settings > Developer settings > OAuth Apps
+2. Create a new OAuth App
+3. Set the authorization callback URL to your PalcoDesk instance
+
+## Linking a Repository
+
+To link a GitHub repository to a project:
+
+<Steps>
+<Step>
+Navigate to the project
+</Step>
+<Step>
+Click on "Settings"
+</Step>
+<Step>
+Find the "GitHub Integration" section
+</Step>
+<Step>
+Click "Connect Repository"
+</Step>
+<Step>
+Select the repository from the list
+</Step>
+<Step>
+Click "Connect"
+</Step>
+</Steps>
+
+## Importing Issues
+
+Import existing GitHub issues as PalcoDesk tasks:
+
+<Steps>
+<Step>
+Navigate to the project with linked repository
+</Step>
+<Step>
+Click on "Settings"
+</Step>
+<Step>
+Find the "GitHub Integration" section
+</Step>
+<Step>
+Click "Import Issues"
+</Step>
+<Step>
+Select which issues to import
+</Step>
+<Step>
+Click "Import"
+</Step>
+</Steps>
+
+Imported issues will become PalcoDesk tasks with:
+- Title from issue title
+- Description from issue body
+- Status based on issue state (open/closed)
+- Labels from GitHub labels
+
+## Status Sync
+
+When enabled, changes in GitHub automatically update PalcoDesk tasks:
+
+| GitHub State | PalcoDesk Status |
+| -------------|------------------|
+| Open | To Do |
+| In Progress | In Progress |
+| Closed | Completed |
+
+## Webhook Configuration
+
+To enable automatic updates, set up a webhook in GitHub:
+
+1. Go to Repository Settings > Webhooks
+2. Add webhook with:
+   - Payload URL: `https://your-palcodesk-url/api/github-integration/webhook`
+   - Events: Issues, Issue comments
+3. Save the webhook
+
+Now when issues are modified in GitHub, PalcoDesk tasks will update automatically.
+
+## Best Practices
+
+- **Use labels**: Create GitHub labels that map to PalcoDesk priorities
+- **Keep in sync**: Use webhooks for real-time synchronization
+- **Import selectively**: Don't import all issues, choose relevant ones

@@ -4,49 +4,43 @@ import { Book, Server } from "lucide-react";
 import type { Metadata } from "next";
 import Script from "next/script";
 import type { ReactNode } from "react";
-
 export const metadata: Metadata = {
-  title: "Kaneo - Project management made simple",
+  title: "PalcoDesk - Project management made simple",
   description:
     "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com. Features kanban boards, time tracking, Gantt charts, and team collaboration. Docker deployment in 5 minutes.",
-  alternates: {
-    canonical: "https://kaneo.app",
-  },
+  alternates: { canonical: "https://palcodesk.app" },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://kaneo.app",
-    title: "Kaneo - Project management made simple",
+    url: "https://palcodesk.app",
+    title: "PalcoDesk - Project management made simple",
     description:
       "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com with kanban boards, time tracking, and team collaboration.",
-    siteName: "Kaneo",
+    siteName: "PalcoDesk",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Kaneo - Free Open Source Project Management Software",
+        alt: "PalcoDesk - Free Open Source Project Management Software",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kaneo - Project management made simple",
+    title: "PalcoDesk - Project management made simple",
     description:
       "Free open source project management software for teams. Self-hosted alternative to Jira, Asana & Monday.com with kanban boards, time tracking, and team collaboration.",
     images: ["/og-image.png"],
-    creator: "@usekaneo",
+    creator: "@usepalcodesk",
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      "max-image-preview": "none",
-    },
+    googleBot: { "max-image-preview": "none" },
   },
-  metadataBase: new URL("https://kaneo.app"),
+  metadataBase: new URL("https://palcodesk.app"),
 };
-
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <HomeLayout
@@ -57,11 +51,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           on: "menu",
           text: "Documentation",
           items: [
-            {
-              text: "Getting Started",
-              url: "/docs",
-              icon: <Book />,
-            },
+            { text: "Getting Started", url: "/docs", icon: <Book /> },
             {
               text: "Deployments",
               url: "/docs/deployments/nginx",
@@ -89,8 +79,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     >
       <Script
         defer
-        data-domain="kaneo.app"
-        src="https://plausible.kaneo.app/js/script.js"
+        data-domain="PalcoDesk.app"
+        src="https://plausible.PalcoDesk.app/js/script.js"
       />
       {children}
     </HomeLayout>

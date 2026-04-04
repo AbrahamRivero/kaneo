@@ -1,7 +1,7 @@
 {
-	"name": "Kaneo",
-	"short_name": "Kaneo",
-	"description": "Kaneo is a modern, self-hosted project management platform focused on simplicity and efficiency. Open source, customizable, and built for teams that value productivity.",
+	"name": "PalcoDesk",
+	"short_name": "PalcoDesk",
+	"description": "PalcoDesk is a comprehensive hotel management system for event rooms, project management, and team collaboration. Built for Hotel Palco.",
 	"start_url": "/",
 	"display": "standalone",
 	"background_color": "#ffffff",

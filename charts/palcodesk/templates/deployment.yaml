@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kaneo.fullname" . }}
+  name: {{ include "palcodesk.fullname" . }}
   labels:
-    {{- include "kaneo.labels" . | nindent 4 }}
+    {{- include "palcodesk.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kaneo.selectorLabels" . | nindent 6 }}
+      {{- include "palcodesk.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,9 +18,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "kaneo.selectorLabels" . | nindent 8 }}
+        {{- include "palcodesk.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "kaneo.serviceAccountName" . }}
+      serviceAccountName: {{ include "palcodesk.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -54,7 +54,7 @@ spec:
               value: "postgresql://{{ .Values.api.env.database.external.username }}:{{ .Values.api.env.database.external.password }}@{{ .Values.api.env.database.external.host }}:{{ .Values.api.env.database.external.port }}/{{ .Values.api.env.database.external.database }}"
               {{- end }}
               {{- else }}
-              value: "postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "kaneo.fullname" . }}-postgresql:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}"
+              value: "postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "palcodesk.fullname" . }}-postgresql:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}"
               {{- end }}
             - name: DISABLE_REGISTRATION
               value: {{ .Values.api.env.disableRegistration | quote }}

@@ -23,8 +23,8 @@ export const handleIssueOpened: HandlerFunction<
   { octokit: Octokit }
 > = async ({ payload, octokit }): Promise<void> => {
   try {
-    if (payload.issue.title.startsWith("[Kaneo]")) {
-      console.log("Skipping Kaneo-created issue to avoid loop");
+    if (payload.issue.title.startsWith("[PalcoDesk]")) {
+      console.log("Skipping PalcoDesk-created issue to avoid loop");
       return;
     }
 
@@ -35,7 +35,7 @@ export const handleIssueOpened: HandlerFunction<
 
     if (!integration || !integration.isActive) {
       console.log(
-        "No active Kaneo integration found for repository:",
+        "No active PalcoDesk integration found for repository:",
         payload.repository.full_name,
       );
       return;
@@ -66,7 +66,7 @@ export const handleIssueOpened: HandlerFunction<
         .filter(Boolean) || [];
 
     const labelsToAdd = [
-      "kaneo",
+      "palcodesk",
       `priority:${taskPriority}`,
       `status:${taskStatus}`,
     ].filter((label) => !existingLabels.includes(label));
@@ -100,6 +100,6 @@ export const handleIssueOpened: HandlerFunction<
       );
     }
   } catch (error) {
-    console.error("Failed to create Kaneo task from GitHub issue:", error);
+    console.error("Failed to create PalcoDesk task from GitHub issue:", error);
   }
 };

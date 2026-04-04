@@ -1,33 +1,61 @@
 ---
 title: Core Concepts
-description: Understanding the key concepts in Kaneo
+description: Understanding the key concepts in PalcoDesk
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Kaneo is built around a few core concepts that help you organize and manage your work effectively. This guide provides an overview of these concepts and how they relate to each other.
+PalcoDesk is built around a set of core concepts that help you organize and manage your work effectively. This guide provides an overview of these concepts and how they relate to each other.
 
 ## Core Entities
 
-Kaneo organizes your work using the following key entities:
+PalcoDesk organizes your work using the following key entities:
 
-- **[Workspaces](/docs/concepts/workspaces)**: The top-level organizational unit that contains projects and team members
-- **[Projects](/docs/concepts/projects)**: Collections of related tasks within a workspace
-- **[Tasks](/docs/concepts/tasks)**: Individual work items that need to be completed
-- **[Teams](/docs/concepts/teams)**: Groups of users who collaborate on workspaces and projects
+### Organizational Entities
+- **[Workspaces](/docs/terminology/workspaces)**: The top-level organizational unit that contains projects, team members, and event rooms
+- **[Projects](/docs/terminology/projects)**: Collections of related tasks within a workspace
+- **[Tasks](/docs/terminology/tasks)**: Individual work items that need to be completed
+- **[Teams](/docs/terminology/teams)**: Groups of users who collaborate on workspaces and projects
 
-Understanding how these entities work together will help you get the most out of Kaneo.
+### Tracking & Management
+- **Time Entries**: Records of time spent working on tasks
+- **Labels**: Color-coded tags for categorizing tasks
+- **Activities**: Audit trail of all changes made to tasks
+
+### Event Management
+- **Event Rooms**: Physical or virtual spaces available for reservation
+- **Services**: Additional offerings (catering, equipment) that can be added to reservations
+- **Tariffs**: Pricing rules for different session types
+- **Reservations**: Bookings for event rooms with date ranges and client details
+
+### Communication
+- **Notifications**: System alerts for task updates, mentions, and reservation reminders
+- **Comments**: Discussion threads attached to tasks
+
+## Supporting Features
+
+### Views & Navigation
+- **Kanban Board**: Visual task management with drag-and-drop columns
+- **Backlog View**: List of tasks not yet started or in progress
+- **List View**: Tabular view of all tasks in a project
+- **Public Project View**: Read-only view for external stakeholders
+
+### Tools
+- **Phone Board**: Digital telephone extension board for office communications
+- **Analytics Dashboard**: Real-time metrics on workspace and project performance
+- **Global Search**: Search across all tasks, projects, and workspaces
+- **GitHub Integration**: Sync tasks with GitHub repositories
 
 ## Basic Workflow
 
-A typical workflow in Kaneo looks like this:
+A typical workflow in PalcoDesk looks like this:
 
 <Steps>
 <Step>
 Create a workspace
 </Step>
 <Step>
-Invite team members to the workspace
+Invite team members to the workspace with appropriate roles
 </Step>
 <Step>
 Create projects within the workspace
@@ -41,5 +69,58 @@ Assign tasks to team members
 <Step>
 Track progress as tasks move through your workflow
 </Step>
+<Step>
+(Optional) Set up event rooms for room reservations
+</Step>
+<Step>
+(Optional) Enable GitHub integration for development teams
+</Step>
 </Steps>
-Each of these steps is explained in detail in the corresponding concept pages.
+
+## Entity Relationships
+
+```
+Workspace
+├── Projects
+│   └── Tasks
+│       ├── Time Entries
+│       ├── Labels
+│       └── Activities/Comments
+├── Team Members (Workspace Users)
+├── Event Rooms
+│   ├── Tariffs
+│   ├── Services
+│   └── Reservations
+└── Analytics
+```
+
+## Task Statuses
+
+PalcoDesk tasks move through the following statuses:
+
+- **Backlog**: Tasks not yet started, waiting in the queue
+- **To Do**: Tasks ready to be worked on
+- **In Progress**: Tasks currently being worked on
+- **Technical Review**: Tasks awaiting review
+- **Completed**: Tasks finished and done
+- **Archived**: Old tasks archived for reference
+
+## Priority Levels
+
+Tasks can be assigned priority levels:
+
+- **No Priority**: No specific priority assigned
+- **Low**: Can be addressed when time permits
+- **Medium**: Standard priority
+- **High**: Should be addressed soon
+- **Urgent**: Requires immediate attention
+
+## User Roles
+
+Workspace members can have different roles:
+
+- **Owner**: Full access to all workspace features and settings
+- **Member**: Can create and manage projects and tasks
+- **Viewer**: Read-only access to workspace content
+
+Each of these concepts is explained in detail in the corresponding documentation pages.

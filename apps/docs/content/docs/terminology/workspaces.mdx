@@ -1,13 +1,13 @@
 ---
 title: Workspaces
-description: Understanding workspaces in Kaneo
+description: Understanding workspaces in PalcoDesk
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## What are Workspaces?
 
-Workspaces are the top-level organizational units in Kaneo. They serve as containers for projects, tasks, and team members. Think of a workspace as a dedicated space for a specific team, department, or area of work.
+Workspaces are the top-level organizational units in PalcoDesk. They serve as containers for projects, tasks, team members, and event rooms. Think of a workspace as a dedicated space for a specific team, department, or area of work.
 
 ## Creating a Workspace
 
@@ -28,6 +28,29 @@ Click "Create"
 </Step>
 </Steps>
 
+## Workspace Features
+
+Each workspace comes with a comprehensive set of features:
+
+### Project Management
+- Create and manage multiple projects
+- Organize tasks with kanban boards and backlog views
+- Track project progress with analytics
+
+### Team Collaboration
+- Invite team members with different roles
+- Assign tasks to workspace members
+- Monitor team activity through the activity feed
+
+### Event Rooms
+- Manage physical or virtual rooms for reservations
+- Set up pricing tariffs for different session types
+- Add services like catering and equipment
+
+### Analytics
+- View workspace-wide metrics
+- Track overdue tasks by priority
+- Monitor team productivity
 
 ## Managing Workspace Settings
 
@@ -46,8 +69,9 @@ Click on "Settings" in the sidebar
 </Steps>
 
 From the settings page, you can:
-- Update the workspace name
-- Configure workspace-specific settings
+- Update the workspace name and description
+- Configure workspace-specific feature flags
+- Delete the workspace
 
 ## Switching Between Workspaces
 
@@ -80,4 +104,18 @@ Click on "Delete Workspace"
 Confirm the deletion
 </Step>
 </Steps>
-**Note**: Deleting a workspace will permanently remove all projects, tasks, and data associated with it. This action cannot be undone.
+
+**Note**: Deleting a workspace will permanently remove all projects, tasks, event rooms, reservations, and data associated with it. This action cannot be undone.
+
+## Workspace Routes
+
+The workspace provides access to various sections:
+
+| Route | Description |
+| ------|-------------|
+| `/workspace/:id` | Workspace overview and projects list |
+| `/workspace/:id/members` | Team member management |
+| `/workspace/:id/settings` | Workspace configuration |
+| `/workspace/:id/analytics` | Workspace analytics dashboard |
+| `/workspace/:id/event-rooms` | Event room reservations |
+| `/workspace/:id/phone-board` | Phone board for the workspace |

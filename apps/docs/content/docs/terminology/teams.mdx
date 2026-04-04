@@ -1,63 +1,122 @@
 ---
 title: Teams
-description: Understanding team management in Kaneo
+description: Understanding team management in PalcoDesk
 ---
+
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-## Team Management in Kaneo
+## Team Management in PalcoDesk
 
-Kaneo allows you to collaborate with team members across workspaces and projects. Effective team management is essential for successful collaboration.
+PalcoDesk allows you to collaborate with team members across workspaces and projects. Effective team management is essential for successful collaboration.
+
+## User Roles
+
+Workspace members can have different roles that determine their access level:
+
+### Owner
+- Full access to all workspace features and settings
+- Can manage workspace settings
+- Can invite and remove members
+- Can delete the workspace
+
+### Member
+- Can create and manage projects and tasks
+- Can assign tasks to other members
+- Cannot modify workspace settings
+- Cannot invite or remove members
+
+### Viewer
+- Read-only access to workspace content
+- Can view projects and tasks
+- Cannot create or edit tasks
+- Cannot access settings
 
 ## Inviting Team Members
 
 To invite someone to your workspace:
+
 <Steps>
 <Step>
 Navigate to the workspace settings
 </Step>
-
 <Step>
 Click on the "Members" tab
 </Step>
-
 <Step>
 Click "Invite Member"
 </Step>
-
 <Step>
 Enter the email address of the person you want to invite
 </Step>
-
 <Step>
 Select the appropriate role for the new member
 </Step>
-
 <Step>
 Click "Send Invitation"
 </Step>
-
-<Step>
-The invited person will have access to the workspace after logging in. 🎉
-</Step>
 </Steps>
 
+The invited person will receive an invitation and can join the workspace after signing up or logging in.
 
 ## Managing Team Members
 
 To manage existing team members:
+
 <Steps>
 <Step>
 Navigate to the workspace settings
 </Step>
-
 <Step>
 Click on the "Members" tab
 </Step>
+</Steps>
 
+From the members page, you can:
+- View all workspace members and their roles
+- Change a member's role
+- Remove a member from the workspace
+- Reset a member's password (for members without OAuth)
+
+## Managing Invitations
+
+Pending invitations show the status of invited members:
+- **Pending**: Invitation sent, user hasn't joined yet
+- **Active**: User has joined the workspace
+
+You can:
+- Resend invitation emails
+- Cancel pending invitations
+
+## Password Reset
+
+Workspace owners can reset passwords for members who signed up with email/password (not OAuth):
+
+<Steps>
 <Step>
-From here, you can:
-   - Add a member to the workspace
-   - Remove a member from the workspace
+Navigate to the workspace settings
+</Step>
+<Step>
+Click on the "Members" tab
+</Step>
+<Step>
+Find the member in the list
+</Step>
+<Step>
+Click the options menu and select "Reset Password"
 </Step>
 </Steps>
 
+The member will receive instructions to set a new password.
+
+## Best Practices
+
+- **Limit owners**: Have 1-2 owners to maintain security
+- **Use viewer role**: For stakeholders who need to see progress but not participate
+- **Regular audits**: Review member list periodically and remove inactive users
+- **Clear roles**: Ensure members understand their access level
+
+## Related Features
+
+- **[Notifications](/docs/features/notifications)** - Stay updated on team activity
+- **[Analytics](/docs/features/analytics)** - Monitor team productivity
+- **[Keyboard Shortcuts](/docs/features/keyboard-shortcuts)** - Navigate quickly through the app

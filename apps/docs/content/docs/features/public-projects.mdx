@@ -1,0 +1,89 @@
+---
+title: Public Projects
+description: Learn how to share projects with external users
+icon: Globe
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+PalcoDesk allows you to share projects with external users who don't have access to your workspace. This is useful for sharing progress with stakeholders, clients, or anyone outside your team.
+
+## Enabling Public Access
+
+To make a project publicly accessible:
+
+<Steps>
+<Step>
+Navigate to the project
+</Step>
+<Step>
+Click on the "Settings" button in the project header
+</Step>
+<Step>
+Find the "Public Access" section
+</Step>
+<Step>
+Toggle "Public" to enable
+</Step>
+</Steps>
+
+Once enabled, the project will be accessible via a public URL.
+
+## Public Project View
+
+External users accessing the public URL will see a read-only view of the project:
+
+### What They See
+- All tasks in the project
+- Task details (title, description, status, priority, assignee, due date)
+- Kanban board view OR List view (based on project settings)
+- Project name and description
+
+### What They Can't Do
+- Edit or create tasks
+- Change task status
+- Access other workspace projects
+- See workspace members
+- Access any private data
+
+## Sharing the URL
+
+Once public, share the project URL:
+
+```
+https://your-domain.com/public-project/{project-id}
+```
+
+You can find this URL in the project settings under "Public URL".
+
+## Disabling Public Access
+
+To remove public access:
+
+<Steps>
+<Step>
+Navigate to the project settings
+</Step>
+<Step>
+Toggle "Public" to disable
+</Step>
+</Steps>
+
+The public URL will no longer work, and external users will see an error.
+
+## Use Cases
+
+### Client Updates
+Share project progress with clients without giving them full workspace access.
+
+### Stakeholder Reviews
+Allow managers or executives to monitor project status.
+
+### External Collaboration
+Collaborate with external team members or contractors on specific projects.
+
+## Best Practices
+
+- **Review before sharing**: Ensure no sensitive information is in task descriptions
+- **Use read-only for reference**: Public projects are view-only, ideal for status updates
+- **Combine with notifications**: Set up notifications to alert external stakeholders of changes
