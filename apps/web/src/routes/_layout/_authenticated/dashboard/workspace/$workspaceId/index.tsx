@@ -60,7 +60,7 @@ function RouteComponent() {
         headerActions={
           <Button
             variant="outline"
-            size="xs"
+            size="sm"
             onClick={handleCreateProject}
             className="gap-1"
           >
@@ -120,7 +120,7 @@ function RouteComponent() {
           headerActions={
             <Button
               variant="outline"
-              size="xs"
+              size="sm"
               onClick={handleCreateProject}
               className="gap-1"
             >
@@ -163,7 +163,7 @@ function RouteComponent() {
         headerActions={
           <Button
             variant="outline"
-            size="xs"
+            size="sm"
             onClick={handleCreateProject}
             className="gap-1"
           >

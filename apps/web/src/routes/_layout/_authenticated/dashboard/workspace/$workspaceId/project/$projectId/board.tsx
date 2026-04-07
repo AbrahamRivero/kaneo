@@ -1,5 +1,4 @@
 import ProjectLayout from "@/components/common/project-layout";
-import KanbanBoard from "@/components/kanban-board";
 import ListView from "@/components/list-view";
 import CreateTaskModal from "@/components/shared/modals/create-task-modal";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,11 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const KanbanBoard = lazy(() =>
+  import("@/components/kanban-board").then((m) => ({ default: m.default }))
+);
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board",
@@ -93,7 +96,6 @@ function RouteComponent() {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="xs"
                         onClick={() => setIsTaskModalOpen(true)}
                         className="h-6 px-2 text-xs text-zinc-600 dark:text-zinc-400"
                       >
@@ -486,7 +488,15 @@ function RouteComponent() {
         <div className="flex-1 overflow-hidden bg-card h-full">
           {filteredProject ? (
             viewMode === "board" ? (
-              <KanbanBoard project={filteredProject} />
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600 dark:border-zinc-700 dark:border-t-zinc-300" />
+                  </div>
+                }
+              >
+                <KanbanBoard project={filteredProject} />
+              </Suspense>
             ) : (
               <ListView project={filteredProject} />
             )

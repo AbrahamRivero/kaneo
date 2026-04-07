@@ -1,13 +1,10 @@
 import { DateRangeFilter } from "@/components/analytics/date-range-filter";
 import { ExportAnalyticsButton } from "@/components/analytics/export-analytics-button";
 import { PeriodTasksTableWrapper } from "@/components/analytics/period-tasks-table-wrapper";
-import { ProductivityByUserChart } from "@/components/analytics/productivity-by-user-chart";
 import {
   SecondaryCardComponent,
   StatCardComponent,
 } from "@/components/analytics/stat-cards";
-import { TasksByProjectChart } from "@/components/analytics/tasks-by-project-chart";
-import { TasksByStatusChart } from "@/components/analytics/tasks-by-status-chart";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,7 +21,38 @@ import {
   Clock2,
   TrendingUp,
 } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+
+const TasksByProjectChart = lazy(() =>
+  import("@/components/analytics/tasks-by-project-chart").then((m) => ({
+    default: m.TasksByProjectChart,
+  }))
+);
+
+const TasksByStatusChart = lazy(() =>
+  import("@/components/analytics/tasks-by-status-chart").then((m) => ({
+    default: m.TasksByStatusChart,
+  }))
+);
+
+const ProductivityByUserChart = lazy(() =>
+  import("@/components/analytics/productivity-by-user-chart").then((m) => ({
+    default: m.ProductivityByUserChart,
+  }))
+);
+
+const chartFallback = (
+  <Card>
+    <CardHeader className="pb-4">
+      <Skeleton className="h-6 w-40" />
+    </CardHeader>
+    <CardContent className="pt-0">
+      <div className="h-72">
+        <Skeleton className="h-full w-full" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/analytics",
@@ -220,27 +248,33 @@ function RouteComponent() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <TasksByProjectChart data={data?.tasksByProject ?? []} />
+          <Suspense fallback={chartFallback}>
+            <TasksByProjectChart data={data?.tasksByProject ?? []} />
+          </Suspense>
 
-          <TasksByStatusChart
-            todo={data?.tasksByStatus.todo ?? 0}
-            inProgress={data?.tasksByStatus.inProgress ?? 0}
-            technicalReview={data?.tasksByStatus.technicalReview ?? 0}
-            completed={data?.tasksByStatus.completed ?? 0}
-            archived={data?.tasksByStatus.archived ?? 0}
-          />
+          <Suspense fallback={chartFallback}>
+            <TasksByStatusChart
+              todo={data?.tasksByStatus.todo ?? 0}
+              inProgress={data?.tasksByStatus.inProgress ?? 0}
+              technicalReview={data?.tasksByStatus.technicalReview ?? 0}
+              completed={data?.tasksByStatus.completed ?? 0}
+              archived={data?.tasksByStatus.archived ?? 0}
+            />
+          </Suspense>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <ProductivityByUserChart
-            data={
-              data?.tasksByAssignee.map((item) => ({
-                userName: item.userName,
-                completed: item.completed,
-                totalAssigned: item.totalAssigned,
-              })) ?? []
-            }
-          />
+          <Suspense fallback={chartFallback}>
+            <ProductivityByUserChart
+              data={
+                data?.tasksByAssignee.map((item) => ({
+                  userName: item.userName,
+                  completed: item.completed,
+                  totalAssigned: item.totalAssigned,
+                })) ?? []
+              }
+            />
+          </Suspense>
         </div>
 
         <Card>
