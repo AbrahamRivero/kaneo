@@ -26,7 +26,7 @@ function RouteComponent() {
         <Button
           onClick={() => setIsInviteTeamMemberModalOpen(true)}
           variant="outline"
-          size="xs"
+          size="sm"
           className="gap-1 w-full md:w-auto"
         >
           <UserPlus className="w-3 h-3" />

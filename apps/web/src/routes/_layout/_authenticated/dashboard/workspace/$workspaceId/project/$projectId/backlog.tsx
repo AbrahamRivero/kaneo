@@ -206,7 +206,7 @@ function RouteComponent() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
-                  size="xs"
+                  size="sm"
                   onClick={() => setIsTaskModalOpen(true)}
                   className="h-6 px-2 text-xs text-zinc-600 dark:text-zinc-400"
                 >
@@ -216,7 +216,7 @@ function RouteComponent() {
 
                 <Button
                   variant="ghost"
-                  size="xs"
+                  size="sm"
                   onClick={handleMoveAllPlannedToTodo}
                   className="h-6 px-2 text-xs text-zinc-600 dark:text-zinc-400"
                   title="Move All Backlog to To Do"

@@ -1,6 +1,5 @@
 import { CalendarControls } from "@/components/calendar/calendar-controls";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
-import { CalendarView } from "@/components/calendar/calendar-view";
 import { ReportsDialog } from "@/components/calendar/reports-dialog";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +12,19 @@ import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { useCalendarStore } from "@/store/calendar-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const CalendarView = lazy(() =>
+  import("@/components/calendar/calendar-view").then((m) => ({
+    default: m.CalendarView,
+  }))
+);
+
+const calendarFallback = (
+  <div className="flex h-[70vh] items-center justify-center">
+    <Skeleton className="h-full w-full" />
+  </div>
+);
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/",
@@ -120,11 +131,13 @@ function EventRoomsIndex() {
         />
       </div>
       <div className="flex-1 overflow-hidden w-full">
-        <CalendarView
-          reservations={weekReservations}
-          workspaceId={workspaceId}
-          eventRooms={eventRooms}
-        />
+        <Suspense fallback={calendarFallback}>
+          <CalendarView
+            reservations={weekReservations}
+            workspaceId={workspaceId}
+            eventRooms={eventRooms}
+          />
+        </Suspense>
       </div>
     </WorkspaceLayout>
   );
