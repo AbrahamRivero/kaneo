@@ -168,6 +168,12 @@ export function ReportsDialog({
         roomName: eventRooms.find((r) => r.id === res.eventRoomId)?.name || "",
       }));
 
+      const hasMultipleReservationRooms = eventRooms.some(
+        (r) =>
+          r.allowsMultipleReservations &&
+          (selectedRoomId === "all" || selectedRoomId === r.id),
+      );
+
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
         alert("Please allow popups to print");
@@ -300,11 +306,12 @@ export function ReportsDialog({
           <table>
             <thead>
               <tr>
-                <th style="width: 30%">Event / Client / Company</th>
-                <th style="width: 15%">Date</th>
-                <th style="width: 20%">Room</th>
-                <th style="width: 15%">Status</th>
-                <th style="width: 10%">Payment</th>
+                <th style="width: 25%">Event / Client / Company</th>
+                <th style="width: 12%">Date</th>
+                <th style="width: 18%">Room</th>
+                ${hasMultipleReservationRooms ? '<th style="width: 10%">Expected Pax</th>' : ''}
+                <th style="width: 12%">Status</th>
+                <th style="width: 8%">Payment</th>
               </tr>
             </thead>
             <tbody>
@@ -312,7 +319,7 @@ export function ReportsDialog({
                 reservationsWithRoom.length === 0
                   ? `
                 <tr>
-                  <td colspan="5" style="text-align: center; padding: 30px; color: #888;">
+                  <td colspan="${hasMultipleReservationRooms ? 6 : 5}" style="text-align: center; padding: 30px; color: #888;">
                     No reservations found for this period
                   </td>
                 </tr>
@@ -327,6 +334,11 @@ export function ReportsDialog({
                     return formatDateRange(dr);
                   })()}</td>
                   <td>${res.roomName}</td>
+                  ${
+                    hasMultipleReservationRooms
+                      ? `<td>${res.expectedPax && res.expectedPax > 0 ? res.expectedPax : "-"}</td>`
+                      : ""
+                  }
                   <td><span class="status status-${res.status || "pending"}">${formatStatus(res.status)}</span></td>
                   <td class="${res.paymentConfirmed ? "yes" : "no"}">${formatPayment(res.paymentConfirmed)}</td>
                 </tr>
