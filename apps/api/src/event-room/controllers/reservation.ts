@@ -306,8 +306,6 @@ async function createReservation(
     )
     .where(eq(reservationServiceTable.reservationId, reservation.id));
 
-  const totalPax = services.reduce((sum, s) => sum + s.pax, 0);
-
   await publishEvent("reservation.created", {
     reservationId: reservation.id,
     workspaceId: payload.workspaceId,
@@ -815,8 +813,6 @@ async function updateReservation(
       eq(reservationServiceTable.serviceId, serviceTable.id),
     )
     .where(eq(reservationServiceTable.reservationId, reservationId));
-
-  const totalPax = services.reduce((sum, s) => sum + s.pax, 0);
 
   await publishEvent("reservation.updated", {
     reservationId: updated.id,

@@ -96,7 +96,7 @@ export type ReservationFormValues = {
   services?: ServiceWithPax[];
   dayTariffs?: {
     date: string;
-    roomTariffId: string;
+    roomTariffId: string | null;
     price: number;
   }[];
   expectedPax?: number;
@@ -134,7 +134,7 @@ const reservationSchema = z
       .array(
         z.object({
           date: z.string(),
-          roomTariffId: z.string(),
+          roomTariffId: z.string().nullable(),
           price: z.number(),
         }),
       )
@@ -166,7 +166,7 @@ interface ReservationFormProps {
     paymentConfirmed?: boolean | null;
     roomTariffId?: string | null;
     services?: { serviceId: string; pax: number }[] | null;
-    dayTariffs?: { date: string; roomTariffId: string; price: number }[] | null;
+    dayTariffs?: { date: string; roomTariffId: string | null; price: number }[] | null;
     expectedPax?: number | null;
     status?: string | null;
   } | null;
@@ -213,7 +213,7 @@ export function ReservationForm({
   const [servicesPage, setServicesPage] = useState(1);
   const [tempServices, setTempServices] = useState<ServiceWithPax[]>([]);
   const [dayTariffs, setDayTariffs] = useState<
-    { date: string; roomTariffId: string; price: number }[]
+    { date: string; roomTariffId: string | null; price: number }[]
   >(initialData?.dayTariffs || []);
   const [useDifferentTariffsPerDay, setUseDifferentTariffsPerDay] = useState(
     Boolean(initialData?.dayTariffs && initialData.dayTariffs.length > 0),
@@ -493,7 +493,13 @@ export function ReservationForm({
         | { date: string; roomTariffId: string; price: number }[]
         | undefined;
       if (days > 1 && formDayTariffs && formDayTariffs.length > 0) {
-        dayTariffsPayload = formDayTariffs;
+        dayTariffsPayload = formDayTariffs
+          .filter((dt): dt is { date: string; roomTariffId: string; price: number } => dt.roomTariffId !== null)
+          .map((dt) => ({
+            date: dt.date,
+            roomTariffId: dt.roomTariffId,
+            price: dt.price,
+          }));
       }
 
       const payload = {

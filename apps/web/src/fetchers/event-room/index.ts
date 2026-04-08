@@ -170,7 +170,7 @@ export type UpdateReservationPayload = {
   }[];
   dayTariffs?: {
     date: string;
-    roomTariffId: string;
+    roomTariffId?: string;
     price: number;
   }[];
   status?: "pending" | "confirmed" | "completed";
