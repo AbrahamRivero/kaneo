@@ -39,7 +39,7 @@ async function createTimeEntry({
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "create_time_entries");
 
   const [createdTimeEntry] = await db
     .insert(timeEntryTable)

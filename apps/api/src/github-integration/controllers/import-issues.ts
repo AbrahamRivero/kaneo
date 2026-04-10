@@ -20,7 +20,7 @@ export async function importIssues(userId: string, projectId: string) {
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "import_issues");
 
   const githubIntegration = await db.query.githubIntegrationTable.findFirst({
     where: eq(githubIntegrationTable.projectId, projectId),

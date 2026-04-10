@@ -28,7 +28,7 @@ async function createLabel(
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "create_labels");
 
   const [label] = await db
     .insert(labelTable)

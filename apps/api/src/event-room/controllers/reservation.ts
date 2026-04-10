@@ -12,6 +12,7 @@ import {
   workspaceUserTable,
 } from "../../database/schema";
 import { publishEvent } from "../../events";
+import { hasScheduledPermission } from "../../utils/permissions";
 
 export type DateRange = { from: string; to?: string };
 
@@ -204,9 +205,16 @@ async function createReservation(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot create reservations",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      payload.workspaceId,
+      "create_reservations",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot create reservations",
+      });
+    }
   }
 
   const [room] = await db
@@ -692,9 +700,16 @@ async function updateReservation(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot update reservations",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      reservation.workspaceId,
+      "edit_reservations",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot update reservations",
+      });
+    }
   }
 
   if (payload.eventRoomId) {
@@ -909,9 +924,16 @@ async function deleteReservation(userId: string, reservationId: string) {
   const isViewer = workspaceUser?.role === "viewer";
 
   if (isViewer) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot delete reservations",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      reservation.workspaceId,
+      "delete_reservations",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot delete reservations",
+      });
+    }
   }
 
   if (!isOwner && !workspaceUser) {

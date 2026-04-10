@@ -396,6 +396,64 @@ export const reservationServiceTable = pgTable("reservation_service", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const scheduledPermissionActionEnum = pgEnum(
+  "scheduled_permission_action",
+  [
+    "create_reservations",
+    "edit_reservations",
+    "delete_reservations",
+    "create_services",
+    "edit_services",
+    "delete_services",
+    "create_tariffs",
+    "edit_tariffs",
+    "delete_tariffs",
+    "create_rooms",
+    "edit_rooms",
+    "delete_rooms",
+    "create_tasks",
+    "edit_tasks",
+    "delete_tasks",
+    "create_projects",
+    "edit_projects",
+    "delete_projects",
+    "create_time_entries",
+    "edit_time_entries",
+    "delete_time_entries",
+    "create_labels",
+    "edit_labels",
+    "delete_labels",
+    "import_issues",
+    "edit_github_integration",
+    "manage_notifications",
+    "edit_comments",
+  ],
+);
+
+export const scheduledPermissionTable = pgTable("scheduled_permission", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, {
+      onDelete: "cascade",
+    }),
+  action: scheduledPermissionActionEnum("action").notNull(),
+  startTime: timestamp("start_time", { mode: "date" }).notNull(),
+  endTime: timestamp("end_time", { mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export type ScheduledPermission = typeof scheduledPermissionTable.$inferSelect;
+export type NewScheduledPermission = typeof scheduledPermissionTable.$inferInsert;
+
 export const reservationDayTariffTable = pgTable("reservation_day_tariff", {
   id: text("id")
     .$defaultFn(() => createId())

@@ -31,7 +31,7 @@ async function importTasks(
     });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "import_issues");
 
   const nextTaskNumber = await getNextTaskNumber(projectId);
 

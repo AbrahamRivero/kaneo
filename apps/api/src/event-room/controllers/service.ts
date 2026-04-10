@@ -6,6 +6,7 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { hasScheduledPermission } from "../../utils/permissions";
 
 export type CreateServicePayload = {
   workspaceId: string;
@@ -194,9 +195,16 @@ export async function createService(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot create services",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      payload.workspaceId,
+      "create_services",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot create services",
+      });
+    }
   }
 
   const [service] = await db
@@ -253,9 +261,16 @@ export async function updateService(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot update services",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      service.workspaceId,
+      "edit_services",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot update services",
+      });
+    }
   }
 
   const [updated] = await db
@@ -306,9 +321,16 @@ export async function deleteService(userId: string, serviceId: string) {
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot delete services",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      service.workspaceId,
+      "delete_services",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot delete services",
+      });
+    }
   }
 
   await db.delete(serviceTable).where(eq(serviceTable.id, serviceId));

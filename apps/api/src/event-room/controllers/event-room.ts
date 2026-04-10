@@ -6,6 +6,7 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { hasScheduledPermission } from "../../utils/permissions";
 
 type CreateEventRoomPayload = {
   workspaceId: string;
@@ -44,9 +45,16 @@ async function createEventRoom(
       .limit(1);
 
     if (!member || member.role === "viewer") {
-      throw new HTTPException(403, {
-        message: "Only owners and members can create event rooms",
-      });
+      const hasPermission = await hasScheduledPermission(
+        userId,
+        payload.workspaceId,
+        "create_rooms",
+      );
+      if (!hasPermission) {
+        throw new HTTPException(403, {
+          message: "Viewers cannot create event rooms",
+        });
+      }
     }
   }
 
@@ -167,9 +175,16 @@ async function updateEventRoom(
       .limit(1);
 
     if (!member || member.role === "viewer") {
-      throw new HTTPException(403, {
-        message: "Only owners and members can update event rooms",
-      });
+      const hasPermission = await hasScheduledPermission(
+        userId,
+        eventRoom.workspaceId,
+        "edit_rooms",
+      );
+      if (!hasPermission) {
+        throw new HTTPException(403, {
+          message: "Only owners and members can update event rooms",
+        });
+      }
     }
   }
 
@@ -222,9 +237,16 @@ async function deleteEventRoom(userId: string, eventRoomId: string) {
       .limit(1);
 
     if (!member || member.role === "viewer") {
-      throw new HTTPException(403, {
-        message: "Only owners and members can delete event rooms",
-      });
+      const hasPermission = await hasScheduledPermission(
+        userId,
+        eventRoom.workspaceId,
+        "delete_rooms",
+      );
+      if (!hasPermission) {
+        throw new HTTPException(403, {
+          message: "Viewers cannot delete event rooms",
+        });
+      }
     }
   }
 

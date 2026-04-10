@@ -11,6 +11,7 @@ import {
   reservationServiceTable,
   reservationTable,
   roomTariffTable,
+  scheduledPermissionTable,
   serviceTable,
   sessionTable,
   taskTable,
@@ -233,6 +234,20 @@ export const reservationDayTariffTableRelations = relations(
     roomTariff: one(roomTariffTable, {
       fields: [reservationDayTariffTable.roomTariffId],
       references: [roomTariffTable.id],
+    }),
+  }),
+);
+
+export const scheduledPermissionTableRelations = relations(
+  scheduledPermissionTable,
+  ({ one }) => ({
+    workspace: one(workspaceTable, {
+      fields: [scheduledPermissionTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    user: one(userTable, {
+      fields: [scheduledPermissionTable.userId],
+      references: [userTable.id],
     }),
   }),
 );

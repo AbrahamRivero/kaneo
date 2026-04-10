@@ -7,6 +7,7 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { hasScheduledPermission } from "../../utils/permissions";
 
 export type SessionType =
   | "half_session"
@@ -224,9 +225,16 @@ export async function createRoomTariff(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot create room tariffs",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      payload.workspaceId,
+      "create_tariffs",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot create room tariffs",
+      });
+    }
   }
 
   const [room] = await db
@@ -298,9 +306,16 @@ export async function updateRoomTariff(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot update room tariffs",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      tariff.workspaceId,
+      "edit_tariffs",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot update room tariffs",
+      });
+    }
   }
 
   if (payload.eventRoomId) {
@@ -376,9 +391,16 @@ export async function deleteRoomTariff(userId: string, tariffId: string) {
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot delete room tariffs",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      tariff.workspaceId,
+      "delete_tariffs",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot delete room tariffs",
+      });
+    }
   }
 
   await db.delete(roomTariffTable).where(eq(roomTariffTable.id, tariffId));

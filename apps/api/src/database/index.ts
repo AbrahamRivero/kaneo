@@ -13,6 +13,7 @@ import {
   reservationServiceTableRelations,
   reservationTableRelations,
   roomTariffTableRelations,
+  scheduledPermissionTableRelations,
   serviceTableRelations,
   sessionTableRelations,
   taskTableRelations,
@@ -34,6 +35,7 @@ import {
   reservationServiceTable,
   reservationTable,
   roomTariffTable,
+  scheduledPermissionTable,
   serviceTable,
   sessionTable,
   taskTable,
@@ -65,6 +67,7 @@ export const schema = {
   reservationTable,
   reservationDayTariffTable,
   roomTariffTable,
+  scheduledPermissionTable,
   sessionTable,
   taskTable,
   timeEntryTable,
@@ -91,6 +94,7 @@ export const schema = {
   reservationTableRelations,
   reservationDayTariffTableRelations,
   roomTariffTableRelations,
+  scheduledPermissionTableRelations,
 };
 
 const db = drizzle(pool, {

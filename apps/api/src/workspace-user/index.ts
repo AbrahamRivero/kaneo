@@ -13,6 +13,12 @@ import getWorkspaceUser from "./controllers/get-workspace-user";
 import getWorkspaceUsers from "./controllers/get-workspace-users";
 import inviteWorkspaceUser from "./controllers/invite-workspace-user";
 import resetMemberPassword from "./controllers/reset-member-password";
+import {
+  createScheduledPermission,
+  deleteScheduledPermission,
+  getScheduledPermissions,
+  updateScheduledPermission,
+} from "./controllers/scheduled-permissions";
 import updateWorkspaceUser from "./controllers/update-workspace-user";
 import updateWorkspaceUserRole from "./controllers/update-workspace-user-role";
 
@@ -174,7 +180,7 @@ const workspaceUser = new Hono<{
         return c.json(res);
       } catch (error) {
         return c.json(
-          { message: error instanceof Error ? error.message : "" },
+          { message: error instanceof Error ? error.message : "Failed to reset password" },
           400,
         );
       }
@@ -197,6 +203,129 @@ const workspaceUser = new Hono<{
       );
 
       return c.json(deletedWorkspaceUser);
+    },
+  )
+  .get(
+    "/:workspaceId/users/:userId/permissions",
+    zValidator(
+      "param",
+      z.object({ workspaceId: z.string(), userId: z.string() }),
+    ),
+    async (c) => {
+      const { workspaceId, userId } = c.req.valid("param");
+
+      const permissions = await getScheduledPermissions(workspaceId, userId);
+
+      return c.json(permissions);
+    },
+  )
+  .post(
+    "/:workspaceId/users/:userId/permissions",
+    zValidator(
+      "param",
+      z.object({ workspaceId: z.string(), userId: z.string() }),
+    ),
+    zValidator(
+      "json",
+      z.object({
+        action: z.enum([
+          "create_reservations", "edit_reservations", "delete_reservations",
+          "create_services", "edit_services", "delete_services",
+          "create_tariffs", "edit_tariffs", "delete_tariffs",
+          "create_rooms", "edit_rooms", "delete_rooms",
+          "create_tasks", "edit_tasks", "delete_tasks",
+          "create_projects", "edit_projects", "delete_projects",
+          "create_time_entries", "edit_time_entries", "delete_time_entries",
+          "create_labels", "edit_labels", "delete_labels",
+          "import_issues", "edit_github_integration",
+          "manage_notifications", "edit_comments"
+        ]),
+        startTime: z.string().datetime(),
+        endTime: z.string().datetime(),
+      }),
+    ),
+    async (c) => {
+      const { workspaceId, userId } = c.req.valid("param");
+      const { action, startTime, endTime } = c.req.valid("json");
+      const requesterId = c.get("userId") as string;
+
+      const permission = await createScheduledPermission(
+        requesterId,
+        workspaceId,
+        userId,
+        {
+          workspaceId,
+          userId,
+          action,
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+        },
+      );
+
+      return c.json(permission);
+    },
+  )
+  .put(
+    "/:workspaceId/users/:userId/permissions/:permissionId",
+    zValidator(
+      "param",
+      z.object({ workspaceId: z.string(), userId: z.string(), permissionId: z.string() }),
+    ),
+    zValidator(
+      "json",
+      z.object({
+        action: z.enum([
+          "create_reservations", "edit_reservations", "delete_reservations",
+          "create_services", "edit_services", "delete_services",
+          "create_tariffs", "edit_tariffs", "delete_tariffs",
+          "create_rooms", "edit_rooms", "delete_rooms",
+          "create_tasks", "edit_tasks", "delete_tasks",
+          "create_projects", "edit_projects", "delete_projects",
+          "create_time_entries", "edit_time_entries", "delete_time_entries",
+          "create_labels", "edit_labels", "delete_labels",
+          "import_issues", "edit_github_integration",
+          "manage_notifications", "edit_comments"
+        ]).optional(),
+        startTime: z.string().datetime().optional(),
+        endTime: z.string().datetime().optional(),
+      }),
+    ),
+    async (c) => {
+      const { workspaceId, userId, permissionId } = c.req.valid("param");
+      const payload = c.req.valid("json");
+      const requesterId = c.get("userId") as string;
+
+      const permission = await updateScheduledPermission(
+        requesterId,
+        workspaceId,
+        permissionId,
+        {
+          ...payload,
+          startTime: payload.startTime ? new Date(payload.startTime) : undefined,
+          endTime: payload.endTime ? new Date(payload.endTime) : undefined,
+        },
+      );
+
+      return c.json(permission);
+    },
+  )
+  .delete(
+    "/:workspaceId/users/:userId/permissions/:permissionId",
+    zValidator(
+      "param",
+      z.object({ workspaceId: z.string(), userId: z.string(), permissionId: z.string() }),
+    ),
+    async (c) => {
+      const { workspaceId, userId, permissionId } = c.req.valid("param");
+      const requesterId = c.get("userId") as string;
+
+      const permission = await deleteScheduledPermission(
+        requesterId,
+        workspaceId,
+        permissionId,
+      );
+
+      return c.json(permission);
     },
   );
 

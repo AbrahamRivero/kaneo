@@ -33,7 +33,7 @@ async function deleteLabel(userId: string, id: string) {
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "delete_labels");
 
   const [deletedLabel] = await db
     .delete(labelTable)

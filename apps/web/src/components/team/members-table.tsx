@@ -28,8 +28,10 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import AddScheduledPermissionModal from "./add-scheduled-permission-modal";
 import DeleteTeamMemberModal from "./delete-team-member-modal";
 import ResetMemberPasswordModal from "./reset-member-password-modal";
+import ScheduledPermissionsList from "./scheduled-permissions-list";
 
 function MembersTable({
   users,
@@ -46,6 +48,8 @@ function MembersTable({
     null,
   );
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+    useState(false);
+  const [isScheduledPermissionModalOpen, setIsScheduledPermissionModalOpen] =
     useState(false);
 
   const handleRoleChange = async (newRole: "owner" | "member" | "viewer") => {
@@ -99,6 +103,9 @@ function MembersTable({
               Status
             </TableHead>
             <TableHead className="text-foreground font-medium">
+              Scheduled Permissions
+            </TableHead>
+            <TableHead className="text-foreground font-medium">
               Joined
             </TableHead>
             {isOwner && (
@@ -134,6 +141,20 @@ function MembersTable({
                     {getStatusText(member.status as "active" | "pending")}
                   </span>
                 </div>
+              </TableCell>
+              <TableCell className="py-3">
+                {member.role === "viewer" && member.userId ? (
+                  <ScheduledPermissionsList
+                    workspaceId={workspaceId}
+                    userId={member.userId}
+                    onAddNew={() => {
+                      setSelectedMember(member);
+                      setIsScheduledPermissionModalOpen(true);
+                    }}
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">-</span>
+                )}
               </TableCell>
               <TableCell className="py-3">
                 <span className="text-sm text-muted-foreground">
@@ -246,6 +267,19 @@ function MembersTable({
           open={isResetPasswordModalOpen}
           onClose={() => {
             setIsResetPasswordModalOpen(false);
+            setSelectedMember(null);
+          }}
+        />
+      )}
+
+      {selectedMember && (
+        <AddScheduledPermissionModal
+          workspaceId={workspaceId}
+          userId={selectedMember.userId ?? ""}
+          userName={selectedMember.userName ?? ""}
+          open={isScheduledPermissionModalOpen}
+          onClose={() => {
+            setIsScheduledPermissionModalOpen(false);
             setSelectedMember(null);
           }}
         />

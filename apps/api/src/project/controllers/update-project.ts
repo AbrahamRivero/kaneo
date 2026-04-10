@@ -24,7 +24,7 @@ async function updateProject(
     });
   }
 
-  await requireAtLeastMember(userId, existingProject.workspaceId);
+  await requireAtLeastMember(userId, existingProject.workspaceId, "edit_projects");
 
   const [updatedWorkspace] = await db
     .update(projectTable)

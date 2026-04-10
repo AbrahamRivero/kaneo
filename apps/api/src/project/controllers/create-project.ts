@@ -10,7 +10,7 @@ async function createProject(
   icon: string,
   slug: string,
 ) {
-  await requireAtLeastMember(userId, workspaceId);
+  await requireAtLeastMember(userId, workspaceId, "create_projects");
 
   const [createdProject] = await db
     .insert(projectTable)

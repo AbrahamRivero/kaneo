@@ -34,7 +34,7 @@ async function createTask({
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId!, project.workspaceId);
+  await requireAtLeastMember(userId!, project.workspaceId, "create_tasks");
 
   const nextTaskNumber = await getNextTaskNumber(projectId);
 
