@@ -27,6 +27,7 @@ import purgeDemoData from "./utils/purge-demo-data";
 import workspace from "./workspace";
 import workspaceUser from "./workspace-user";
 import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users";
+import { errorHandler } from "./middleware/error-handler";
 
 const app = new Hono<{
   Variables: {
@@ -183,6 +184,8 @@ app.use("*", async (c, next) => {
 
   return next();
 });
+
+app.use(errorHandler);
 
 if (isDemoMode) {
   new Cron("0 * * * *", async () => {

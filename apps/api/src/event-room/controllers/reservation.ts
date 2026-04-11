@@ -227,6 +227,12 @@ async function createReservation(
     throw new HTTPException(404, { message: "Event room not found" });
   }
 
+  if (room.allowsMultipleReservations && !payload.expectedPax) {
+    throw new HTTPException(400, {
+      message: "Expected Pax is required for rooms that allow multiple reservations",
+    });
+  }
+
   const conflict = await checkReservationConflict(
     payload.eventRoomId,
     payload.dateRange,
@@ -712,19 +718,28 @@ async function updateReservation(
     }
   }
 
-  if (payload.eventRoomId) {
-    const [room] = await db
-      .select()
-      .from(eventRoomTable)
-      .where(eq(eventRoomTable.id, payload.eventRoomId))
-      .limit(1);
+  const eventRoomId = payload.eventRoomId ?? reservation.eventRoomId;
 
-    if (!room || room.workspaceId !== reservation.workspaceId) {
-      throw new HTTPException(404, { message: "Event room not found" });
-    }
+  const [room] = await db
+    .select()
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, eventRoomId))
+    .limit(1);
+
+  if (!room) {
+    throw new HTTPException(404, { message: "Event room not found" });
   }
 
-  const eventRoomId = payload.eventRoomId ?? reservation.eventRoomId;
+  if (room.workspaceId !== reservation.workspaceId) {
+    throw new HTTPException(404, { message: "Event room not found" });
+  }
+
+  if (room.allowsMultipleReservations && !payload.expectedPax) {
+    throw new HTTPException(400, {
+      message: "Expected Pax is required for rooms that allow multiple reservations",
+    });
+  }
+
   const dateRange = payload.dateRange
     ? payload.dateRange
     : dateRangeFromString(reservation.dateRange);
@@ -766,7 +781,7 @@ async function updateReservation(
     throw new Error("Failed to update reservation");
   }
 
-  const [room] = await db
+  const [roomForName] = await db
     .select({ name: eventRoomTable.name })
     .from(eventRoomTable)
     .where(eq(eventRoomTable.id, updated.eventRoomId))
@@ -836,7 +851,7 @@ async function updateReservation(
     title: updated.title,
     dateRange: updatedDateRange,
     expectedPax: updated.expectedPax ?? undefined,
-    roomName: room?.name || "Unknown",
+    roomName: roomForName?.name || "Unknown",
     userId,
   });
 

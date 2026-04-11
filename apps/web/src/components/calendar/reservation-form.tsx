@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -526,6 +527,11 @@ export function ReservationForm({
         expectedPax: restFormData.expectedPax || 0,
       };
 
+      if (allowsMultipleReservations && !payload.expectedPax) {
+        toast.error("Expected Pax is required for this room");
+        return;
+      }
+
       if (reservationId) {
         const updatePayload = {
           ...payload,
@@ -543,7 +549,17 @@ export function ReservationForm({
       }
       onSuccess?.();
     } catch (error) {
-      console.log(error);
+      let message = "Failed to create reservation";
+      if (error instanceof Error) {
+        const errorText = error.message;
+        try {
+          const errorData = JSON.parse(errorText);
+          message = errorData.message || errorText;
+        } catch {
+          message = errorText;
+        }
+      }
+      toast.error(message);
     }
 
     goToDate(dateRange.from);
