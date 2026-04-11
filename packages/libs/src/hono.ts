@@ -21,7 +21,7 @@ export const client = hc<AppType>(API_URL, {
       if (error instanceof TypeError && error.message.includes("fetch")) {
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:1337";
         throw new Error(
-          `Failed to connect to API server at ${apiUrl}. This might be due to CORS configuration issues or the server not running. Please check your environment variables and server status.`
+          `Failed to connect to API server at ${apiUrl}. This might be due to CORS configuration issues or the server not running. Please check your environment variables and server status.`,
         );
       }
       throw error;

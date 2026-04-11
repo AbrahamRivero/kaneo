@@ -38,7 +38,7 @@ async function updateLabel(
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "edit_labels");
 
   const [updatedLabel] = await db
     .update(labelTable)

@@ -309,7 +309,7 @@ export function ReportsDialog({
                 <th style="width: 25%">Event / Client / Company</th>
                 <th style="width: 12%">Date</th>
                 <th style="width: 18%">Room</th>
-                ${hasMultipleReservationRooms ? '<th style="width: 10%">Expected Pax</th>' : ''}
+                ${hasMultipleReservationRooms ? '<th style="width: 10%">Expected Pax</th>' : ""}
                 <th style="width: 12%">Status</th>
                 <th style="width: 8%">Payment</th>
               </tr>

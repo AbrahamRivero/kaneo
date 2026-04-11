@@ -39,7 +39,7 @@ async function updateTimeEntry(
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "edit_time_entries");
 
   const [updatedTimeEntry] = await db
     .update(timeEntryTable)

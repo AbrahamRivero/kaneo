@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,7 +50,11 @@ import {
   useCreateReservation,
   useUpdateReservation,
 } from "@/hooks/mutations/event-room";
-import { useGetAllServices, useGetRoomTariffs, useGetServices } from "@/hooks/queries/event-room";
+import {
+  useGetAllServices,
+  useGetRoomTariffs,
+  useGetServices,
+} from "@/hooks/queries/event-room";
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -166,7 +171,9 @@ interface ReservationFormProps {
     paymentConfirmed?: boolean | null;
     roomTariffId?: string | null;
     services?: { serviceId: string; pax: number }[] | null;
-    dayTariffs?: { date: string; roomTariffId: string | null; price: number }[] | null;
+    dayTariffs?:
+      | { date: string; roomTariffId: string | null; price: number }[]
+      | null;
     expectedPax?: number | null;
     status?: string | null;
   } | null;
@@ -494,7 +501,10 @@ export function ReservationForm({
         | undefined;
       if (days > 1 && formDayTariffs && formDayTariffs.length > 0) {
         dayTariffsPayload = formDayTariffs
-          .filter((dt): dt is { date: string; roomTariffId: string; price: number } => dt.roomTariffId !== null)
+          .filter(
+            (dt): dt is { date: string; roomTariffId: string; price: number } =>
+              dt.roomTariffId !== null,
+          )
           .map((dt) => ({
             date: dt.date,
             roomTariffId: dt.roomTariffId,
@@ -517,6 +527,11 @@ export function ReservationForm({
         expectedPax: restFormData.expectedPax || 0,
       };
 
+      if (allowsMultipleReservations && !payload.expectedPax) {
+        toast.error("Expected Pax is required for this room");
+        return;
+      }
+
       if (reservationId) {
         const updatePayload = {
           ...payload,
@@ -534,7 +549,17 @@ export function ReservationForm({
       }
       onSuccess?.();
     } catch (error) {
-      console.log(error);
+      let message = "Failed to create reservation";
+      if (error instanceof Error) {
+        const errorText = error.message;
+        try {
+          const errorData = JSON.parse(errorText);
+          message = errorData.message || errorText;
+        } catch {
+          message = errorText;
+        }
+      }
+      toast.error(message);
     }
 
     goToDate(dateRange.from);

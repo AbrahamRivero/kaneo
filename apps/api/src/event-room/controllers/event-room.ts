@@ -6,6 +6,10 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import createNotification from "../../notification/controllers/create-notification";
+import { hasScheduledPermission } from "../../utils/permissions";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
+import { getUserName } from "../utils/get-user-name";
 
 type CreateEventRoomPayload = {
   workspaceId: string;
@@ -44,9 +48,16 @@ async function createEventRoom(
       .limit(1);
 
     if (!member || member.role === "viewer") {
-      throw new HTTPException(403, {
-        message: "Only owners and members can create event rooms",
-      });
+      const hasPermission = await hasScheduledPermission(
+        userId,
+        payload.workspaceId,
+        "create_rooms",
+      );
+      if (!hasPermission) {
+        throw new HTTPException(403, {
+          message: "Viewers cannot create event rooms",
+        });
+      }
     }
   }
 
@@ -60,6 +71,32 @@ async function createEventRoom(
       allowsMultipleReservations: payload.allowsMultipleReservations ?? false,
     })
     .returning();
+
+  if (!eventRoom) {
+    throw new HTTPException(500, { message: "Failed to create event room" });
+  }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(payload.workspaceId);
+  const notificationTitle = `Event Room Created: ${eventRoom.name}`;
+  const notificationContent =
+    `User "${userName}" created event room "${eventRoom.name}"\n` +
+    `- Capacity: ${eventRoom.capacity}\n` +
+    `- Description: ${eventRoom.description || "N/A"}\n` +
+    `- Multiple Reservations: ${eventRoom.allowsMultipleReservations ? "Yes" : "No"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "event_room_created",
+        resourceId: eventRoom.id,
+        resourceType: "event_room",
+      }),
+    ),
+  );
 
   return eventRoom;
 }
@@ -167,9 +204,16 @@ async function updateEventRoom(
       .limit(1);
 
     if (!member || member.role === "viewer") {
-      throw new HTTPException(403, {
-        message: "Only owners and members can update event rooms",
-      });
+      const hasPermission = await hasScheduledPermission(
+        userId,
+        eventRoom.workspaceId,
+        "edit_rooms",
+      );
+      if (!hasPermission) {
+        throw new HTTPException(403, {
+          message: "Only owners and members can update event rooms",
+        });
+      }
     }
   }
 
@@ -181,6 +225,33 @@ async function updateEventRoom(
     })
     .where(eq(eventRoomTable.id, eventRoomId))
     .returning();
+
+  if (!updated) {
+    throw new HTTPException(500, { message: "Failed to update event room" });
+  }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(eventRoom.workspaceId);
+  const notificationTitle = `Event Room Updated: ${updated.name}`;
+  const changedFields = Object.keys(payload).join(", ");
+  const notificationContent =
+    `User "${userName}" updated event room "${updated.name}"\n` +
+    `- Changed fields: ${changedFields || "N/A"}\n` +
+    `- New capacity: ${updated.capacity}\n` +
+    `- Multiple Reservations: ${updated.allowsMultipleReservations ? "Yes" : "No"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "event_room_updated",
+        resourceId: updated.id,
+        resourceType: "event_room",
+      }),
+    ),
+  );
 
   return updated;
 }
@@ -222,11 +293,39 @@ async function deleteEventRoom(userId: string, eventRoomId: string) {
       .limit(1);
 
     if (!member || member.role === "viewer") {
-      throw new HTTPException(403, {
-        message: "Only owners and members can delete event rooms",
-      });
+      const hasPermission = await hasScheduledPermission(
+        userId,
+        eventRoom.workspaceId,
+        "delete_rooms",
+      );
+      if (!hasPermission) {
+        throw new HTTPException(403, {
+          message: "Viewers cannot delete event rooms",
+        });
+      }
     }
   }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(eventRoom.workspaceId);
+  const notificationTitle = `Event Room Deleted: ${eventRoom.name}`;
+  const notificationContent =
+    `User "${userName}" deleted event room "${eventRoom.name}"\n` +
+    `- Previous capacity: ${eventRoom.capacity}\n` +
+    `- Previous description: ${eventRoom.description || "N/A"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "event_room_deleted",
+        resourceId: eventRoom.id,
+        resourceType: "event_room",
+      }),
+    ),
+  );
 
   await db.delete(eventRoomTable).where(eq(eventRoomTable.id, eventRoomId));
 

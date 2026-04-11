@@ -36,7 +36,7 @@ import {
 import { lazy, Suspense, useEffect, useState } from "react";
 
 const KanbanBoard = lazy(() =>
-  import("@/components/kanban-board").then((m) => ({ default: m.default }))
+  import("@/components/kanban-board").then((m) => ({ default: m.default })),
 );
 
 export const Route = createFileRoute(

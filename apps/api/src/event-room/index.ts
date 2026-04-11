@@ -1,6 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
+import db from "../database";
+import { eventRoomTable } from "../database/schema";
 import eventRoomController from "./controllers/event-room";
 import reservationController from "./controllers/reservation";
 import * as roomTariffController from "./controllers/room-tariff";
@@ -91,47 +94,71 @@ const eventRoom = new Hono<{
     "/reservations",
     zValidator(
       "json",
-      z.object({
-        workspaceId: z.string(),
-        eventRoomId: z.string(),
-        title: z.string().optional(),
-        clientName: z.string(),
-        companyName: z.string().optional(),
-        phone: z.string().optional(),
-        email: z.string().optional(),
-        dateRange: z.object({
-          from: z.string(),
-          to: z.string().optional(),
+      z
+        .object({
+          workspaceId: z.string(),
+          eventRoomId: z.string(),
+          title: z.string().optional(),
+          clientName: z.string(),
+          companyName: z.string().optional(),
+          phone: z.string().optional(),
+          email: z.string().optional(),
+          dateRange: z.object({
+            from: z.string(),
+            to: z.string().optional(),
+          }),
+          notes: z.string().optional(),
+          roomTariffId: z.string().optional(),
+          totalRoomPrice: z.number().optional(),
+          totalServicePrice: z.number().optional(),
+          serviceChargeAmount: z.number().optional(),
+          grandTotal: z.number().optional(),
+          expectedPax: z.number().optional(),
+          paymentConfirmed: z.boolean().optional(),
+          status: z.enum(["pending", "confirmed", "completed"]).optional(),
+          services: z
+            .array(
+              z.object({
+                serviceId: z.string(),
+                pax: z.number(),
+                unitPrice: z.number(),
+                totalPrice: z.number(),
+              }),
+            )
+            .optional(),
+          dayTariffs: z
+            .array(
+              z.object({
+                date: z.string(),
+                roomTariffId: z.string().optional(),
+                price: z.number(),
+              }),
+            )
+            .optional(),
+        })
+        .superRefine(async (data, ctx) => {
+          const [room] = await db
+            .select({
+              allowsMultipleReservations:
+                eventRoomTable.allowsMultipleReservations,
+            })
+            .from(eventRoomTable)
+            .where(
+              and(
+                eq(eventRoomTable.id, data.eventRoomId),
+                eq(eventRoomTable.workspaceId, data.workspaceId),
+              ),
+            )
+            .limit(1);
+
+          if (room?.allowsMultipleReservations && !data.expectedPax) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Expected Pax is required",
+              path: ["expectedPax"],
+            });
+          }
         }),
-        notes: z.string().optional(),
-        roomTariffId: z.string().optional(),
-        totalRoomPrice: z.number().optional(),
-        totalServicePrice: z.number().optional(),
-        serviceChargeAmount: z.number().optional(),
-        grandTotal: z.number().optional(),
-        expectedPax: z.number().optional(),
-        paymentConfirmed: z.boolean().optional(),
-        status: z.enum(["pending", "confirmed", "completed"]).optional(),
-        services: z
-          .array(
-            z.object({
-              serviceId: z.string(),
-              pax: z.number(),
-              unitPrice: z.number(),
-              totalPrice: z.number(),
-            }),
-          )
-          .optional(),
-        dayTariffs: z
-          .array(
-            z.object({
-              date: z.string(),
-              roomTariffId: z.string().optional(),
-              price: z.number(),
-            }),
-          )
-          .optional(),
-      }),
     ),
     async (c) => {
       const userId = c.get("userId");
@@ -155,48 +182,68 @@ const eventRoom = new Hono<{
     "/reservations/:id",
     zValidator(
       "json",
-      z.object({
-        eventRoomId: z.string().optional(),
-        title: z.string().optional(),
-        clientName: z.string().optional(),
-        companyName: z.string().optional(),
-        phone: z.string().optional(),
-        email: z.string().optional(),
-        dateRange: z
-          .object({
-            from: z.string(),
-            to: z.string().optional(),
-          })
-          .optional(),
-        notes: z.string().optional(),
-        paymentConfirmed: z.boolean().optional(),
-        roomTariffId: z.string().optional(),
-        totalRoomPrice: z.number().optional(),
-        totalServicePrice: z.number().optional(),
-        serviceChargeAmount: z.number().optional(),
-        grandTotal: z.number().optional(),
-        expectedPax: z.number().optional(),
-        services: z
-          .array(
-            z.object({
-              serviceId: z.string(),
-              pax: z.number(),
-              unitPrice: z.number(),
-              totalPrice: z.number(),
-            }),
-          )
-          .optional(),
-        dayTariffs: z
-          .array(
-            z.object({
-              date: z.string(),
-              roomTariffId: z.string().optional(),
-              price: z.number(),
-            }),
-          )
-          .optional(),
-        status: z.enum(["pending", "confirmed", "completed"]).optional(),
-      }),
+      z
+        .object({
+          eventRoomId: z.string().optional(),
+          title: z.string().optional(),
+          clientName: z.string().optional(),
+          companyName: z.string().optional(),
+          phone: z.string().optional(),
+          email: z.string().optional(),
+          dateRange: z
+            .object({
+              from: z.string(),
+              to: z.string().optional(),
+            })
+            .optional(),
+          notes: z.string().optional(),
+          paymentConfirmed: z.boolean().optional(),
+          roomTariffId: z.string().optional(),
+          totalRoomPrice: z.number().optional(),
+          totalServicePrice: z.number().optional(),
+          serviceChargeAmount: z.number().optional(),
+          grandTotal: z.number().optional(),
+          expectedPax: z.number().optional(),
+          services: z
+            .array(
+              z.object({
+                serviceId: z.string(),
+                pax: z.number(),
+                unitPrice: z.number(),
+                totalPrice: z.number(),
+              }),
+            )
+            .optional(),
+          dayTariffs: z
+            .array(
+              z.object({
+                date: z.string(),
+                roomTariffId: z.string().optional(),
+                price: z.number(),
+              }),
+            )
+            .optional(),
+          status: z.enum(["pending", "confirmed", "completed"]).optional(),
+        })
+        .superRefine(async (data, ctx) => {
+          if (!data.eventRoomId) return;
+          const [room] = await db
+            .select({
+              allowsMultipleReservations:
+                eventRoomTable.allowsMultipleReservations,
+            })
+            .from(eventRoomTable)
+            .where(eq(eventRoomTable.id, data.eventRoomId))
+            .limit(1);
+
+          if (room?.allowsMultipleReservations && !data.expectedPax) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Expected Pax is required",
+              path: ["expectedPax"],
+            });
+          }
+        }),
     ),
     async (c) => {
       const userId = c.get("userId");
@@ -217,6 +264,27 @@ const eventRoom = new Hono<{
     const result = await reservationController.deleteReservation(userId, id);
     return c.json(result);
   })
+
+  .patch(
+    "/reservations/:id/payment",
+    zValidator(
+      "json",
+      z.object({
+        paymentConfirmed: z.boolean(),
+      }),
+    ),
+    async (c) => {
+      const userId = c.get("userId");
+      const id = c.req.param("id");
+      const { paymentConfirmed } = c.req.valid("json");
+      const result = await reservationController.updatePaymentStatus(
+        userId,
+        id,
+        paymentConfirmed,
+      );
+      return c.json(result);
+    },
+  )
 
   .get("/:workspaceId/services", async (c) => {
     const workspaceId = c.req.param("workspaceId");

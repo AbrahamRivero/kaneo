@@ -46,7 +46,7 @@ function formatDate(dateStr: string): string {
 }
 
 function formatCurrency(amount: number | null): string {
-  if (amount === null) return "No especificado";
+  if (amount === null) return "Not specified";
   return new Intl.NumberFormat("es-ES", {
     style: "currency",
     currency: "EUR",
@@ -210,30 +210,30 @@ async function notifyUnpaidReservations(): Promise<void> {
     let dayDescription: string;
     if (daysUntilStart > 0) {
       dayDescription =
-        "Faltan " + daysUntilStart + " día" + (daysUntilStart > 1 ? "s" : "");
+        daysUntilStart + " day" + (daysUntilStart > 1 ? "s" : "") + " left";
     } else if (daysUntilStart === 0) {
-      dayDescription = "Hoy inicia";
+      dayDescription = "Starts today";
     } else {
-      dayDescription = "Día " + currentDay + " de " + totalDays;
+      dayDescription = "Day " + currentDay + " of " + totalDays;
     }
 
     const titlePrefix = reservation.title ? reservation.title + " - " : "";
 
     const notificationTitle =
-      "Reserva sin pagar: " + titlePrefix + dayDescription;
+      "Unpaid reservation: " + titlePrefix + dayDescription;
 
     const companyPart = reservation.companyName
       ? " (" + reservation.companyName + ")"
       : "";
     const notificationContent =
-      "Cliente: " +
+      "Client: " +
       reservation.clientName +
       companyPart +
-      "\nFecha: " +
+      "\nDate: " +
       dateFormatted +
-      "\nMonto: " +
+      "\nAmount: " +
       formatCurrency(reservation.grandTotal) +
-      "\nEspacio: " +
+      "\nRoom: " +
       reservation.eventRoomName;
 
     const promises = workspaceUsers.map((user) =>
@@ -256,9 +256,7 @@ async function notifyUnpaidReservations(): Promise<void> {
     );
   }
 
-  console.log(
-    "[CRON] Processed " + uniqueById.length + " unpaid reservations",
-  );
+  console.log("[CRON] Processed " + uniqueById.length + " unpaid reservations");
 }
 
 export {

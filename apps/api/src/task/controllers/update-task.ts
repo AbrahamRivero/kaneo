@@ -46,7 +46,7 @@ async function updateTask(
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId!, project.workspaceId);
+  await requireAtLeastMember(userId!, project.workspaceId, "edit_tasks");
 
   const currentStatus = status as Status;
   const currentPriority = priority as Priority;

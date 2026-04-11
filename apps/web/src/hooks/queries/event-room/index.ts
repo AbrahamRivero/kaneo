@@ -43,7 +43,12 @@ export function useGetReservationById(id?: string) {
   });
 }
 
-export function useGetServices(workspaceId: string, page = 1, limit = 10, search?: string) {
+export function useGetServices(
+  workspaceId: string,
+  page = 1,
+  limit = 10,
+  search?: string,
+) {
   return useQuery({
     queryKey: ["services", workspaceId, page, limit, search],
     queryFn: () => getServices(workspaceId, page, limit, search),

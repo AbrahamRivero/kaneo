@@ -11,12 +11,11 @@ import { auth } from "./auth";
 import config from "./config";
 import db from "./database";
 import eventRoom from "./event-room";
-import {
-  notifyUnpaidReservations,
-} from "./event-room/services/check-unpaid-reservations";
+import { notifyUnpaidReservations } from "./event-room/services/check-unpaid-reservations";
 import { publishEvent } from "./events";
 import githubIntegration from "./github-integration";
 import label from "./label";
+import { errorHandler } from "./middleware/error-handler";
 import notification from "./notification";
 import project from "./project";
 import { getPublicProject } from "./project/controllers/get-public-project";
@@ -185,6 +184,8 @@ app.use("*", async (c, next) => {
 
   return next();
 });
+
+app.use(errorHandler);
 
 if (isDemoMode) {
   new Cron("0 * * * *", async () => {

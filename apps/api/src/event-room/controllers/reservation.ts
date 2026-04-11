@@ -12,6 +12,10 @@ import {
   workspaceUserTable,
 } from "../../database/schema";
 import { publishEvent } from "../../events";
+import createNotification from "../../notification/controllers/create-notification";
+import { hasScheduledPermission } from "../../utils/permissions";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
+import { getUserName } from "../utils/get-user-name";
 
 export type DateRange = { from: string; to?: string };
 
@@ -100,14 +104,14 @@ function datesOverlap(
 type ConflictResult =
   | { hasConflict: false }
   | {
-      hasConflict: true;
-      type: "date_overlap";
-      conflictingReservation: {
-        id: string;
-        title: string;
-        dateRange: DateRange;
-      };
+    hasConflict: true;
+    type: "date_overlap";
+    conflictingReservation: {
+      id: string;
+      title: string;
+      dateRange: DateRange;
     };
+  };
 
 async function checkReservationConflict(
   eventRoomId: string,
@@ -204,9 +208,16 @@ async function createReservation(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot create reservations",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      payload.workspaceId,
+      "create_reservations",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot create reservations",
+      });
+    }
   }
 
   const [room] = await db
@@ -217,6 +228,13 @@ async function createReservation(
 
   if (!room || room.workspaceId !== payload.workspaceId) {
     throw new HTTPException(404, { message: "Event room not found" });
+  }
+
+  if (room.allowsMultipleReservations && !payload.expectedPax) {
+    throw new HTTPException(400, {
+      message:
+        "Expected Pax is required for rooms that allow multiple reservations",
+    });
   }
 
   const conflict = await checkReservationConflict(
@@ -316,6 +334,41 @@ async function createReservation(
     roomName: room.name,
     userId,
   });
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(payload.workspaceId);
+  const dateStr =
+    resDateRange.from === resDateRange.to
+      ? resDateRange.from
+      : `${resDateRange.from} to ${resDateRange.to}`;
+  const totalFormatted = payload.grandTotal
+    ? `€${(payload.grandTotal / 100).toFixed(2)}`
+    : "N/A";
+  const statusStr = payload.status || "pending";
+  const paxStr = payload.expectedPax ? `${payload.expectedPax} pax` : "N/A";
+
+  const notificationTitle = `${payload.title ? `Reservation Created: ${payload.title}` : "Reservation Created"}`;
+  const notificationContent =
+    `User "${userName}" created a reservation\n` +
+    `- Client: ${payload.clientName}${payload.companyName ? ` (${payload.companyName})` : ""}\n` +
+    `- Room: ${room.name}\n` +
+    `- Date: ${dateStr}\n` +
+    `- Status: ${statusStr}\n` +
+    `- Expected Pax: ${paxStr}\n` +
+    `- Total: ${totalFormatted}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "reservation_created",
+        resourceId: reservation.id,
+        resourceType: "reservation",
+      }),
+    ),
+  );
 
   return {
     ...reservation,
@@ -692,24 +745,41 @@ async function updateReservation(
     .limit(1);
 
   if (!isOwner && (!member || member.role === "viewer")) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot update reservations",
-    });
-  }
-
-  if (payload.eventRoomId) {
-    const [room] = await db
-      .select()
-      .from(eventRoomTable)
-      .where(eq(eventRoomTable.id, payload.eventRoomId))
-      .limit(1);
-
-    if (!room || room.workspaceId !== reservation.workspaceId) {
-      throw new HTTPException(404, { message: "Event room not found" });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      reservation.workspaceId,
+      "edit_reservations",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot update reservations",
+      });
     }
   }
 
   const eventRoomId = payload.eventRoomId ?? reservation.eventRoomId;
+
+  const [room] = await db
+    .select()
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, eventRoomId))
+    .limit(1);
+
+  if (!room) {
+    throw new HTTPException(404, { message: "Event room not found" });
+  }
+
+  if (room.workspaceId !== reservation.workspaceId) {
+    throw new HTTPException(404, { message: "Event room not found" });
+  }
+
+  if (room.allowsMultipleReservations && !payload.expectedPax) {
+    throw new HTTPException(400, {
+      message:
+        "Expected Pax is required for rooms that allow multiple reservations",
+    });
+  }
+
   const dateRange = payload.dateRange
     ? payload.dateRange
     : dateRangeFromString(reservation.dateRange);
@@ -751,7 +821,7 @@ async function updateReservation(
     throw new Error("Failed to update reservation");
   }
 
-  const [room] = await db
+  const [roomForName] = await db
     .select({ name: eventRoomTable.name })
     .from(eventRoomTable)
     .where(eq(eventRoomTable.id, updated.eventRoomId))
@@ -821,9 +891,50 @@ async function updateReservation(
     title: updated.title,
     dateRange: updatedDateRange,
     expectedPax: updated.expectedPax ?? undefined,
-    roomName: room?.name || "Unknown",
+    roomName: roomForName?.name || "Unknown",
     userId,
   });
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(updated.workspaceId);
+  const dateStr =
+    updatedDateRange.from === updatedDateRange.to
+      ? updatedDateRange.from
+      : `${updatedDateRange.from} to ${updatedDateRange.to}`;
+  const totalFormatted = updated.grandTotal
+    ? `€${(updated.grandTotal / 100).toFixed(2)}`
+    : "N/A";
+  const statusStr = updated.status || "pending";
+  const paxStr = updated.expectedPax ? `${updated.expectedPax} pax` : "N/A";
+  const changedFields = payload
+    ? Object.keys(payload)
+      .filter((k) => k !== "services" && k !== "dayTariffs")
+      .join(", ")
+    : "N/A";
+
+  const notificationTitle = `${updated.title ? `Reservation Updated: ${updated.title}` : "Reservation Updated"}`;
+  const notificationContent =
+    `User "${userName}" updated a reservation\n` +
+    `- Client: ${updated.clientName}${updated.companyName ? ` (${updated.companyName})` : ""}\n` +
+    `- Room: ${roomForName?.name || "Unknown"}\n` +
+    `- Date: ${dateStr}\n` +
+    `- Status: ${statusStr}\n` +
+    `- Expected Pax: ${paxStr}\n` +
+    `- Total: ${totalFormatted}\n` +
+    `- Changed fields: ${changedFields}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "reservation_updated",
+        resourceId: updated.id,
+        resourceType: "reservation",
+      }),
+    ),
+  );
 
   const dayTariffs = await db
     .select({
@@ -909,9 +1020,16 @@ async function deleteReservation(userId: string, reservationId: string) {
   const isViewer = workspaceUser?.role === "viewer";
 
   if (isViewer) {
-    throw new HTTPException(403, {
-      message: "Viewers cannot delete reservations",
-    });
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      reservation.workspaceId,
+      "delete_reservations",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot delete reservations",
+      });
+    }
   }
 
   if (!isOwner && !workspaceUser) {
@@ -932,11 +1050,153 @@ async function deleteReservation(userId: string, reservationId: string) {
     userId,
   });
 
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(reservation.workspaceId);
+  const dateStr =
+    resDateRange.from === resDateRange.to
+      ? resDateRange.from
+      : `${resDateRange.from} to ${resDateRange.to}`;
+  const totalFormatted = reservation.grandTotal
+    ? `€${(reservation.grandTotal / 100).toFixed(2)}`
+    : "N/A";
+  const statusStr = reservation.status || "unknown";
+  const paxStr = reservation.expectedPax
+    ? `${reservation.expectedPax} pax`
+    : "N/A";
+
+  const notificationTitle = `${reservation.title ? `Reservation Deleted: ${reservation.title}` : "Reservation Deleted"}`;
+  const notificationContent =
+    `User "${userName}" deleted a reservation\n` +
+    `- Client: ${reservation.clientName}${reservation.companyName ? ` (${reservation.companyName})` : ""}\n` +
+    `- Date: ${dateStr}\n` +
+    `- Status: ${statusStr}\n` +
+    `- Expected Pax: ${paxStr}\n` +
+    `- Total: ${totalFormatted}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "reservation_deleted",
+        resourceId: reservation.id,
+        resourceType: "reservation",
+      }),
+    ),
+  );
+
   await db
     .delete(reservationTable)
     .where(eq(reservationTable.id, reservationId));
 
   return { success: true };
+}
+
+async function updatePaymentStatus(
+  userId: string,
+  reservationId: string,
+  paymentConfirmed: boolean,
+) {
+  const [reservation] = await db
+    .select()
+    .from(reservationTable)
+    .where(eq(reservationTable.id, reservationId))
+    .limit(1);
+
+  if (!reservation) {
+    throw new HTTPException(404, { message: "Reservation not found" });
+  }
+
+  const [workspace] = await db
+    .select({ ownerId: workspaceTable.ownerId })
+    .from(workspaceTable)
+    .where(eq(workspaceTable.id, reservation.workspaceId))
+    .limit(1);
+
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  const [member] = await db
+    .select({ role: workspaceUserTable.role })
+    .from(workspaceUserTable)
+    .where(
+      and(
+        eq(workspaceUserTable.workspaceId, reservation.workspaceId),
+        eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  const isViewer = member?.role === "viewer";
+
+  if (!isOwner && isViewer) {
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      reservation.workspaceId,
+      "mark_reservation_paid",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot update payment status without permission",
+      });
+    }
+  }
+
+  const [updated] = await db
+    .update(reservationTable)
+    .set({ paymentConfirmed })
+    .where(eq(reservationTable.id, reservationId))
+    .returning();
+
+  const [eventRoom] = await db
+    .select({ name: eventRoomTable.name })
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, reservation.eventRoomId))
+    .limit(1);
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(reservation.workspaceId);
+
+  const clientName = reservation.title || reservation.clientName || "Unknown";
+  const roomName = eventRoom?.name || "Event Room";
+  const dateRange = dateRangeFromString(reservation.dateRange);
+  const dateStr =
+    dateRange.from === dateRange.to
+      ? dateRange.from
+      : `${dateRange.from} to ${dateRange.to}`;
+  const statusText = paymentConfirmed ? "marked as paid" : "marked as pending";
+
+  await Promise.all(
+    workspaceUsers
+      .filter((wu) => wu.userId !== userId)
+      .map((wu) =>
+        createNotification({
+          userId: wu.userId,
+          title: "Payment Status Updated",
+          content: `User "${userName}" has ${statusText} the payment for "${clientName}" at "${roomName}" on ${dateStr}`,
+          type: "reservation_payment",
+          resourceId: reservation.id,
+          resourceType: "reservation",
+        }),
+      ),
+  );
+
+  await publishEvent("reservation.payment_updated", {
+    reservationId: reservation.id,
+    workspaceId: reservation.workspaceId,
+    clientName,
+    paymentConfirmed,
+    roomName,
+    dateRange,
+    userId,
+  });
+
+  return updated;
 }
 
 export default {
@@ -945,4 +1205,5 @@ export default {
   getReservation,
   updateReservation,
   deleteReservation,
+  updatePaymentStatus,
 };

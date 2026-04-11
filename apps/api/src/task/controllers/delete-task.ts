@@ -25,7 +25,7 @@ async function deleteTask(taskId: string, userId: string) {
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId, project.workspaceId);
+  await requireAtLeastMember(userId, project.workspaceId, "delete_tasks");
 
   const result = await db
     .delete(taskTable)

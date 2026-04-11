@@ -17,7 +17,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 const CalendarView = lazy(() =>
   import("@/components/calendar/calendar-view").then((m) => ({
     default: m.CalendarView,
-  }))
+  })),
 );
 
 const calendarFallback = (

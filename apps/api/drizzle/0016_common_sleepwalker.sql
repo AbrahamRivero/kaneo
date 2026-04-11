@@ -1,0 +1,1 @@
+ALTER TYPE "public"."scheduled_permission_action" ADD VALUE 'mark_reservation_paid' BEFORE 'create_services';

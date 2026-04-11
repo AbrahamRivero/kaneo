@@ -18,7 +18,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
-import { useDeleteReservation } from "@/hooks/mutations/event-room";
+import { useDeleteReservation, useUpdatePaymentStatus } from "@/hooks/mutations/event-room";
 import queryClient from "@/query-client";
 import { useNavigate } from "@tanstack/react-router";
 import { differenceInDays, format } from "date-fns";
@@ -28,11 +28,13 @@ import {
   CheckCircle2,
   DollarSign,
   FileDown,
+  HandCoins,
   Pen,
   Phone,
   Trash2,
   Users,
   X,
+  CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -122,6 +124,7 @@ function SingleReservationSection({
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
   const deleteReservation = useDeleteReservation();
+  const updatePaymentStatus = useUpdatePaymentStatus();
 
   const dateRange = parseDateRange(reservation.dateRange);
   const dateRangeStr = formatDateRangeFromObject(dateRange);
@@ -175,6 +178,22 @@ function SingleReservationSection({
       to: "/dashboard/workspace/$workspaceId/event-rooms/reservations/$id",
       params: { workspaceId, id: reservation.id },
     });
+  };
+
+  const handleTogglePayment = async () => {
+    try {
+      await updatePaymentStatus.mutateAsync({
+        id: reservation.id,
+        paymentConfirmed: !reservation.paymentConfirmed,
+      });
+      toast.success(
+        reservation.paymentConfirmed
+          ? "Payment marked as pending"
+          : "Payment marked as paid",
+      );
+    } catch {
+      toast.error("Failed to update payment status");
+    }
   };
 
   const handleReport = () => {
@@ -474,8 +493,8 @@ function SingleReservationSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Reservation?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this reservation for
-              <strong>{reservation.title || reservation.clientName}</strong> on
+              Are you sure you want to delete this reservation for {" "}
+              <strong>{reservation.title || reservation.clientName}</strong> on {" "}
               {dateStr}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -521,6 +540,23 @@ function SingleReservationSection({
               title="Generate Report"
             >
               <FileDown className="size-3.5 text-muted-foreground" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`size-7 hover:bg-muted ${
+                reservation.paymentConfirmed
+                  ? "text-green-500 hover:text-green-600"
+                  : "text-amber-500 hover:text-amber-600"
+              }`}
+              onClick={handleTogglePayment}
+              title={
+                reservation.paymentConfirmed
+                  ? "Mark as pending"
+                  : "Mark as paid"
+              }
+            >
+              <CreditCard className="size-3.5" />
             </Button>
             <Button
               variant="ghost"
@@ -586,19 +622,19 @@ function SingleReservationSection({
                 <div className="p-1">
                   <Phone className="size-4" />
                 </div>
-                <span>+53 {reservation.phone}</span>
+                <span>{reservation.phone}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="p-1">
                 {reservation.paymentConfirmed ? (
-                  <DollarSign className="size-4 text-green-500" />
+                  <HandCoins className="size-4 text-green-500" />
                 ) : (
-                  <DollarSign className="size-4 text-amber-500" />
+                  <HandCoins className="size-4 text-amber-500" />
                 )}
               </div>
               <span>
-                Payment:
+                Payment: {" "}
                 {reservation.paymentConfirmed ? (
                   <span className="text-green-600 dark:text-green-400 font-medium">
                     Confirmed
