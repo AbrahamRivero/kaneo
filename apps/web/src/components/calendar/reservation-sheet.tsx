@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   DollarSign,
   FileDown,
+  HandCoins,
   Pen,
   Phone,
   Trash2,
@@ -474,8 +475,8 @@ function SingleReservationSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Reservation?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this reservation for
-              <strong>{reservation.title || reservation.clientName}</strong> on
+              Are you sure you want to delete this reservation for {" "}
+              <strong>{reservation.title || reservation.clientName}</strong> on {" "}
               {dateStr}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -586,19 +587,19 @@ function SingleReservationSection({
                 <div className="p-1">
                   <Phone className="size-4" />
                 </div>
-                <span>+53 {reservation.phone}</span>
+                <span>{reservation.phone}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="p-1">
                 {reservation.paymentConfirmed ? (
-                  <DollarSign className="size-4 text-green-500" />
+                  <HandCoins className="size-4 text-green-500" />
                 ) : (
-                  <DollarSign className="size-4 text-amber-500" />
+                  <HandCoins className="size-4 text-amber-500" />
                 )}
               </div>
               <span>
-                Payment:
+                Payment: {" "}
                 {reservation.paymentConfirmed ? (
                   <span className="text-green-600 dark:text-green-400 font-medium">
                     Confirmed

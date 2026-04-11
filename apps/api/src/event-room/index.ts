@@ -1,9 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import db from "../database";
 import { eventRoomTable } from "../database/schema";
-import { and, eq } from "drizzle-orm";
 import eventRoomController from "./controllers/event-room";
 import reservationController from "./controllers/reservation";
 import * as roomTariffController from "./controllers/room-tariff";
@@ -139,7 +139,8 @@ const eventRoom = new Hono<{
         .superRefine(async (data, ctx) => {
           const [room] = await db
             .select({
-              allowsMultipleReservations: eventRoomTable.allowsMultipleReservations,
+              allowsMultipleReservations:
+                eventRoomTable.allowsMultipleReservations,
             })
             .from(eventRoomTable)
             .where(
@@ -228,7 +229,8 @@ const eventRoom = new Hono<{
           if (!data.eventRoomId) return;
           const [room] = await db
             .select({
-              allowsMultipleReservations: eventRoomTable.allowsMultipleReservations,
+              allowsMultipleReservations:
+                eventRoomTable.allowsMultipleReservations,
             })
             .from(eventRoomTable)
             .where(eq(eventRoomTable.id, data.eventRoomId))

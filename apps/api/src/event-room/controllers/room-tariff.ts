@@ -7,7 +7,10 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import createNotification from "../../notification/controllers/create-notification";
 import { hasScheduledPermission } from "../../utils/permissions";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
+import { getUserName } from "../utils/get-user-name";
 
 export type SessionType =
   | "half_session"
@@ -48,18 +51,7 @@ export type RoomTariffWithMaskedPrice = {
   roomName?: string;
 };
 
-function maskPrice(
-  tariff: typeof roomTariffTable.$inferSelect,
-  isViewer: boolean,
-): RoomTariffWithMaskedPrice {
-  if (isViewer) {
-    return {
-      ...tariff,
-      price: null,
-      serviceChargePercent: tariff.serviceChargePercent,
-      modificationCharge: tariff.modificationCharge,
-    };
-  }
+function maskPrice(tariff: typeof roomTariffTable.$inferSelect): RoomTariffWithMaskedPrice {
   return {
     ...tariff,
     price: tariff.price,
@@ -130,7 +122,7 @@ export async function getRoomTariffs(
         .where(eq(eventRoomTable.id, tariff.eventRoomId))
         .limit(1);
 
-      const masked = maskPrice(tariff, isViewer);
+      const masked = maskPrice(tariff);
       return {
         ...masked,
         roomName: room?.name,
@@ -189,7 +181,7 @@ export async function getRoomTariffById(userId: string, tariffId: string) {
     .where(eq(eventRoomTable.id, tariff.eventRoomId))
     .limit(1);
 
-  const masked = maskPrice(tariff, isViewer);
+  const masked = maskPrice(tariff);
   return {
     ...masked,
     roomName: room?.name,
@@ -259,6 +251,47 @@ export async function createRoomTariff(
       isActive: payload.isActive ?? true,
     })
     .returning();
+
+  if (!tariff) {
+    throw new HTTPException(500, { message: "Failed to create room tariff" });
+  }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(payload.workspaceId);
+  const sessionTypeLabels: Record<string, string> = {
+    half_session: "Half Session",
+    full_session: "Full Session",
+    social_event: "Social Event",
+    flat: "Flat Rate",
+  };
+  const sessionLabel =
+    sessionTypeLabels[tariff.sessionType] || tariff.sessionType;
+  const priceFormatted = `€${(tariff.price / 100).toFixed(2)}`;
+  const serviceChargeFormatted = `${tariff.serviceChargePercent}%`;
+  const modificationFormatted = `€${(tariff.modificationCharge / 100).toFixed(2)}`;
+
+  const notificationTitle = `Room Tariff Created: ${sessionLabel}`;
+  const notificationContent =
+    `User "${userName}" created a room tariff\n` +
+    `- Room: ${room.name}\n` +
+    `- Session Type: ${sessionLabel}\n` +
+    `- Price: ${priceFormatted}\n` +
+    `- Service Charge: ${serviceChargeFormatted}\n` +
+    `- Modification Charge: ${modificationFormatted}\n` +
+    `- Active: ${tariff.isActive ? "Yes" : "No"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "tariff_created",
+        resourceId: tariff.id,
+        resourceType: "room_tariff",
+      }),
+    ),
+  );
 
   return {
     ...tariff,
@@ -349,6 +382,49 @@ export async function updateRoomTariff(
     .where(eq(eventRoomTable.id, updated.eventRoomId))
     .limit(1);
 
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(updated.workspaceId);
+  const sessionTypeLabels: Record<string, string> = {
+    half_session: "Half Session",
+    full_session: "Full Session",
+    social_event: "Social Event",
+    flat: "Flat Rate",
+  };
+  const sessionLabel =
+    sessionTypeLabels[updated.sessionType] || updated.sessionType;
+  const priceFormatted = updated.price
+    ? `€${(updated.price / 100).toFixed(2)}`
+    : "N/A";
+  const serviceChargeFormatted = `${updated.serviceChargePercent}%`;
+  const modificationFormatted = updated.modificationCharge
+    ? `€${(updated.modificationCharge / 100).toFixed(2)}`
+    : "N/A";
+  const changedFields = Object.keys(payload).join(", ");
+
+  const notificationTitle = `Room Tariff Updated: ${sessionLabel}`;
+  const notificationContent =
+    `User "${userName}" updated a room tariff\n` +
+    `- Room: ${room?.name || "Unknown"}\n` +
+    `- Session Type: ${sessionLabel}\n` +
+    `- Changed fields: ${changedFields}\n` +
+    `- New Price: ${priceFormatted}\n` +
+    `- Service Charge: ${serviceChargeFormatted}\n` +
+    `- Modification Charge: ${modificationFormatted}\n` +
+    `- Active: ${updated.isActive ? "Yes" : "No"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "tariff_updated",
+        resourceId: updated.id,
+        resourceType: "room_tariff",
+      }),
+    ),
+  );
+
   return {
     ...updated,
     roomName: room?.name,
@@ -402,6 +478,48 @@ export async function deleteRoomTariff(userId: string, tariffId: string) {
       });
     }
   }
+
+  const [room] = await db
+    .select({ name: eventRoomTable.name })
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, tariff.eventRoomId))
+    .limit(1);
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(tariff.workspaceId);
+  const sessionTypeLabels: Record<string, string> = {
+    half_session: "Half Session",
+    full_session: "Full Session",
+    social_event: "Social Event",
+    flat: "Flat Rate",
+  };
+  const sessionLabel =
+    sessionTypeLabels[tariff.sessionType] || tariff.sessionType;
+  const priceFormatted = tariff.price
+    ? `€${(tariff.price / 100).toFixed(2)}`
+    : "N/A";
+
+  const notificationTitle = `Room Tariff Deleted: ${sessionLabel}`;
+  const notificationContent =
+    `User "${userName}" deleted a room tariff\n` +
+    `- Room: ${room?.name || "Unknown"}\n` +
+    `- Session Type: ${sessionLabel}\n` +
+    `- Previous Price: ${priceFormatted}\n` +
+    `- Service Charge: ${tariff.serviceChargePercent}%\n` +
+    `- Modification Charge: €${(tariff.modificationCharge / 100).toFixed(2)}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "tariff_deleted",
+        resourceId: tariff.id,
+        resourceType: "room_tariff",
+      }),
+    ),
+  );
 
   await db.delete(roomTariffTable).where(eq(roomTariffTable.id, tariffId));
 

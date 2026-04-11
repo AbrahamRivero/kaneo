@@ -1,6 +1,6 @@
+import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";
-import type { MiddlewareHandler } from "hono";
 
 export const errorHandler: MiddlewareHandler = async (c, next) => {
   try {
@@ -15,7 +15,7 @@ export const errorHandler: MiddlewareHandler = async (c, next) => {
           message,
           code: "VALIDATION_ERROR",
         },
-        422
+        422,
       );
     }
 
@@ -31,7 +31,7 @@ export const errorHandler: MiddlewareHandler = async (c, next) => {
         message: "Internal server error",
         code: "INTERNAL_ERROR",
       },
-      500
+      500,
     );
   }
 };

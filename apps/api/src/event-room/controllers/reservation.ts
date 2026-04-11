@@ -12,7 +12,10 @@ import {
   workspaceUserTable,
 } from "../../database/schema";
 import { publishEvent } from "../../events";
+import createNotification from "../../notification/controllers/create-notification";
 import { hasScheduledPermission } from "../../utils/permissions";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
+import { getUserName } from "../utils/get-user-name";
 
 export type DateRange = { from: string; to?: string };
 
@@ -101,14 +104,14 @@ function datesOverlap(
 type ConflictResult =
   | { hasConflict: false }
   | {
-      hasConflict: true;
-      type: "date_overlap";
-      conflictingReservation: {
-        id: string;
-        title: string;
-        dateRange: DateRange;
-      };
+    hasConflict: true;
+    type: "date_overlap";
+    conflictingReservation: {
+      id: string;
+      title: string;
+      dateRange: DateRange;
     };
+  };
 
 async function checkReservationConflict(
   eventRoomId: string,
@@ -229,7 +232,8 @@ async function createReservation(
 
   if (room.allowsMultipleReservations && !payload.expectedPax) {
     throw new HTTPException(400, {
-      message: "Expected Pax is required for rooms that allow multiple reservations",
+      message:
+        "Expected Pax is required for rooms that allow multiple reservations",
     });
   }
 
@@ -330,6 +334,41 @@ async function createReservation(
     roomName: room.name,
     userId,
   });
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(payload.workspaceId);
+  const dateStr =
+    resDateRange.from === resDateRange.to
+      ? resDateRange.from
+      : `${resDateRange.from} to ${resDateRange.to}`;
+  const totalFormatted = payload.grandTotal
+    ? `€${(payload.grandTotal / 100).toFixed(2)}`
+    : "N/A";
+  const statusStr = payload.status || "pending";
+  const paxStr = payload.expectedPax ? `${payload.expectedPax} pax` : "N/A";
+
+  const notificationTitle = `${payload.title ? `Reservation Created: ${payload.title}` : "Reservation Created"}`;
+  const notificationContent =
+    `User "${userName}" created a reservation\n` +
+    `- Client: ${payload.clientName}${payload.companyName ? ` (${payload.companyName})` : ""}\n` +
+    `- Room: ${room.name}\n` +
+    `- Date: ${dateStr}\n` +
+    `- Status: ${statusStr}\n` +
+    `- Expected Pax: ${paxStr}\n` +
+    `- Total: ${totalFormatted}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "reservation_created",
+        resourceId: reservation.id,
+        resourceType: "reservation",
+      }),
+    ),
+  );
 
   return {
     ...reservation,
@@ -736,7 +775,8 @@ async function updateReservation(
 
   if (room.allowsMultipleReservations && !payload.expectedPax) {
     throw new HTTPException(400, {
-      message: "Expected Pax is required for rooms that allow multiple reservations",
+      message:
+        "Expected Pax is required for rooms that allow multiple reservations",
     });
   }
 
@@ -855,6 +895,47 @@ async function updateReservation(
     userId,
   });
 
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(updated.workspaceId);
+  const dateStr =
+    updatedDateRange.from === updatedDateRange.to
+      ? updatedDateRange.from
+      : `${updatedDateRange.from} to ${updatedDateRange.to}`;
+  const totalFormatted = updated.grandTotal
+    ? `€${(updated.grandTotal / 100).toFixed(2)}`
+    : "N/A";
+  const statusStr = updated.status || "pending";
+  const paxStr = updated.expectedPax ? `${updated.expectedPax} pax` : "N/A";
+  const changedFields = payload
+    ? Object.keys(payload)
+      .filter((k) => k !== "services" && k !== "dayTariffs")
+      .join(", ")
+    : "N/A";
+
+  const notificationTitle = `${updated.title ? `Reservation Updated: ${updated.title}` : "Reservation Updated"}`;
+  const notificationContent =
+    `User "${userName}" updated a reservation\n` +
+    `- Client: ${updated.clientName}${updated.companyName ? ` (${updated.companyName})` : ""}\n` +
+    `- Room: ${roomForName?.name || "Unknown"}\n` +
+    `- Date: ${dateStr}\n` +
+    `- Status: ${statusStr}\n` +
+    `- Expected Pax: ${paxStr}\n` +
+    `- Total: ${totalFormatted}\n` +
+    `- Changed fields: ${changedFields}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "reservation_updated",
+        resourceId: updated.id,
+        resourceType: "reservation",
+      }),
+    ),
+  );
+
   const dayTariffs = await db
     .select({
       id: reservationDayTariffTable.id,
@@ -968,6 +1049,42 @@ async function deleteReservation(userId: string, reservationId: string) {
     expectedPax: reservation.expectedPax ?? undefined,
     userId,
   });
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(reservation.workspaceId);
+  const dateStr =
+    resDateRange.from === resDateRange.to
+      ? resDateRange.from
+      : `${resDateRange.from} to ${resDateRange.to}`;
+  const totalFormatted = reservation.grandTotal
+    ? `€${(reservation.grandTotal / 100).toFixed(2)}`
+    : "N/A";
+  const statusStr = reservation.status || "unknown";
+  const paxStr = reservation.expectedPax
+    ? `${reservation.expectedPax} pax`
+    : "N/A";
+
+  const notificationTitle = `${reservation.title ? `Reservation Deleted: ${reservation.title}` : "Reservation Deleted"}`;
+  const notificationContent =
+    `User "${userName}" deleted a reservation\n` +
+    `- Client: ${reservation.clientName}${reservation.companyName ? ` (${reservation.companyName})` : ""}\n` +
+    `- Date: ${dateStr}\n` +
+    `- Status: ${statusStr}\n` +
+    `- Expected Pax: ${paxStr}\n` +
+    `- Total: ${totalFormatted}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "reservation_deleted",
+        resourceId: reservation.id,
+        resourceType: "reservation",
+      }),
+    ),
+  );
 
   await db
     .delete(reservationTable)

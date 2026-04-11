@@ -6,7 +6,10 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import createNotification from "../../notification/controllers/create-notification";
 import { hasScheduledPermission } from "../../utils/permissions";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
+import { getUserName } from "../utils/get-user-name";
 
 export type CreateServicePayload = {
   workspaceId: string;
@@ -34,16 +37,7 @@ export type ServiceWithMaskedPrice = {
   updatedAt: Date;
 };
 
-function maskPrice(
-  service: typeof serviceTable.$inferSelect,
-  isViewer: boolean,
-): ServiceWithMaskedPrice {
-  if (isViewer) {
-    return {
-      ...service,
-      pricePerPax: null,
-    };
-  }
+function maskPrice(service: typeof serviceTable.$inferSelect): ServiceWithMaskedPrice {
   return {
     ...service,
     pricePerPax: service.pricePerPax,
@@ -116,7 +110,7 @@ export async function getServices(
   const total = countResult[0]?.count ?? 0;
 
   return {
-    data: services.map((service) => maskPrice(service, isViewer)),
+    data: services.map((service) => maskPrice(service)),
     total,
     page,
     limit,
@@ -160,7 +154,7 @@ export async function getServiceById(userId: string, serviceId: string) {
 
   const isViewer = !isOwner && member?.role === "viewer";
 
-  return maskPrice(service, isViewer);
+  return maskPrice(service);
 }
 
 export async function createService(
@@ -214,6 +208,37 @@ export async function createService(
       isActive: payload.isActive ?? true,
     })
     .returning();
+
+  if (!service) {
+    throw new HTTPException(500, { message: "Failed to create service" });
+  }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(payload.workspaceId);
+  const priceFormatted = service.pricePerPax
+    ? `€${(service.pricePerPax / 100).toFixed(2)}`
+    : "N/A";
+
+  const notificationTitle = `Service Created: ${service.name}`;
+  const notificationContent =
+    `User "${userName}" created a service\n` +
+    `- Name: ${service.name}\n` +
+    `- Price per Pax: ${priceFormatted}\n` +
+    `- Description: ${service.description || "N/A"}\n` +
+    `- Active: ${service.isActive ? "Yes" : "No"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "service_created",
+        resourceId: service.id,
+        resourceType: "service",
+      }),
+    ),
+  );
 
   return service;
 }
@@ -279,6 +304,39 @@ export async function updateService(
     .where(eq(serviceTable.id, serviceId))
     .returning();
 
+  if (!updated) {
+    throw new HTTPException(500, { message: "Failed to update service" });
+  }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(service.workspaceId);
+  const priceFormatted = updated.pricePerPax
+    ? `€${(updated.pricePerPax / 100).toFixed(2)}`
+    : "N/A";
+  const changedFields = Object.keys(payload).join(", ");
+
+  const notificationTitle = `Service Updated: ${updated.name}`;
+  const notificationContent =
+    `User "${userName}" updated a service\n` +
+    `- Name: ${updated.name}\n` +
+    `- Changed fields: ${changedFields}\n` +
+    `- New Price per Pax: ${priceFormatted}\n` +
+    `- Description: ${updated.description || "N/A"}\n` +
+    `- Active: ${updated.isActive ? "Yes" : "No"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "service_updated",
+        resourceId: updated.id,
+        resourceType: "service",
+      }),
+    ),
+  );
+
   return updated;
 }
 
@@ -329,6 +387,32 @@ export async function deleteService(userId: string, serviceId: string) {
       });
     }
   }
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(service.workspaceId);
+  const priceFormatted = service.pricePerPax
+    ? `€${(service.pricePerPax / 100).toFixed(2)}`
+    : "N/A";
+
+  const notificationTitle = `Service Deleted: ${service.name}`;
+  const notificationContent =
+    `User "${userName}" deleted a service\n` +
+    `- Name: ${service.name}\n` +
+    `- Previous Price per Pax: ${priceFormatted}\n` +
+    `- Previous Description: ${service.description || "N/A"}`;
+
+  await Promise.all(
+    workspaceUsers.map((wu) =>
+      createNotification({
+        userId: wu.userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: "service_deleted",
+        resourceId: service.id,
+        resourceType: "service",
+      }),
+    ),
+  );
 
   await db.delete(serviceTable).where(eq(serviceTable.id, serviceId));
 

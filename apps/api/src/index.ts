@@ -15,6 +15,7 @@ import { notifyUnpaidReservations } from "./event-room/services/check-unpaid-res
 import { publishEvent } from "./events";
 import githubIntegration from "./github-integration";
 import label from "./label";
+import { errorHandler } from "./middleware/error-handler";
 import notification from "./notification";
 import project from "./project";
 import { getPublicProject } from "./project/controllers/get-public-project";
@@ -27,7 +28,6 @@ import purgeDemoData from "./utils/purge-demo-data";
 import workspace from "./workspace";
 import workspaceUser from "./workspace-user";
 import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users";
-import { errorHandler } from "./middleware/error-handler";
 
 const app = new Hono<{
   Variables: {
