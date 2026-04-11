@@ -1,7 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database";
-import { scheduledPermissionTable, workspaceTable, workspaceUserTable } from "../../database/schema";
+import {
+  scheduledPermissionTable,
+  workspaceTable,
+  workspaceUserTable,
+} from "../../database/schema";
 import type { ScheduledAction } from "../../utils/permissions";
 
 export type CreateScheduledPermissionPayload = {
@@ -50,7 +54,9 @@ export async function createScheduledPermission(
   payload: CreateScheduledPermissionPayload,
 ) {
   if (requesterId === targetUserId) {
-    throw new HTTPException(400, { message: "Cannot assign permissions to yourself" });
+    throw new HTTPException(400, {
+      message: "Cannot assign permissions to yourself",
+    });
   }
 
   const [requester] = await db
@@ -65,7 +71,9 @@ export async function createScheduledPermission(
     .limit(1);
 
   if (!requester || requester.role === "viewer") {
-    throw new HTTPException(403, { message: "Only owners and members can assign permissions" });
+    throw new HTTPException(403, {
+      message: "Only owners and members can assign permissions",
+    });
   }
 
   const [targetUser] = await db
@@ -85,19 +93,39 @@ export async function createScheduledPermission(
 
   if (targetUser.role === "viewer") {
     const validViewerActions: ScheduledAction[] = [
-      "create_reservations", "edit_reservations", "delete_reservations",
-      "create_services", "edit_services", "delete_services",
-      "create_tariffs", "edit_tariffs", "delete_tariffs",
-      "create_rooms", "edit_rooms", "delete_rooms",
-      "create_tasks", "edit_tasks", "delete_tasks",
-      "create_projects", "edit_projects", "delete_projects",
-      "create_time_entries", "edit_time_entries", "delete_time_entries",
-      "create_labels", "edit_labels", "delete_labels",
-      "import_issues", "edit_github_integration",
-      "manage_notifications", "edit_comments"
+      "create_reservations",
+      "edit_reservations",
+      "delete_reservations",
+      "create_services",
+      "edit_services",
+      "delete_services",
+      "create_tariffs",
+      "edit_tariffs",
+      "delete_tariffs",
+      "create_rooms",
+      "edit_rooms",
+      "delete_rooms",
+      "create_tasks",
+      "edit_tasks",
+      "delete_tasks",
+      "create_projects",
+      "edit_projects",
+      "delete_projects",
+      "create_time_entries",
+      "edit_time_entries",
+      "delete_time_entries",
+      "create_labels",
+      "edit_labels",
+      "delete_labels",
+      "import_issues",
+      "edit_github_integration",
+      "manage_notifications",
+      "edit_comments",
     ];
     if (!validViewerActions.includes(payload.action)) {
-      throw new HTTPException(400, { message: "Invalid action for viewer role" });
+      throw new HTTPException(400, {
+        message: "Invalid action for viewer role",
+      });
     }
   }
 
@@ -132,7 +160,9 @@ export async function updateScheduledPermission(
   }
 
   if (requesterId === permission.userId) {
-    throw new HTTPException(400, { message: "Cannot modify your own permissions" });
+    throw new HTTPException(400, {
+      message: "Cannot modify your own permissions",
+    });
   }
 
   const [requesterWorkspaceUser] = await db
@@ -147,7 +177,9 @@ export async function updateScheduledPermission(
     .limit(1);
 
   if (!requesterWorkspaceUser || requesterWorkspaceUser.role === "viewer") {
-    throw new HTTPException(403, { message: "Only owners and members can modify permissions" });
+    throw new HTTPException(403, {
+      message: "Only owners and members can modify permissions",
+    });
   }
 
   const isRequesterOwner = requesterWorkspaceUser.role === "owner";
@@ -155,8 +187,9 @@ export async function updateScheduledPermission(
 
   if (!isRequesterOwner) {
     if (isTargetUserOwner) {
-      throw new HTTPException(403, { 
-        message: "Only workspace owners can modify permissions for other owners" 
+      throw new HTTPException(403, {
+        message:
+          "Only workspace owners can modify permissions for other owners",
       });
     }
   }
@@ -175,19 +208,39 @@ export async function updateScheduledPermission(
 
     if (targetUser?.role === "viewer") {
       const validViewerActions = [
-        "create_reservations", "edit_reservations", "delete_reservations",
-        "create_services", "edit_services", "delete_services",
-        "create_tariffs", "edit_tariffs", "delete_tariffs",
-        "create_rooms", "edit_rooms", "delete_rooms",
-        "create_tasks", "edit_tasks", "delete_tasks",
-        "create_projects", "edit_projects", "delete_projects",
-        "create_time_entries", "edit_time_entries", "delete_time_entries",
-        "create_labels", "edit_labels", "delete_labels",
-        "import_issues", "edit_github_integration",
-        "manage_notifications", "edit_comments"
+        "create_reservations",
+        "edit_reservations",
+        "delete_reservations",
+        "create_services",
+        "edit_services",
+        "delete_services",
+        "create_tariffs",
+        "edit_tariffs",
+        "delete_tariffs",
+        "create_rooms",
+        "edit_rooms",
+        "delete_rooms",
+        "create_tasks",
+        "edit_tasks",
+        "delete_tasks",
+        "create_projects",
+        "edit_projects",
+        "delete_projects",
+        "create_time_entries",
+        "edit_time_entries",
+        "delete_time_entries",
+        "create_labels",
+        "edit_labels",
+        "delete_labels",
+        "import_issues",
+        "edit_github_integration",
+        "manage_notifications",
+        "edit_comments",
       ];
       if (!validViewerActions.includes(payload.action)) {
-        throw new HTTPException(400, { message: "Invalid action for viewer role" });
+        throw new HTTPException(400, {
+          message: "Invalid action for viewer role",
+        });
       }
     }
   }
@@ -235,8 +288,9 @@ export async function deleteScheduledPermission(
 
   if (!isRequesterOwner) {
     if (isTargetUserOwner) {
-      throw new HTTPException(403, { 
-        message: "Only workspace owners can delete permissions for other owners" 
+      throw new HTTPException(403, {
+        message:
+          "Only workspace owners can delete permissions for other owners",
       });
     }
   }
@@ -281,8 +335,9 @@ export async function toggleScheduledPermission(
 
   if (!isRequesterOwner) {
     if (isTargetUserOwner) {
-      throw new HTTPException(403, { 
-        message: "Only workspace owners can toggle permissions for other owners" 
+      throw new HTTPException(403, {
+        message:
+          "Only workspace owners can toggle permissions for other owners",
       });
     }
   }

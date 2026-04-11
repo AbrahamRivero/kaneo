@@ -4,11 +4,13 @@ import type { UpdateScheduledPermissionRequest } from "@/types/scheduled-permiss
 
 function useUpdateScheduledPermission() {
   return useMutation({
-    mutationFn: (data: UpdateScheduledPermissionRequest & {
-      workspaceId: string;
-      userId: string;
-      permissionId: string;
-    }) => updateScheduledPermission(data),
+    mutationFn: (
+      data: UpdateScheduledPermissionRequest & {
+        workspaceId: string;
+        userId: string;
+        permissionId: string;
+      },
+    ) => updateScheduledPermission(data),
   });
 }
 

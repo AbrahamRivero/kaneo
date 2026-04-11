@@ -31,25 +31,52 @@ type Props = {
 };
 
 const scheduledPermissionSchema = z.object({
-  action: z.enum([
-    "create_reservations", "edit_reservations", "delete_reservations",
-    "create_services", "edit_services", "delete_services",
-    "create_tariffs", "edit_tariffs", "delete_tariffs",
-    "create_rooms", "edit_rooms", "delete_rooms",
-    "create_tasks", "edit_tasks", "delete_tasks",
-    "create_projects", "edit_projects", "delete_projects",
-    "create_time_entries", "edit_time_entries", "delete_time_entries",
-    "create_labels", "edit_labels", "delete_labels",
-    "import_issues", "edit_github_integration",
-    "manage_notifications", "edit_comments"
-  ] as const, { message: "Please select an action" }),
+  action: z.enum(
+    [
+      "create_reservations",
+      "edit_reservations",
+      "delete_reservations",
+      "create_services",
+      "edit_services",
+      "delete_services",
+      "create_tariffs",
+      "edit_tariffs",
+      "delete_tariffs",
+      "create_rooms",
+      "edit_rooms",
+      "delete_rooms",
+      "create_tasks",
+      "edit_tasks",
+      "delete_tasks",
+      "create_projects",
+      "edit_projects",
+      "delete_projects",
+      "create_time_entries",
+      "edit_time_entries",
+      "delete_time_entries",
+      "create_labels",
+      "edit_labels",
+      "delete_labels",
+      "import_issues",
+      "edit_github_integration",
+      "manage_notifications",
+      "edit_comments",
+    ] as const,
+    { message: "Please select an action" },
+  ),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
 });
 
 type FormValues = z.infer<typeof scheduledPermissionSchema>;
 
-function AddScheduledPermissionModal({ open, onClose, workspaceId, userId, userName }: Props) {
+function AddScheduledPermissionModal({
+  open,
+  onClose,
+  workspaceId,
+  userId,
+  userName,
+}: Props) {
   const { mutateAsync } = useCreateScheduledPermission();
   const queryClient = useQueryClient();
 
@@ -88,7 +115,10 @@ function AddScheduledPermissionModal({ open, onClose, workspaceId, userId, userN
       onClose();
     } catch (error) {
       form.setError("root", {
-        message: error instanceof Error ? error.message : "Failed to create permission",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to create permission",
       });
     }
   };

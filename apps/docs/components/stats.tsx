@@ -6,9 +6,12 @@ async function fetchGitHubStats() {
       fetch("https://api.github.com/repos/AbrahamRivero/palcodesk", {
         next: { revalidate: 86400 },
       }),
-      fetch("https://api.github.com/repos/AbrahamRivero/palcodesk/contributors", {
-        next: { revalidate: 86400 },
-      }),
+      fetch(
+        "https://api.github.com/repos/AbrahamRivero/palcodesk/contributors",
+        {
+          next: { revalidate: 86400 },
+        },
+      ),
     ]);
 
     if (!repoData.ok || !contributors.ok) {

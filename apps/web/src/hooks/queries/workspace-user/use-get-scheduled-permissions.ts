@@ -11,8 +11,7 @@ function useGetScheduledPermissions({
 }) {
   return useQuery({
     queryKey: ["scheduled-permissions", workspaceId, userId],
-    queryFn: () =>
-      getScheduledPermissions({ workspaceId, userId }),
+    queryFn: () => getScheduledPermissions({ workspaceId, userId }),
     enabled: !!workspaceId && !!userId,
   });
 }

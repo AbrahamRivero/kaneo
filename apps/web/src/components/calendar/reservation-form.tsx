@@ -49,7 +49,11 @@ import {
   useCreateReservation,
   useUpdateReservation,
 } from "@/hooks/mutations/event-room";
-import { useGetAllServices, useGetRoomTariffs, useGetServices } from "@/hooks/queries/event-room";
+import {
+  useGetAllServices,
+  useGetRoomTariffs,
+  useGetServices,
+} from "@/hooks/queries/event-room";
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -166,7 +170,9 @@ interface ReservationFormProps {
     paymentConfirmed?: boolean | null;
     roomTariffId?: string | null;
     services?: { serviceId: string; pax: number }[] | null;
-    dayTariffs?: { date: string; roomTariffId: string | null; price: number }[] | null;
+    dayTariffs?:
+      | { date: string; roomTariffId: string | null; price: number }[]
+      | null;
     expectedPax?: number | null;
     status?: string | null;
   } | null;
@@ -494,7 +500,10 @@ export function ReservationForm({
         | undefined;
       if (days > 1 && formDayTariffs && formDayTariffs.length > 0) {
         dayTariffsPayload = formDayTariffs
-          .filter((dt): dt is { date: string; roomTariffId: string; price: number } => dt.roomTariffId !== null)
+          .filter(
+            (dt): dt is { date: string; roomTariffId: string; price: number } =>
+              dt.roomTariffId !== null,
+          )
           .map((dt) => ({
             date: dt.date,
             roomTariffId: dt.roomTariffId,

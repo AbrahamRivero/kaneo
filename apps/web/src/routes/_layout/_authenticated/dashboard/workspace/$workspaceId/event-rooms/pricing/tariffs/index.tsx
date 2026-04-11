@@ -106,7 +106,9 @@ function PricingTariffsRoute() {
             total={total}
             page={pagination.page}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onPageChange={(page) =>
+              setPagination((prev) => ({ ...prev, page }))
+            }
             onLimitChange={(limit) => setPagination({ page: 1, limit })}
             onEdit={(tariff) =>
               navigate({

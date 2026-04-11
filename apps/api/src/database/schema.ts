@@ -452,7 +452,8 @@ export const scheduledPermissionTable = pgTable("scheduled_permission", {
 });
 
 export type ScheduledPermission = typeof scheduledPermissionTable.$inferSelect;
-export type NewScheduledPermission = typeof scheduledPermissionTable.$inferInsert;
+export type NewScheduledPermission =
+  typeof scheduledPermissionTable.$inferInsert;
 
 export const reservationDayTariffTable = pgTable("reservation_day_tariff", {
   id: text("id")

@@ -110,10 +110,7 @@ export async function getServices(
       .where(searchCondition)
       .limit(limit)
       .offset(offset),
-    db
-      .select({ count: count() })
-      .from(serviceTable)
-      .where(baseCondition),
+    db.select({ count: count() }).from(serviceTable).where(baseCondition),
   ]);
 
   const total = countResult[0]?.count ?? 0;

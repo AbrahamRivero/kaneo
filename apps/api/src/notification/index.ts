@@ -251,9 +251,7 @@ subscribeToEvent(
 
     const to = dateRange.to || dateRange.from;
     const dateFormatted =
-      dateRange.from === to
-        ? dateRange.from
-        : `${dateRange.from} - ${to}`;
+      dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     const paxText = expectedPax ? `${expectedPax} guests` : "";
 
@@ -301,9 +299,7 @@ subscribeToEvent(
 
     const to = dateRange.to || dateRange.from;
     const dateFormatted =
-      dateRange.from === to
-        ? dateRange.from
-        : `${dateRange.from} - ${to}`;
+      dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     const paxText = expectedPax ? `${expectedPax} guests` : "";
 
@@ -350,9 +346,7 @@ subscribeToEvent(
 
     const to = dateRange.to || dateRange.from;
     const dateFormatted =
-      dateRange.from === to
-        ? dateRange.from
-        : `${dateRange.from} - ${to}`;
+      dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     const paxText = expectedPax ? ` (${expectedPax} guests)` : "";
 

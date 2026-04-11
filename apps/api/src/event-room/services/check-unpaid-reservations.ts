@@ -256,9 +256,7 @@ async function notifyUnpaidReservations(): Promise<void> {
     );
   }
 
-  console.log(
-    "[CRON] Processed " + uniqueById.length + " unpaid reservations",
-  );
+  console.log("[CRON] Processed " + uniqueById.length + " unpaid reservations");
 }
 
 export {

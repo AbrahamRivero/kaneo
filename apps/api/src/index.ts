@@ -11,9 +11,7 @@ import { auth } from "./auth";
 import config from "./config";
 import db from "./database";
 import eventRoom from "./event-room";
-import {
-  notifyUnpaidReservations,
-} from "./event-room/services/check-unpaid-reservations";
+import { notifyUnpaidReservations } from "./event-room/services/check-unpaid-reservations";
 import { publishEvent } from "./events";
 import githubIntegration from "./github-integration";
 import label from "./label";

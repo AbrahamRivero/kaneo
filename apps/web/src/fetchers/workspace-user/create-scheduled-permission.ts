@@ -1,8 +1,11 @@
-import type { CreateScheduledPermissionRequest, ScheduledPermission } from "@/types/scheduled-permission";
+import type {
+  CreateScheduledPermissionRequest,
+  ScheduledPermission,
+} from "@/types/scheduled-permission";
 import { client } from "@palcodesk/libs";
 
 async function createScheduledPermission(
-  data: CreateScheduledPermissionRequest
+  data: CreateScheduledPermissionRequest,
 ): Promise<ScheduledPermission> {
   const { workspaceId, userId, action, startTime, endTime, isActive } = data;
 

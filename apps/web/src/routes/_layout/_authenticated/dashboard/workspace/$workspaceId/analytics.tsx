@@ -26,19 +26,19 @@ import { lazy, Suspense, useState } from "react";
 const TasksByProjectChart = lazy(() =>
   import("@/components/analytics/tasks-by-project-chart").then((m) => ({
     default: m.TasksByProjectChart,
-  }))
+  })),
 );
 
 const TasksByStatusChart = lazy(() =>
   import("@/components/analytics/tasks-by-status-chart").then((m) => ({
     default: m.TasksByStatusChart,
-  }))
+  })),
 );
 
 const ProductivityByUserChart = lazy(() =>
   import("@/components/analytics/productivity-by-user-chart").then((m) => ({
     default: m.ProductivityByUserChart,
-  }))
+  })),
 );
 
 const chartFallback = (

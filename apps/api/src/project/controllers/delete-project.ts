@@ -16,7 +16,11 @@ async function deleteProject(userId: string, id: string) {
     });
   }
 
-  await requireAtLeastMember(userId, existingProject.workspaceId, "delete_projects");
+  await requireAtLeastMember(
+    userId,
+    existingProject.workspaceId,
+    "delete_projects",
+  );
 
   const [deletedProject] = await db
     .delete(projectTable)

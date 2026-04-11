@@ -1,4 +1,7 @@
-import type { UpdateScheduledPermissionRequest, ScheduledPermission } from "@/types/scheduled-permission";
+import type {
+  UpdateScheduledPermissionRequest,
+  ScheduledPermission,
+} from "@/types/scheduled-permission";
 import { client } from "@palcodesk/libs";
 
 async function updateScheduledPermission({

@@ -1,7 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
-import { scheduledPermissionTable, workspaceTable, workspaceUserTable } from "../database/schema";
+import {
+  scheduledPermissionTable,
+  workspaceTable,
+  workspaceUserTable,
+} from "../database/schema";
 
 export type WorkspaceRole = "owner" | "member" | "viewer";
 
@@ -88,7 +92,11 @@ export async function requireAtLeastMember(
   }
 
   if (role === "viewer" && action) {
-    const hasPermission = await hasScheduledPermission(userId, workspaceId, action);
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      workspaceId,
+      action,
+    );
     if (hasPermission) {
       return;
     }
@@ -116,7 +124,11 @@ export async function requireOwner(
   }
 }
 
-function isTimeInRange(currentTime: Date, startTime: Date, endTime: Date): boolean {
+function isTimeInRange(
+  currentTime: Date,
+  startTime: Date,
+  endTime: Date,
+): boolean {
   const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
   const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
   const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
@@ -134,7 +146,7 @@ export async function hasScheduledPermission(
   action: ScheduledAction,
 ): Promise<boolean> {
   const role = await getUserRole(userId, workspaceId);
-  
+
   if (role === "owner" || role === "member") {
     return true;
   }
