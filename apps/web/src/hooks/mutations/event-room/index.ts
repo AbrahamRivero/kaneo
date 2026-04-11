@@ -8,6 +8,7 @@ import {
   deleteRoomTariff,
   deleteService,
   updateEventRoom,
+  updatePaymentStatus,
   updateReservation,
   updateRoomTariff,
   updateService,
@@ -255,6 +256,27 @@ export function useDeleteRoomTariff() {
         queryKey: ["room-tariffs"],
         refetchType: "all",
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdatePaymentStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      paymentConfirmed,
+    }: {
+      id: string;
+      paymentConfirmed: boolean;
+    }) => updatePaymentStatus(id, paymentConfirmed),
+    onSuccess: () => {
+      toast.success("Payment status updated");
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
     },
     onError: (error: Error) => {
       toast.error(error.message);

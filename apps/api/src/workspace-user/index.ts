@@ -230,13 +230,14 @@ const workspaceUser = new Hono<{
       "param",
       z.object({ workspaceId: z.string(), userId: z.string() }),
     ),
-    zValidator(
+      zValidator(
       "json",
       z.object({
         action: z.enum([
           "create_reservations",
           "edit_reservations",
           "delete_reservations",
+          "mark_reservation_paid",
           "create_services",
           "edit_services",
           "delete_services",
@@ -306,6 +307,7 @@ const workspaceUser = new Hono<{
             "create_reservations",
             "edit_reservations",
             "delete_reservations",
+            "mark_reservation_paid",
             "create_services",
             "edit_services",
             "delete_services",

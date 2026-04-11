@@ -96,6 +96,7 @@ export async function createScheduledPermission(
       "create_reservations",
       "edit_reservations",
       "delete_reservations",
+      "mark_reservation_paid",
       "create_services",
       "edit_services",
       "delete_services",
@@ -211,6 +212,7 @@ export async function updateScheduledPermission(
         "create_reservations",
         "edit_reservations",
         "delete_reservations",
+        "mark_reservation_paid",
         "create_services",
         "edit_services",
         "delete_services",
@@ -303,53 +305,10 @@ export async function deleteScheduledPermission(
   return deletedPermission;
 }
 
-export async function toggleScheduledPermission(
-  requesterId: string,
-  workspaceId: string,
-  permissionId: string,
-  isActive: boolean,
-) {
-  const [permission] = await db
-    .select()
-    .from(scheduledPermissionTable)
-    .where(eq(scheduledPermissionTable.id, permissionId))
-    .limit(1);
-
-  if (!permission) {
-    throw new HTTPException(404, { message: "Permission not found" });
-  }
-
-  const [requesterWorkspaceUser] = await db
-    .select()
-    .from(workspaceUserTable)
-    .where(
-      and(
-        eq(workspaceUserTable.workspaceId, workspaceId),
-        eq(workspaceUserTable.userId, requesterId),
-      ),
-    )
-    .limit(1);
-
-  const isRequesterOwner = requesterWorkspaceUser?.role === "owner";
-  const isTargetUserOwner = permission.userId === requesterId;
-
-  if (!isRequesterOwner) {
-    if (isTargetUserOwner) {
-      throw new HTTPException(403, {
-        message:
-          "Only workspace owners can toggle permissions for other owners",
-      });
-    }
-  }
-
-  const [updatedPermission] = await db
-    .update(scheduledPermissionTable)
-    .set({
-      isActive,
-      updatedAt: new Date(),
-    })
-    .where(eq(scheduledPermissionTable.id, permissionId))
-    .returning();
-
-  return updatedPermission;
-}
+export default {
+  getScheduledPermissions,
+  getScheduledPermissionById,
+  createScheduledPermission,
+  updateScheduledPermission,
+  deleteScheduledPermission,
+};

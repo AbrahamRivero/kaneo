@@ -344,6 +344,25 @@ export const deleteReservation = async (
   return response.json();
 };
 
+export const updatePaymentStatus = async (
+  id: string,
+  paymentConfirmed: boolean,
+): Promise<Reservation> => {
+  const response = await client["event-room"].reservations[":id"].payment.$patch(
+    {
+      param: { id },
+      json: { paymentConfirmed },
+    },
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
 export const getServices = async (
   workspaceId: string,
   page = 1,

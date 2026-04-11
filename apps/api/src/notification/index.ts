@@ -367,4 +367,50 @@ subscribeToEvent(
   },
 );
 
+subscribeToEvent(
+  "reservation.payment_updated",
+  async ({
+    reservationId,
+    workspaceId,
+    clientName,
+    paymentConfirmed,
+    roomName,
+    dateRange,
+    userId,
+  }: {
+    reservationId: string;
+    workspaceId: string;
+    clientName: string;
+    paymentConfirmed: boolean;
+    roomName: string;
+    dateRange: { from: string; to?: string };
+    userId: string;
+  }) => {
+    if (!reservationId || !workspaceId) {
+      return;
+    }
+
+    const to = dateRange.to || dateRange.from;
+    const dateFormatted =
+      dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
+
+    const statusText = paymentConfirmed ? "marked as paid" : "marked as pending";
+
+    const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
+    const promises = workspaceUsers
+      .filter((u) => u.userId !== userId)
+      .map((u) =>
+        createNotification({
+          userId: u.userId,
+          title: "Payment Status Updated",
+          content: `"${clientName}" at "${roomName}" on ${dateFormatted} has been ${statusText}`,
+          type: "reservation_payment",
+          resourceId: reservationId,
+          resourceType: "reservation",
+        }),
+      );
+    await Promise.all(promises);
+  },
+);
+
 export default notification;

@@ -402,6 +402,7 @@ export const scheduledPermissionActionEnum = pgEnum(
     "create_reservations",
     "edit_reservations",
     "delete_reservations",
+    "mark_reservation_paid",
     "create_services",
     "edit_services",
     "delete_services",

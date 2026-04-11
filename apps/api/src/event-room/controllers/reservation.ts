@@ -1093,10 +1093,117 @@ async function deleteReservation(userId: string, reservationId: string) {
   return { success: true };
 }
 
+async function updatePaymentStatus(
+  userId: string,
+  reservationId: string,
+  paymentConfirmed: boolean,
+) {
+  const [reservation] = await db
+    .select()
+    .from(reservationTable)
+    .where(eq(reservationTable.id, reservationId))
+    .limit(1);
+
+  if (!reservation) {
+    throw new HTTPException(404, { message: "Reservation not found" });
+  }
+
+  const [workspace] = await db
+    .select({ ownerId: workspaceTable.ownerId })
+    .from(workspaceTable)
+    .where(eq(workspaceTable.id, reservation.workspaceId))
+    .limit(1);
+
+  if (!workspace) {
+    throw new HTTPException(404, { message: "Workspace not found" });
+  }
+
+  const isOwner = workspace.ownerId === userId;
+
+  const [member] = await db
+    .select({ role: workspaceUserTable.role })
+    .from(workspaceUserTable)
+    .where(
+      and(
+        eq(workspaceUserTable.workspaceId, reservation.workspaceId),
+        eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  const isViewer = member?.role === "viewer";
+
+  if (!isOwner && isViewer) {
+    const hasPermission = await hasScheduledPermission(
+      userId,
+      reservation.workspaceId,
+      "mark_reservation_paid",
+    );
+    if (!hasPermission) {
+      throw new HTTPException(403, {
+        message: "Viewers cannot update payment status without permission",
+      });
+    }
+  }
+
+  const [updated] = await db
+    .update(reservationTable)
+    .set({ paymentConfirmed })
+    .where(eq(reservationTable.id, reservationId))
+    .returning();
+
+  const [eventRoom] = await db
+    .select({ name: eventRoomTable.name })
+    .from(eventRoomTable)
+    .where(eq(eventRoomTable.id, reservation.eventRoomId))
+    .limit(1);
+
+  const userName = await getUserName(userId);
+  const workspaceUsers = await getActiveWorkspaceUsers(reservation.workspaceId);
+
+  const clientName = reservation.title || reservation.clientName || "Unknown";
+  const roomName = eventRoom?.name || "Event Room";
+  const dateRange = dateRangeFromString(reservation.dateRange);
+  const dateStr =
+    dateRange.from === dateRange.to
+      ? dateRange.from
+      : `${dateRange.from} to ${dateRange.to}`;
+  const statusText = paymentConfirmed ? "marked as paid" : "marked as pending";
+
+  await Promise.all(
+    workspaceUsers
+      .filter((wu) => wu.userId !== userId)
+      .map((wu) =>
+        createNotification({
+          userId: wu.userId,
+          title: "Payment Status Updated",
+          content: `User "${userName}" has ${statusText} the payment for "${clientName}" at "${roomName}" on ${dateStr}`,
+          type: "reservation_payment",
+          resourceId: reservation.id,
+          resourceType: "reservation",
+        }),
+      ),
+  );
+
+  await publishEvent("reservation.payment_updated", {
+    reservationId: reservation.id,
+    workspaceId: reservation.workspaceId,
+    clientName,
+    paymentConfirmed,
+    roomName,
+    dateRange,
+    userId,
+  });
+
+  return updated;
+}
+
 export default {
   createReservation,
   getReservations,
   getReservation,
   updateReservation,
   deleteReservation,
+  updatePaymentStatus,
 };

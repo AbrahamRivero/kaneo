@@ -18,7 +18,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
-import { useDeleteReservation } from "@/hooks/mutations/event-room";
+import { useDeleteReservation, useUpdatePaymentStatus } from "@/hooks/mutations/event-room";
 import queryClient from "@/query-client";
 import { useNavigate } from "@tanstack/react-router";
 import { differenceInDays, format } from "date-fns";
@@ -34,6 +34,7 @@ import {
   Trash2,
   Users,
   X,
+  CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -123,6 +124,7 @@ function SingleReservationSection({
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
   const deleteReservation = useDeleteReservation();
+  const updatePaymentStatus = useUpdatePaymentStatus();
 
   const dateRange = parseDateRange(reservation.dateRange);
   const dateRangeStr = formatDateRangeFromObject(dateRange);
@@ -176,6 +178,22 @@ function SingleReservationSection({
       to: "/dashboard/workspace/$workspaceId/event-rooms/reservations/$id",
       params: { workspaceId, id: reservation.id },
     });
+  };
+
+  const handleTogglePayment = async () => {
+    try {
+      await updatePaymentStatus.mutateAsync({
+        id: reservation.id,
+        paymentConfirmed: !reservation.paymentConfirmed,
+      });
+      toast.success(
+        reservation.paymentConfirmed
+          ? "Payment marked as pending"
+          : "Payment marked as paid",
+      );
+    } catch {
+      toast.error("Failed to update payment status");
+    }
   };
 
   const handleReport = () => {
@@ -522,6 +540,23 @@ function SingleReservationSection({
               title="Generate Report"
             >
               <FileDown className="size-3.5 text-muted-foreground" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`size-7 hover:bg-muted ${
+                reservation.paymentConfirmed
+                  ? "text-green-500 hover:text-green-600"
+                  : "text-amber-500 hover:text-amber-600"
+              }`}
+              onClick={handleTogglePayment}
+              title={
+                reservation.paymentConfirmed
+                  ? "Mark as pending"
+                  : "Mark as paid"
+              }
+            >
+              <CreditCard className="size-3.5" />
             </Button>
             <Button
               variant="ghost"

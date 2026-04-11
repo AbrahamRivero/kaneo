@@ -2,6 +2,7 @@ export type ScheduledAction =
   | "create_reservations"
   | "edit_reservations"
   | "delete_reservations"
+  | "mark_reservation_paid"
   | "create_services"
   | "edit_services"
   | "delete_services"
@@ -57,6 +58,7 @@ export const SCHEDULED_ACTIONS: { value: ScheduledAction; label: string }[] = [
   { value: "create_reservations", label: "Create reservations" },
   { value: "edit_reservations", label: "Edit reservations" },
   { value: "delete_reservations", label: "Delete reservations" },
+  { value: "mark_reservation_paid", label: "Mark reservation as paid" },
   { value: "create_services", label: "Create services" },
   { value: "edit_services", label: "Edit services" },
   { value: "delete_services", label: "Delete services" },

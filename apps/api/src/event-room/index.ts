@@ -265,6 +265,27 @@ const eventRoom = new Hono<{
     return c.json(result);
   })
 
+  .patch(
+    "/reservations/:id/payment",
+    zValidator(
+      "json",
+      z.object({
+        paymentConfirmed: z.boolean(),
+      }),
+    ),
+    async (c) => {
+      const userId = c.get("userId");
+      const id = c.req.param("id");
+      const { paymentConfirmed } = c.req.valid("json");
+      const result = await reservationController.updatePaymentStatus(
+        userId,
+        id,
+        paymentConfirmed,
+      );
+      return c.json(result);
+    },
+  )
+
   .get("/:workspaceId/services", async (c) => {
     const workspaceId = c.req.param("workspaceId");
     const userId = c.get("userId");
