@@ -81,6 +81,14 @@ export function CalendarView({
     setSheetOpen(true);
   };
 
+  const handleReservationUpdate = (updatedReservation: Reservation) => {
+    setSelectedReservations((prev) =>
+      prev?.map((res) =>
+        res.id === updatedReservation.id ? updatedReservation : res
+      )
+    );
+  };
+
   return (
     <>
       <EventSheet
@@ -89,6 +97,7 @@ export function CalendarView({
         onOpenChange={setSheetOpen}
         workspaceId={workspaceId}
         eventRooms={eventRooms}
+        onReservationUpdate={handleReservationUpdate}
       />
       <div className="flex flex-col h-full overflow-x-auto w-full">
         <CalendarWeekHeader

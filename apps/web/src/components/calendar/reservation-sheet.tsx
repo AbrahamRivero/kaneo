@@ -45,6 +45,7 @@ interface ReservationSheetProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   eventRooms: EventRoom[];
+  onReservationUpdate?: (updatedReservation: Reservation) => void;
 }
 
 function parseDateRange(dateRangeStr: string): DateRange {
@@ -109,6 +110,7 @@ interface SingleReservationSectionProps {
   workspaceId: string;
   eventRooms: EventRoom[];
   onDeleteSuccess: () => void;
+  onReservationUpdate?: (updatedReservation: Reservation) => void;
 }
 
 function SingleReservationSection({
@@ -119,6 +121,7 @@ function SingleReservationSection({
   workspaceId,
   eventRooms,
   onDeleteSuccess,
+  onReservationUpdate,
 }: SingleReservationSectionProps) {
   const navigate = useNavigate();
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
@@ -182,15 +185,25 @@ function SingleReservationSection({
 
   const handleTogglePayment = async () => {
     try {
+      const newPaymentStatus = !reservation.paymentConfirmed;
+      const newStatus = newPaymentStatus ? "confirmed" : "pending";
       await updatePaymentStatus.mutateAsync({
         id: reservation.id,
-        paymentConfirmed: !reservation.paymentConfirmed,
+        paymentConfirmed: newPaymentStatus,
       });
       toast.success(
-        reservation.paymentConfirmed
-          ? "Payment marked as pending"
-          : "Payment marked as paid",
+        newPaymentStatus
+          ? "Payment marked as paid"
+          : "Payment marked as pending",
       );
+      const updatedReservation: Reservation = {
+        ...reservation,
+        paymentConfirmed: newPaymentStatus,
+        status: newStatus,
+      };
+      if (onReservationUpdate) {
+        onReservationUpdate(updatedReservation);
+      }
     } catch {
       toast.error("Failed to update payment status");
     }
@@ -738,18 +751,34 @@ export function EventSheet({
   onOpenChange,
   workspaceId,
   eventRooms,
+  onReservationUpdate,
 }: ReservationSheetProps) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [localReservations, setLocalReservations] = useState<Reservation[] | null>(null);
 
   useEffect(() => {
     if (open) {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      setLocalReservations(reservations);
     }
-  }, [open]);
+  }, [open, reservations]);
 
-  if (!reservations || reservations.length === 0) return null;
+  const handleReservationUpdate = (updatedReservation: Reservation) => {
+    if (!localReservations) return;
+    const updated = localReservations.map((res) =>
+      res.id === updatedReservation.id ? updatedReservation : res
+    );
+    setLocalReservations(updated);
+    if (onReservationUpdate) {
+      onReservationUpdate(updatedReservation);
+    }
+  };
 
-  const firstReservation = reservations[0];
+  const currentReservations = localReservations || reservations;
+
+  if (!currentReservations || currentReservations.length === 0) return null;
+
+  const firstReservation = currentReservations[0];
   const eventRoom = eventRooms.find(
     (r) => r.id === firstReservation.eventRoomId,
   );
@@ -759,7 +788,7 @@ export function EventSheet({
 
   const handleDeleteSuccess = () => {
     setRefreshKey((k) => k + 1);
-    if (refreshKey >= reservations.length - 1) {
+    if (refreshKey >= currentReservations.length - 1) {
       onOpenChange(false);
     }
   };
@@ -797,8 +826,8 @@ export function EventSheet({
                 <span>{dateStr}</span>
                 <span className="size-1 rounded-full bg-muted-foreground" />
                 <span>
-                  {reservations.length} reservation
-                  {reservations.length !== 1 ? "s" : ""}
+                  {currentReservations.length} reservation
+                  {currentReservations.length !== 1 ? "s" : ""}
                 </span>
               </div>
               {eventRoom?.allowsMultipleReservations && (
@@ -811,16 +840,17 @@ export function EventSheet({
 
           <div key={refreshKey} className="flex-1 overflow-y-auto px-4 py-4">
             <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
-              {reservations.map((reservation, index) => (
+              {currentReservations.map((reservation, index) => (
                 <SingleReservationSection
                   key={reservation.id}
                   reservation={reservation}
                   dateStr={dateStr}
                   index={index}
-                  total={reservations.length}
+                  total={currentReservations.length}
                   workspaceId={workspaceId}
                   eventRooms={eventRooms}
                   onDeleteSuccess={handleDeleteSuccess}
+                  onReservationUpdate={handleReservationUpdate}
                 />
               ))}
             </div>

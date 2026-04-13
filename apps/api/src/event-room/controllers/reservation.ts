@@ -1149,7 +1149,10 @@ async function updatePaymentStatus(
 
   const [updated] = await db
     .update(reservationTable)
-    .set({ paymentConfirmed })
+    .set({
+      paymentConfirmed,
+      status: paymentConfirmed ? "confirmed" : "pending",
+    })
     .where(eq(reservationTable.id, reservationId))
     .returning();
 
