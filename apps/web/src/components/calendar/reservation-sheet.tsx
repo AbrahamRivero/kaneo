@@ -416,28 +416,35 @@ function SingleReservationSection({
               `
                   : ""
               }
-              ${
-                (reservation.totalRoomPrice ?? 0) > 0
-                  ? `
+              ${(() => {
+                const totalRoomPrice = reservation.totalRoomPrice ?? 0;
+                const totalServicePrice = reservation.totalServicePrice ?? 0;
+                const savedServiceChargeAmount = reservation.serviceChargeAmount ?? 0;
+                const servicesServiceCharge = totalServicePrice * 0.1;
+                const roomServiceCharge = totalRoomPrice > 0 ? savedServiceChargeAmount - servicesServiceCharge : 0;
+                const roomServiceChargePercent = totalRoomPrice > 0 && roomServiceCharge > 0
+                  ? Math.round((roomServiceCharge / totalRoomPrice) * 100)
+                  : 0;
+
+                let html = "";
+                if (roomServiceCharge > 0) {
+                  html += `
                 <tr>
-                  <td>Room Service Charge (10%)</td>
+                  <td>Room Service Charge (${roomServiceChargePercent}%)</td>
                   <td></td>
-                  <td style="text-align: right;">$${((reservation.totalRoomPrice ?? 0) * 0.1).toFixed(2)}</td>
-                </tr>
-              `
-                  : ""
-              }
-              ${
-                (reservation.totalServicePrice ?? 0) > 0
-                  ? `
+                  <td style="text-align: right;">$${roomServiceCharge.toFixed(2)}</td>
+                </tr>`;
+                }
+                if (servicesServiceCharge > 0) {
+                  html += `
                 <tr>
                   <td>Services Charge (10%)</td>
                   <td></td>
-                  <td style="text-align: right;">$${((reservation.totalServicePrice ?? 0) * 0.1).toFixed(2)}</td>
-                </tr>
-              `
-                  : ""
-              }
+                  <td style="text-align: right;">$${servicesServiceCharge.toFixed(2)}</td>
+                </tr>`;
+                }
+                return html;
+              })()}
               <tr class="total-row">
                 <td>Grand Total</td>
                 <td></td>
@@ -711,18 +718,27 @@ function SingleReservationSection({
                 {(() => {
                   const totalRoomPrice = reservation.totalRoomPrice ?? 0;
                   const totalServicePrice = reservation.totalServicePrice ?? 0;
+                  const savedServiceChargeAmount = reservation.serviceChargeAmount ?? 0;
 
-                  // Calculate room service charge (derive percentage from saved data)
-                  // If there's room price and service charge, assume room charge is 10% of room
-                  const roomServiceCharge = totalRoomPrice * 0.1;
                   // Services service charge is always 10% of services
                   const servicesServiceCharge = totalServicePrice * 0.1;
+
+                  // Derive room service charge from saved total minus services charge
+                  // Formula: savedServiceChargeAmount = roomServiceCharge + servicesServiceCharge
+                  const roomServiceCharge = totalRoomPrice > 0
+                    ? savedServiceChargeAmount - servicesServiceCharge
+                    : 0;
+
+                  // Calculate room percentage for display
+                  const roomServiceChargePercent = totalRoomPrice > 0 && roomServiceCharge > 0
+                    ? Math.round((roomServiceCharge / totalRoomPrice) * 100)
+                    : 0;
 
                   return (
                     <>
                       {roomServiceCharge > 0 && (
                         <div className="flex justify-between text-muted-foreground">
-                          <span>Room Service Charge (10%)</span>
+                          <span>Room Service Charge ({roomServiceChargePercent}%)</span>
                           <span>${roomServiceCharge.toFixed(2)}</span>
                         </div>
                       )}
