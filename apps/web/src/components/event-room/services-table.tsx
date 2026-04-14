@@ -76,8 +76,8 @@ export function ServicesTable({
             {(page - 1) * limit + 1}
             &ndash;
             {Math.min(page * limit, total)}
-          </span>
-          of <span className="font-medium text-foreground">{total}</span>
+          </span>{" "}
+          of <span className="font-medium text-foreground">{total}</span>{" "}
           services
         </p>
         <Select

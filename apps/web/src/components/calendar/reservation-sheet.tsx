@@ -18,7 +18,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
-import { useDeleteReservation, useUpdatePaymentStatus } from "@/hooks/mutations/event-room";
+import {
+  useDeleteReservation,
+  useUpdatePaymentStatus,
+} from "@/hooks/mutations/event-room";
 import queryClient from "@/query-client";
 import { useNavigate } from "@tanstack/react-router";
 import { differenceInDays, format } from "date-fns";
@@ -48,12 +51,62 @@ interface ReservationSheetProps {
   onReservationUpdate?: (updatedReservation: Reservation) => void;
 }
 
+const capitalizeWords = (str: string): string => {
+  return str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 function parseDateRange(dateRangeStr: string): DateRange {
   try {
     return JSON.parse(dateRangeStr) as DateRange;
   } catch {
     return { from: "", to: "" };
   }
+}
+
+function getReservationDateMeta(reservation: Reservation): {
+  dateRange: DateRange;
+  dateRangeStr: string;
+  days: number;
+} {
+  const dateRange = parseDateRange(reservation.dateRange);
+  const dateRangeStr = formatDateRangeFromObject(dateRange);
+  const days =
+    dateRange.to && dateRange.to !== dateRange.from
+      ? differenceInDays(
+          new Date(`${dateRange.to}T00:00:00`),
+          new Date(`${dateRange.from}T00:00:00`),
+        ) + 1
+      : 1;
+
+  return { dateRange, dateRangeStr, days };
+}
+
+function getRoomBreakdown(
+  reservation: Reservation,
+  days: number,
+): { sessionType: string; days: number; price: number }[] {
+  const dayTariffs = reservation.dayTariffs ?? [];
+
+  if (dayTariffs.length > 0) {
+    return Object.values(
+      dayTariffs.reduce(
+        (acc, dt) => {
+          const sessionType = dt.sessionType ?? "unknown";
+          if (!acc[sessionType]) {
+            acc[sessionType] = { sessionType, days: 0, price: 0 };
+          }
+          acc[sessionType].days += 1;
+          acc[sessionType].price += dt.price ?? 0;
+          return acc;
+        },
+        {} as Record<string, { sessionType: string; days: number; price: number }>,
+      ),
+    );
+  }
+
+  return reservation.totalRoomPrice
+    ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
+    : [];
 }
 
 function formatDateRangeFromObject(dateRange: DateRange): string {
@@ -102,6 +155,39 @@ function getStatusIcon(status?: string): React.ReactNode {
   }
 }
 
+function getReservationCharges(reservation: Reservation): {
+  roomCharge: number;
+  servicesCharge: number;
+  roomServiceChargePercent: number;
+} {
+  const totalRoomPrice = reservation.totalRoomPrice ?? 0;
+  const totalServicePrice = reservation.totalServicePrice ?? 0;
+
+  const servicesCharge = reservation.serviceChargeAmount ?? totalServicePrice * 0.1;
+
+  const legacyDerivedRoomCharge =
+    totalRoomPrice > 0
+      ? Math.max((reservation.serviceChargeAmount ?? 0) - totalServicePrice * 0.1, 0)
+      : 0;
+
+  const roomCharge =
+    reservation.roomChargeAmount ??
+    (legacyDerivedRoomCharge > 0
+      ? legacyDerivedRoomCharge
+      : totalRoomPrice > 0
+        ? totalRoomPrice * 0.1
+        : 0);
+
+  const roomServiceChargePercent =
+    totalRoomPrice > 0
+      ? reservation.roomChargeAmount != null || legacyDerivedRoomCharge > 0
+        ? Math.round((roomCharge / totalRoomPrice) * 100)
+        : 10
+      : 0;
+
+  return { roomCharge, servicesCharge, roomServiceChargePercent };
+}
+
 interface SingleReservationSectionProps {
   reservation: Reservation;
   dateStr: string;
@@ -129,39 +215,8 @@ function SingleReservationSection({
   const deleteReservation = useDeleteReservation();
   const updatePaymentStatus = useUpdatePaymentStatus();
 
-  const dateRange = parseDateRange(reservation.dateRange);
-  const dateRangeStr = formatDateRangeFromObject(dateRange);
-  const days =
-    dateRange.to && dateRange.to !== dateRange.from
-      ? differenceInDays(
-          new Date(`${dateRange.to}T00:00:00`),
-          new Date(`${dateRange.from}T00:00:00`),
-        ) + 1
-      : 1;
-  const dayTariffs = reservation.dayTariffs ?? [];
-
-  const roomBreakdown =
-    dayTariffs.length > 0
-      ? Object.values(
-          dayTariffs.reduce(
-            (acc, dt) => {
-              const sessionType = dt.sessionType ?? "unknown";
-              if (!acc[sessionType]) {
-                acc[sessionType] = { sessionType, days: 0, price: 0 };
-              }
-              acc[sessionType].days += 1;
-              acc[sessionType].price += dt.price ?? 0;
-              return acc;
-            },
-            {} as Record<
-              string,
-              { sessionType: string; days: number; price: number }
-            >,
-          ),
-        )
-      : reservation.totalRoomPrice
-        ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
-        : [];
+  const { dateRangeStr, days } = getReservationDateMeta(reservation);
+  const roomBreakdown = getRoomBreakdown(reservation, days);
 
   const hasPricing = reservation.grandTotal != null;
 
@@ -216,7 +271,7 @@ function SingleReservationSection({
       return;
     }
 
-    const dateRange = parseDateRange(reservation.dateRange);
+    const { dateRange, days } = getReservationDateMeta(reservation);
     const startDate = dateRange.from
       ? format(new Date(`${dateRange.from}T00:00:00`), "MMMM dd, yyyy")
       : "-";
@@ -227,55 +282,12 @@ function SingleReservationSection({
       dateRange.from === dateRange.to || !dateRange.to
         ? startDate
         : `${startDate} - ${endDate}`;
-    const days =
-      dateRange.to && dateRange.to !== dateRange.from
-        ? differenceInDays(
-            new Date(`${dateRange.to}T00:00:00`),
-            new Date(`${dateRange.from}T00:00:00`),
-          ) + 1
-        : 1;
-
-    const dayTariffs = reservation.dayTariffs ?? [];
     const services = reservation.services ?? [];
-    const roomBreakdown =
-      dayTariffs.length > 0
-        ? Object.values(
-            dayTariffs.reduce(
-              (acc, dt) => {
-                const sessionType = dt.sessionType ?? "unknown";
-                if (!acc[sessionType]) {
-                  acc[sessionType] = { sessionType, days: 0, price: 0 };
-                }
-                acc[sessionType].days += 1;
-                acc[sessionType].price += dt.price ?? 0;
-                return acc;
-              },
-              {} as Record<
-                string,
-                { sessionType: string; days: number; price: number }
-              >,
-            ),
-          )
-        : reservation.totalRoomPrice
-          ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
-          : [];
+    const roomBreakdown = getRoomBreakdown(reservation, days);
 
     const roomName =
       eventRooms.find((r) => r.id === reservation.eventRoomId)?.name ||
       "Event Room";
-
-    const getStatusLabel = (status?: string) => {
-      switch (status) {
-        case "confirmed":
-          return "Confirmed";
-        case "pending":
-          return "Pending";
-        case "completed":
-          return "Completed";
-        default:
-          return "Unknown";
-      }
-    };
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -398,8 +410,8 @@ function SingleReservationSection({
                 .map(
                   (room) => `
                 <tr>
-                  <td>Room (${room.sessionType.replace("_", " ")})</td>
-                  <td>${room.days > 1 ? room.days + " days" : "1 day"}</td>
+                  <td>Room (${capitalizeWords(room.sessionType)})</td>
+                  <td>${room.days > 1 ? room.days + " Days" : "1 Day"}</td>
                   <td style="text-align: right;">$${room.price.toFixed(2)}</td>
                 </tr>
               `,
@@ -416,17 +428,29 @@ function SingleReservationSection({
               `
                   : ""
               }
-              ${
-                (reservation.serviceChargeAmount ?? 0) > 0
-                  ? `
+              ${(() => {
+                const { roomCharge, servicesCharge, roomServiceChargePercent } =
+                  getReservationCharges(reservation);
+
+                let html = "";
+                if (roomCharge > 0) {
+                  html += `
                 <tr>
-                  <td>Service Charge</td>
+                  <td>Room Service Charge (${roomServiceChargePercent}%)</td>
                   <td></td>
-                  <td style="text-align: right;">$${(reservation.serviceChargeAmount ?? 0).toFixed(2)}</td>
-                </tr>
-              `
-                  : ""
-              }
+                  <td style="text-align: right;">$${roomCharge.toFixed(2)}</td>
+                </tr>`;
+                }
+                if (servicesCharge > 0) {
+                  html += `
+                <tr>
+                  <td>Services Charge (10%)</td>
+                  <td></td>
+                  <td style="text-align: right;">$${servicesCharge.toFixed(2)}</td>
+                </tr>`;
+                }
+                return html;
+              })()}
               <tr class="total-row">
                 <td>Grand Total</td>
                 <td></td>
@@ -506,8 +530,8 @@ function SingleReservationSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Reservation?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this reservation for {" "}
-              <strong>{reservation.title || reservation.clientName}</strong> on {" "}
+              Are you sure you want to delete this reservation for{" "}
+              <strong>{reservation.title || reservation.clientName}</strong> on{" "}
               {dateStr}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -647,7 +671,7 @@ function SingleReservationSection({
                 )}
               </div>
               <span>
-                Payment: {" "}
+                Payment:{" "}
                 {reservation.paymentConfirmed ? (
                   <span className="text-green-600 dark:text-green-400 font-medium">
                     Confirmed
@@ -681,8 +705,8 @@ function SingleReservationSection({
                 {roomBreakdown.map((room) => (
                   <div key={room.sessionType} className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Room ({room.sessionType.replace("_", " ")}
-                      {room.days > 1 ? ` × ${room.days} days` : ""})
+                      Room ({capitalizeWords(room.sessionType)}
+                      {room.days > 1 ? ` ${room.days} Days` : ""})
                     </span>
                     <span>${room.price.toFixed(2)}</span>
                   </div>
@@ -698,27 +722,27 @@ function SingleReservationSection({
                   </div>
                 )}
                 {(() => {
-                  const subTotal =
-                    (reservation.totalRoomPrice ?? 0) +
-                    (reservation.totalServicePrice ?? 0);
-                  const serviceChargePercent =
-                    subTotal > 0 && (reservation.serviceChargeAmount ?? 0) > 0
-                      ? Math.round(
-                          ((reservation.serviceChargeAmount ?? 0) / subTotal) *
-                            100,
-                        )
-                      : 0;
-                  return (reservation.serviceChargeAmount ?? 0) > 0 ? (
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>
-                        Service Charge ({serviceChargePercent}% of Room +
-                        Services)
-                      </span>
-                      <span>
-                        ${(reservation.serviceChargeAmount ?? 0).toFixed(2)}
-                      </span>
-                    </div>
-                  ) : null;
+                  const { roomCharge, servicesCharge, roomServiceChargePercent } =
+                    getReservationCharges(reservation);
+
+                  return (
+                    <>
+                      {roomCharge > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>
+                            Room Service Charge ({roomServiceChargePercent}%)
+                          </span>
+                          <span>${roomCharge.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {servicesCharge > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Services Charge (10%)</span>
+                          <span>${servicesCharge.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </>
+                  );
                 })()}
                 <div className="flex justify-between font-medium border-t pt-2 mt-1">
                   <span>Total</span>
@@ -754,7 +778,9 @@ export function EventSheet({
   onReservationUpdate,
 }: ReservationSheetProps) {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [localReservations, setLocalReservations] = useState<Reservation[] | null>(null);
+  const [localReservations, setLocalReservations] = useState<
+    Reservation[] | null
+  >(null);
 
   useEffect(() => {
     if (open) {
@@ -766,7 +792,7 @@ export function EventSheet({
   const handleReservationUpdate = (updatedReservation: Reservation) => {
     if (!localReservations) return;
     const updated = localReservations.map((res) =>
-      res.id === updatedReservation.id ? updatedReservation : res
+      res.id === updatedReservation.id ? updatedReservation : res,
     );
     setLocalReservations(updated);
     if (onReservationUpdate) {

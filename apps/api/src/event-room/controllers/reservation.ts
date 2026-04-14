@@ -16,6 +16,7 @@ import createNotification from "../../notification/controllers/create-notificati
 import { hasScheduledPermission } from "../../utils/permissions";
 import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
 import { getUserName } from "../utils/get-user-name";
+import { calculateReservationPricing } from "../utils/pricing";
 
 export type DateRange = { from: string; to?: string };
 
@@ -251,6 +252,16 @@ async function createReservation(
     }
   }
 
+  const pricing = await calculateReservationPricing(
+    {
+      totalRoomPrice: payload.totalRoomPrice || 0,
+      totalServicePrice: payload.totalServicePrice || 0,
+      roomTariffId: payload.roomTariffId,
+      services: payload.services || [],
+    },
+    db,
+  );
+
   const [reservation] = await db
     .insert(reservationTable)
     .values({
@@ -265,10 +276,11 @@ async function createReservation(
       dateRange: dateRangeToString(payload.dateRange),
       notes: payload.notes,
       roomTariffId: payload.roomTariffId,
-      totalRoomPrice: payload.totalRoomPrice,
-      totalServicePrice: payload.totalServicePrice,
-      serviceChargeAmount: payload.serviceChargeAmount,
-      grandTotal: payload.grandTotal,
+      totalRoomPrice: pricing.totalRoomPrice,
+      totalServicePrice: pricing.totalServicePrice,
+      roomChargeAmount: pricing.roomChargeAmount,
+      serviceChargeAmount: pricing.serviceChargeAmount,
+      grandTotal: pricing.grandTotal,
       expectedPax: payload.expectedPax,
       paymentConfirmed: payload.paymentConfirmed,
       status: payload.status,
@@ -799,6 +811,16 @@ async function updateReservation(
     }
   }
 
+  const pricing = await calculateReservationPricing(
+    {
+      totalRoomPrice: payload.totalRoomPrice || reservation.totalRoomPrice || 0,
+      totalServicePrice: payload.totalServicePrice || reservation.totalServicePrice || 0,
+      roomTariffId: payload.roomTariffId ?? reservation.roomTariffId,
+      services: payload.services || [],
+    },
+    db,
+  );
+
   const { status: _, ...restPayload } = payload;
   const { dateRange: payloadDateRange, ...restWithoutDateRange } = restPayload;
 
@@ -812,6 +834,11 @@ async function updateReservation(
       ...(payload.status && payload.status !== "all"
         ? { status: payload.status }
         : {}),
+      totalRoomPrice: pricing.totalRoomPrice,
+      totalServicePrice: pricing.totalServicePrice,
+      roomChargeAmount: pricing.roomChargeAmount,
+      serviceChargeAmount: pricing.serviceChargeAmount,
+      grandTotal: pricing.grandTotal,
       updatedAt: new Date(),
     })
     .where(eq(reservationTable.id, reservationId))

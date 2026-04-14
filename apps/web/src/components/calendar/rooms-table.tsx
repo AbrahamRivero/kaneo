@@ -76,8 +76,8 @@ export function RoomsTable({ rooms, onEdit, onDelete }: RoomsTableProps) {
             {(currentPage - 1) * pageSize + 1}
             &ndash;
             {Math.min(currentPage * pageSize, rooms.length)}
-          </span>
-          of <span className="font-medium text-foreground">{rooms.length}</span>
+          </span>{" "}
+          of <span className="font-medium text-foreground">{rooms.length}</span>{" "}
           rooms
         </p>
         <Select
