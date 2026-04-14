@@ -85,7 +85,7 @@ export function CalendarView({
     setSelectedReservations((prev) =>
       prev?.map((res) =>
         res.id === updatedReservation.id ? updatedReservation : res
-      )
+      ) ?? null
     );
   };
 

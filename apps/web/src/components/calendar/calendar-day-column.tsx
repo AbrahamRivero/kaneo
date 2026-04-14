@@ -1,5 +1,6 @@
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { EventCard } from "./event-card";
+import { RoomPaxIndicator } from "./room-pax-indicator";
 
 interface CalendarDayColumnProps {
   reservations: Reservation[];
@@ -32,11 +33,22 @@ export function CalendarDayColumn({
 }: CalendarDayColumnProps) {
   const sortedReservations = sortReservations(reservations);
 
+  const multipleReservationRooms = eventRooms.filter(
+    (room) => room.allowsMultipleReservations,
+  );
+
   return (
     <div
       className="w-44 border-r border-border last:border-r-0 p-1.5 md:p-2 flex flex-col gap-2 overflow-y-auto relative"
       style={{ height: 2880 }}
     >
+      {multipleReservationRooms.map((room) => (
+        <RoomPaxIndicator
+          key={room.id}
+          room={room}
+          reservations={reservations}
+        />
+      ))}
       {sortedReservations.map((reservation) => {
         const room = eventRooms.find((r) => r.id === reservation.eventRoomId);
         return (
