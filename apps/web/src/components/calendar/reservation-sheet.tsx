@@ -417,12 +417,23 @@ function SingleReservationSection({
                   : ""
               }
               ${
-                (reservation.serviceChargeAmount ?? 0) > 0
+                (reservation.totalRoomPrice ?? 0) > 0
                   ? `
                 <tr>
-                  <td>Service Charge</td>
+                  <td>Room Service Charge (10%)</td>
                   <td></td>
-                  <td style="text-align: right;">$${(reservation.serviceChargeAmount ?? 0).toFixed(2)}</td>
+                  <td style="text-align: right;">$${((reservation.totalRoomPrice ?? 0) * 0.1).toFixed(2)}</td>
+                </tr>
+              `
+                  : ""
+              }
+              ${
+                (reservation.totalServicePrice ?? 0) > 0
+                  ? `
+                <tr>
+                  <td>Services Charge (10%)</td>
+                  <td></td>
+                  <td style="text-align: right;">$${((reservation.totalServicePrice ?? 0) * 0.1).toFixed(2)}</td>
                 </tr>
               `
                   : ""
@@ -698,27 +709,31 @@ function SingleReservationSection({
                   </div>
                 )}
                 {(() => {
-                  const subTotal =
-                    (reservation.totalRoomPrice ?? 0) +
-                    (reservation.totalServicePrice ?? 0);
-                  const serviceChargePercent =
-                    subTotal > 0 && (reservation.serviceChargeAmount ?? 0) > 0
-                      ? Math.round(
-                          ((reservation.serviceChargeAmount ?? 0) / subTotal) *
-                            100,
-                        )
-                      : 0;
-                  return (reservation.serviceChargeAmount ?? 0) > 0 ? (
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>
-                        Service Charge ({serviceChargePercent}% of Room +
-                        Services)
-                      </span>
-                      <span>
-                        ${(reservation.serviceChargeAmount ?? 0).toFixed(2)}
-                      </span>
-                    </div>
-                  ) : null;
+                  const totalRoomPrice = reservation.totalRoomPrice ?? 0;
+                  const totalServicePrice = reservation.totalServicePrice ?? 0;
+
+                  // Calculate room service charge (derive percentage from saved data)
+                  // If there's room price and service charge, assume room charge is 10% of room
+                  const roomServiceCharge = totalRoomPrice * 0.1;
+                  // Services service charge is always 10% of services
+                  const servicesServiceCharge = totalServicePrice * 0.1;
+
+                  return (
+                    <>
+                      {roomServiceCharge > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Room Service Charge (10%)</span>
+                          <span>${roomServiceCharge.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {servicesServiceCharge > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Services Charge (10%)</span>
+                          <span>${servicesServiceCharge.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </>
+                  );
                 })()}
                 <div className="flex justify-between font-medium border-t pt-2 mt-1">
                   <span>Total</span>

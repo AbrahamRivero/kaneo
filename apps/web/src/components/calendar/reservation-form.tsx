@@ -455,9 +455,22 @@ export function ReservationForm({
       },
       0,
     );
-    const serviceChargePercent = selectedTariff?.serviceChargePercent ?? 0;
+    // Room service charge: use tariff's serviceChargePercent (only if there's a tariff)
+    const roomServiceChargePercent = selectedTariff?.serviceChargePercent ?? 0;
+    const roomServiceCharge = tariffPrice * (roomServiceChargePercent / 100);
+
+    // Services service charge: always apply 10% on services (independent of room tariff)
+    const servicesServiceChargePercent = 10;
+    const servicesServiceCharge = servicesPrice * (servicesServiceChargePercent / 100);
+
+    // Combined service charge
+    const serviceChargeAmount = roomServiceCharge + servicesServiceCharge;
+
+    // Display percentage: show room's if tariff exists, otherwise show services' 10%
+    const serviceChargePercent =
+      tariffPrice > 0 ? roomServiceChargePercent : servicesServiceChargePercent;
+
     const subTotal = tariffPrice + servicesPrice;
-    const serviceChargeAmount = subTotal * (serviceChargePercent / 100);
     const grandTotal = subTotal + serviceChargeAmount;
     return {
       tariffPrice,
@@ -467,6 +480,8 @@ export function ReservationForm({
       grandTotal,
       days,
       roomBreakdown,
+      roomServiceCharge,
+      servicesServiceCharge,
     };
   };
 
@@ -1410,13 +1425,18 @@ export function ReservationForm({
                 <span>${pricing.servicesPrice.toFixed(2)}</span>
               </div>
             )}
-            {pricing.serviceChargePercent > 0 && (
+            {pricing.roomServiceCharge > 0 && (
               <div className="flex justify-between text-muted-foreground">
                 <span>
-                  Service Charge ({pricing.serviceChargePercent}% of Room +
-                  Services)
+                  Room Service Charge ({selectedTariff?.serviceChargePercent ?? 0}%)
                 </span>
-                <span>${pricing.serviceChargeAmount.toFixed(2)}</span>
+                <span>${pricing.roomServiceCharge.toFixed(2)}</span>
+              </div>
+            )}
+            {pricing.servicesServiceCharge > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Services Charge (10%)</span>
+                <span>${pricing.servicesServiceCharge.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between font-medium border-t pt-2 mt-2 text-lg">
