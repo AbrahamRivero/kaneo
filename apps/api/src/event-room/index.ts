@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import db from "../database";
 import { eventRoomTable } from "../database/schema";
+import availabilityController from "./controllers/availability";
 import eventRoomController from "./controllers/event-room";
 import reservationController from "./controllers/reservation";
 import * as roomTariffController from "./controllers/room-tariff";
@@ -437,6 +438,49 @@ const eventRoom = new Hono<{
     const id = c.req.param("id");
     const result = await roomTariffController.deleteRoomTariff(userId, id);
     return c.json(result);
-  });
+  })
+
+  // Availability endpoints for real-time PAX tracking
+  .get(
+    "/:workspaceId/daily-pax",
+    zValidator(
+      "query",
+      z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }),
+    ),
+    async (c) => {
+      const workspaceId = c.req.param("workspaceId");
+      const { startDate, endDate } = c.req.valid("query");
+      const data = await availabilityController.getDailyPax(
+        workspaceId,
+        startDate,
+        endDate,
+      );
+      return c.json(data);
+    },
+  )
+
+  .get(
+    "/:workspaceId/availability/stream",
+    zValidator(
+      "query",
+      z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }),
+    ),
+    async (c) => {
+      const workspaceId = c.req.param("workspaceId");
+      const { startDate, endDate } = c.req.valid("query");
+      return availabilityController.streamAvailability(
+        c,
+        workspaceId,
+        startDate,
+        endDate,
+      );
+    },
+  );
 
 export default eventRoom;
