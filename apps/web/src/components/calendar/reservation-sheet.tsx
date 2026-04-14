@@ -454,7 +454,12 @@ function SingleReservationSection({
               <tr class="total-row">
                 <td>Grand Total</td>
                 <td></td>
-                <td style="text-align: right;">$${(reservation.grandTotal ?? 0).toFixed(2)}</td>
+                <td style="text-align: right;">$${(
+                  roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
+                  (reservation.totalServicePrice ?? 0) +
+                  getReservationCharges(reservation).roomCharge +
+                  getReservationCharges(reservation).servicesCharge
+                ).toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
@@ -746,7 +751,15 @@ function SingleReservationSection({
                 })()}
                 <div className="flex justify-between font-medium border-t pt-2 mt-1">
                   <span>Total</span>
-                  <span>${(reservation.grandTotal ?? 0).toFixed(2)}</span>
+                  <span>
+                    $
+                    {(
+                      roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
+                      (reservation.totalServicePrice ?? 0) +
+                      getReservationCharges(reservation).roomCharge +
+                      getReservationCharges(reservation).servicesCharge
+                    ).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
