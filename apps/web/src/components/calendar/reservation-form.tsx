@@ -210,7 +210,11 @@ export function ReservationForm({
     if (initialData?.dateRange) {
       return parseDateRange(initialData.dateRange);
     }
-    return { from: new Date() };
+    // Normalize to start of day to avoid timezone/time issues
+    const today = new Date();
+    return {
+      from: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+    };
   });
   const [datePickerOpen, setDatePickerOpen] = useState<boolean | "from" | "to">(
     false,
@@ -306,9 +310,16 @@ export function ReservationForm({
 
   useEffect(() => {
     if (initialData) {
-      const parsedDateRange = initialData.dateRange
-        ? parseDateRange(initialData.dateRange)
-        : { from: new Date() };
+      let parsedDateRange: DateRange;
+      if (initialData.dateRange) {
+        parsedDateRange = parseDateRange(initialData.dateRange);
+      } else {
+        // Normalize to start of day to avoid timezone/time issues
+        const today = new Date();
+        parsedDateRange = {
+          from: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+        };
+      }
       setDateRange(parsedDateRange);
       form.reset({
         title: initialData.title || "",
@@ -826,7 +837,13 @@ export function ReservationForm({
                     selected={dateRange.from}
                     onSelect={(date) => {
                       if (date) {
-                        const newDateRange = { ...dateRange, from: date };
+                        // Normalize to start of day to avoid timezone/time issues
+                        const normalizedDate = new Date(
+                          date.getFullYear(),
+                          date.getMonth(),
+                          date.getDate(),
+                        );
+                        const newDateRange = { ...dateRange, from: normalizedDate };
                         setDateRange(newDateRange);
                         form.setValue("dateRange", newDateRange);
                         setDatePickerOpen(false);
@@ -865,10 +882,18 @@ export function ReservationForm({
                     mode="single"
                     selected={dateRange.to}
                     onSelect={(date) => {
-                      const newDateRange = { ...dateRange, to: date };
-                      setDateRange(newDateRange);
-                      form.setValue("dateRange", newDateRange);
-                      setDatePickerOpen(false);
+                      if (date) {
+                        // Normalize to start of day to avoid timezone/time issues
+                        const normalizedDate = new Date(
+                          date.getFullYear(),
+                          date.getMonth(),
+                          date.getDate(),
+                        );
+                        const newDateRange = { ...dateRange, to: normalizedDate };
+                        setDateRange(newDateRange);
+                        form.setValue("dateRange", newDateRange);
+                        setDatePickerOpen(false);
+                      }
                     }}
                     initialFocus
                   />
