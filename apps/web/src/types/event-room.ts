@@ -22,6 +22,7 @@ export interface Service {
   workspaceId: string;
   name: string;
   pricePerPax: number | null;
+  serviceChargePercent: number;
   description?: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -78,6 +79,7 @@ export interface Reservation {
   roomTariffId?: string | null;
   totalRoomPrice?: number | null;
   totalServicePrice?: number | null;
+  roomChargeAmount?: number | null;
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
   status: string;

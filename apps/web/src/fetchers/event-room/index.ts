@@ -30,6 +30,7 @@ export type Service = {
   workspaceId: string;
   name: string;
   pricePerPax: number | null;
+  serviceChargePercent: number;
   description?: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -76,6 +77,7 @@ export type Reservation = {
   roomTariffId?: string | null;
   totalRoomPrice?: number | null;
   totalServicePrice?: number | null;
+  roomChargeAmount?: number | null;
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
   expectedPax?: number | null;
@@ -128,6 +130,7 @@ export type CreateReservationPayload = {
   roomTariffId?: string;
   totalRoomPrice?: number;
   totalServicePrice?: number;
+  roomChargeAmount?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
   expectedPax?: number;
@@ -159,6 +162,7 @@ export type UpdateReservationPayload = {
   roomTariffId?: string;
   totalRoomPrice?: number;
   totalServicePrice?: number;
+  roomChargeAmount?: number;
   serviceChargeAmount?: number;
   grandTotal?: number;
   expectedPax?: number;
