@@ -13,12 +13,14 @@ import { z } from "zod/v4";
 const serviceSchema = z.object({
   name: z.string().min(1, { error: "Name is required" }),
   pricePerPax: z.string().optional(),
+  serviceChargePercent: z.string().optional(),
   description: z.string().optional(),
 });
 
 export type ServiceFormData = {
   name: string;
   pricePerPax?: string;
+  serviceChargePercent?: string;
   description?: string;
 };
 
@@ -29,6 +31,7 @@ interface ServiceFormProps {
     id: string;
     name: string;
     pricePerPax: number | null;
+    serviceChargePercent?: number | null;
     description?: string | null;
   } | null;
   isLoadingData?: boolean;
@@ -52,12 +55,15 @@ export function ServiceForm({
     defaultValues: {
       name: "",
       pricePerPax: "",
+      serviceChargePercent: "10",
       description: "",
     },
     values: initialData
       ? {
           name: initialData.name,
           pricePerPax: initialData.pricePerPax?.toString() ?? "",
+          serviceChargePercent:
+            initialData.serviceChargePercent?.toString() ?? "10",
           description: initialData.description ?? "",
         }
       : undefined,
@@ -68,6 +74,9 @@ export function ServiceForm({
       workspaceId,
       name: data.name,
       pricePerPax: data.pricePerPax ? Number(data.pricePerPax) : null,
+      serviceChargePercent: data.serviceChargePercent
+        ? Number(data.serviceChargePercent)
+        : 10,
       description: data.description?.trim() ? data.description : "",
       isActive: true,
     };
@@ -131,6 +140,19 @@ export function ServiceForm({
             placeholder="0.00"
             {...form.register("pricePerPax")}
           />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="serviceChargePercent">Service Charge %</Label>
+          <Input
+            id="serviceChargePercent"
+            type="number"
+            placeholder="0"
+            {...form.register("serviceChargePercent")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Additional charge to apply to this service (e.g., 10 for 10%)
+          </p>
         </div>
 
         <div className="grid gap-2">

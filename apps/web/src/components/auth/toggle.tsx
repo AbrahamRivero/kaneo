@@ -16,7 +16,7 @@ export function AuthToggle({ message, linkText, linkTo }: AuthToggleProps) {
 
   return (
     <div className="text-center text-sm">
-      {message}
+      {message} {" "}
       <Link
         to={linkTo}
         className="underline underline-offset-4 hover:text-primary"
