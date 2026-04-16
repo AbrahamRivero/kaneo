@@ -18,6 +18,7 @@ import {
   getReservations,
 } from "@/fetchers/event-room";
 import {
+  addDays,
   addMonths,
   endOfMonth,
   endOfQuarter,
@@ -31,6 +32,8 @@ import { FileDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export type ReportPeriod =
+  | "today"
+  | "tomorrow"
   | "weekly"
   | "monthly"
   | "quarterly"
@@ -60,6 +63,20 @@ function getDateRange(period: ReportPeriod): {
   const today = new Date();
 
   switch (period) {
+    case "today":
+      return {
+        startDate: format(today, "yyyy-MM-dd"),
+        endDate: format(today, "yyyy-MM-dd"),
+        label: "Today",
+      };
+    case "tomorrow": {
+      const tomorrow = addDays(today, 1);
+      return {
+        startDate: format(tomorrow, "yyyy-MM-dd"),
+        endDate: format(tomorrow, "yyyy-MM-dd"),
+        label: "Tomorrow",
+      };
+    }
     case "weekly":
       return {
         startDate: format(
@@ -141,6 +158,8 @@ function formatDateRange(dateRange: DateRange): string {
   return fromDate;
 }
 
+export type PaymentFilter = "all" | "paid" | "not_paid";
+
 export function ReportsDialog({
   open,
   onOpenChange,
@@ -149,6 +168,7 @@ export function ReportsDialog({
 }: ReportsDialogProps) {
   const [period, setPeriod] = useState<ReportPeriod>("monthly");
   const [selectedRoomId, setSelectedRoomId] = useState<string>("all");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentFilter>("all");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { startDate, endDate, label } = getDateRange(period);
@@ -163,7 +183,24 @@ export function ReportsDialog({
         selectedRoomId !== "all" ? selectedRoomId : undefined,
       );
 
-      const reservationsWithRoom = reservations.map((res) => ({
+      let filteredReservations = reservations;
+
+      if (paymentStatus !== "all") {
+        filteredReservations = reservations.filter((res) => {
+          if (paymentStatus === "paid") return res.paymentConfirmed === true;
+          if (paymentStatus === "not_paid")
+            return res.paymentConfirmed === false;
+          return true;
+        });
+      }
+
+      const sortedReservations = [...filteredReservations].sort((a, b) => {
+        const dateA = parseDateRange(a.dateRange).from || "";
+        const dateB = parseDateRange(b.dateRange).from || "";
+        return dateA.localeCompare(dateB);
+      });
+
+      const reservationsWithRoom = sortedReservations.map((res) => ({
         ...res,
         roomName: eventRooms.find((r) => r.id === res.eventRoomId)?.name || "",
       }));
@@ -184,6 +221,13 @@ export function ReportsDialog({
         selectedRoomId === "all"
           ? "All Rooms"
           : eventRooms.find((r) => r.id === selectedRoomId)?.name || "";
+
+      const paymentLabel =
+        paymentStatus === "all"
+          ? "All"
+          : paymentStatus === "paid"
+            ? "Paid"
+            : "Not Paid";
 
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -298,6 +342,10 @@ export function ReportsDialog({
               <span class="meta-value">${roomLabel}</span>
             </div>
             <div class="meta-item">
+              <span class="meta-label">Payment</span>
+              <span class="meta-value">${paymentLabel}</span>
+            </div>
+            <div class="meta-item">
               <span class="meta-label">Total Reservations</span>
               <span class="meta-value">${reservationsWithRoom.length}</span>
             </div>
@@ -403,6 +451,8 @@ export function ReportsDialog({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="tomorrow">Tomorrow</SelectItem>
               <SelectItem value="weekly">This Week</SelectItem>
               <SelectItem value="monthly">This Month</SelectItem>
               <SelectItem value="last_month">Last Month</SelectItem>
@@ -422,6 +472,20 @@ export function ReportsDialog({
                   {room.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={paymentStatus}
+            onValueChange={(v) => setPaymentStatus(v as PaymentFilter)}
+          >
+            <SelectTrigger className="w-full h-8 text-sm">
+              <SelectValue placeholder="All Payments" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="not_paid">Not Paid</SelectItem>
             </SelectContent>
           </Select>
 
