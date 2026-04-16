@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import type { ScheduledPermission } from "@/types/scheduled-permission";
 import getScheduledPermissions from "@/fetchers/workspace-user/get-scheduled-permissions";
+import type { ScheduledPermission } from "@/types/scheduled-permission";
+import { useQuery } from "@tanstack/react-query";
 
 function useGetScheduledPermissions({
   workspaceId,

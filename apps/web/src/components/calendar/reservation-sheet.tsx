@@ -29,6 +29,7 @@ import {
   Bell,
   Calendar as CalendarIcon,
   CheckCircle2,
+  CreditCard,
   DollarSign,
   FileDown,
   HandCoins,
@@ -37,7 +38,6 @@ import {
   Trash2,
   Users,
   X,
-  CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -99,7 +99,10 @@ function getRoomBreakdown(
           acc[sessionType].price += dt.price ?? 0;
           return acc;
         },
-        {} as Record<string, { sessionType: string; days: number; price: number }>,
+        {} as Record<
+          string,
+          { sessionType: string; days: number; price: number }
+        >,
       ),
     );
   }
@@ -163,11 +166,15 @@ function getReservationCharges(reservation: Reservation): {
   const totalRoomPrice = reservation.totalRoomPrice ?? 0;
   const totalServicePrice = reservation.totalServicePrice ?? 0;
 
-  const servicesCharge = reservation.serviceChargeAmount ?? totalServicePrice * 0.1;
+  const servicesCharge =
+    reservation.serviceChargeAmount ?? totalServicePrice * 0.1;
 
   const legacyDerivedRoomCharge =
     totalRoomPrice > 0
-      ? Math.max((reservation.serviceChargeAmount ?? 0) - totalServicePrice * 0.1, 0)
+      ? Math.max(
+          (reservation.serviceChargeAmount ?? 0) - totalServicePrice * 0.1,
+          0,
+        )
       : 0;
 
   const roomCharge =
@@ -456,9 +463,9 @@ function SingleReservationSection({
                 <td></td>
                 <td style="text-align: right;">$${(
                   roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
-                  (reservation.totalServicePrice ?? 0) +
-                  getReservationCharges(reservation).roomCharge +
-                  getReservationCharges(reservation).servicesCharge
+                    (reservation.totalServicePrice ?? 0) +
+                    getReservationCharges(reservation).roomCharge +
+                    getReservationCharges(reservation).servicesCharge
                 ).toFixed(2)}</td>
               </tr>
             </tbody>
@@ -727,8 +734,11 @@ function SingleReservationSection({
                   </div>
                 )}
                 {(() => {
-                  const { roomCharge, servicesCharge, roomServiceChargePercent } =
-                    getReservationCharges(reservation);
+                  const {
+                    roomCharge,
+                    servicesCharge,
+                    roomServiceChargePercent,
+                  } = getReservationCharges(reservation);
 
                   return (
                     <>

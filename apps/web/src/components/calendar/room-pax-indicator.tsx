@@ -11,7 +11,10 @@ function getCapacityColor(percentage: number): string {
   return "bg-red-500";
 }
 
-export function RoomPaxIndicator({ room, reservations }: RoomPaxIndicatorProps) {
+export function RoomPaxIndicator({
+  room,
+  reservations,
+}: RoomPaxIndicatorProps) {
   const roomReservations = reservations.filter(
     (res) => res.eventRoomId === room.id,
   );

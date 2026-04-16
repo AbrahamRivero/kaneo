@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -74,6 +73,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod/v4";
 
 const capitalizeWords = (str: string): string => {
@@ -177,6 +177,7 @@ interface ReservationFormProps {
     expectedPax?: number | null;
     status?: string | null;
   } | null;
+  initialDateRange?: DateRange;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -202,6 +203,7 @@ export function ReservationForm({
   eventRooms = [],
   reservationId,
   initialData,
+  initialDateRange,
   onSuccess,
   onCancel,
 }: ReservationFormProps) {
@@ -209,6 +211,9 @@ export function ReservationForm({
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     if (initialData?.dateRange) {
       return parseDateRange(initialData.dateRange);
+    }
+    if (initialDateRange) {
+      return initialDateRange;
     }
     // Normalize to start of day to avoid timezone/time issues
     const today = new Date();
@@ -317,7 +322,11 @@ export function ReservationForm({
         // Normalize to start of day to avoid timezone/time issues
         const today = new Date();
         parsedDateRange = {
-          from: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+          from: new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+          ),
         };
       }
       setDateRange(parsedDateRange);
@@ -461,7 +470,8 @@ export function ReservationForm({
 
     // Services service charge: always apply 10% on services (independent of room tariff)
     const servicesServiceChargePercent = 10;
-    const servicesServiceCharge = servicesPrice * (servicesServiceChargePercent / 100);
+    const servicesServiceCharge =
+      servicesPrice * (servicesServiceChargePercent / 100);
 
     // Combined service charge
     const serviceChargeAmount = roomServiceCharge + servicesServiceCharge;
@@ -858,7 +868,10 @@ export function ReservationForm({
                           date.getMonth(),
                           date.getDate(),
                         );
-                        const newDateRange = { ...dateRange, from: normalizedDate };
+                        const newDateRange = {
+                          ...dateRange,
+                          from: normalizedDate,
+                        };
                         setDateRange(newDateRange);
                         form.setValue("dateRange", newDateRange);
                         setDatePickerOpen(false);
@@ -904,7 +917,10 @@ export function ReservationForm({
                           date.getMonth(),
                           date.getDate(),
                         );
-                        const newDateRange = { ...dateRange, to: normalizedDate };
+                        const newDateRange = {
+                          ...dateRange,
+                          to: normalizedDate,
+                        };
                         setDateRange(newDateRange);
                         form.setValue("dateRange", newDateRange);
                         setDatePickerOpen(false);
@@ -1428,7 +1444,8 @@ export function ReservationForm({
             {pricing.roomServiceCharge > 0 && (
               <div className="flex justify-between text-muted-foreground">
                 <span>
-                  Room Service Charge ({selectedTariff?.serviceChargePercent ?? 0}%)
+                  Room Service Charge (
+                  {selectedTariff?.serviceChargePercent ?? 0}%)
                 </span>
                 <span>${pricing.roomServiceCharge.toFixed(2)}</span>
               </div>
