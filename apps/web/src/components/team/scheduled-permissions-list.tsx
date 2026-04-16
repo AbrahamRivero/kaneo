@@ -1,8 +1,8 @@
 import useDeleteScheduledPermission from "@/hooks/mutations/workspace-user/use-delete-scheduled-permission";
 import useGetScheduledPermissions from "@/hooks/queries/workspace-user/use-get-scheduled-permissions";
 import {
-  formatActionLabel,
   type ScheduledAction,
+  formatActionLabel,
 } from "@/types/scheduled-permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clock, Trash2 } from "lucide-react";
@@ -77,7 +77,7 @@ function ScheduledPermissionsList({ workspaceId, userId, onAddNew }: Props) {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-                - 
+                -
                 {new Date(permission.endTime).toLocaleTimeString("en-US", {
                   hour: "2-digit",
                   minute: "2-digit",

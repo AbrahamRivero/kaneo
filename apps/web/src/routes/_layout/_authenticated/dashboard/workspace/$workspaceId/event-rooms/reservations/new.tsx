@@ -1,18 +1,37 @@
-import { ReservationForm } from "@/components/calendar/reservation-form";
+import {
+  type DateRange,
+  ReservationForm,
+} from "@/components/calendar/reservation-form";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import { useGetEventRooms } from "@/hooks/queries/event-room";
 import queryClient from "@/query-client";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/$workspaceId/event-rooms/reservations/new",
 )({
+  validateSearch: searchSchema,
   component: CreateReservationPage,
 });
 
 function CreateReservationPage() {
   const { workspaceId } = Route.useParams();
   const navigate = useNavigate();
+  const search = Route.useSearch() as { from?: string; to?: string };
+
+  const initialDateRange: DateRange | undefined = search.from
+    ? (() => {
+        const [year, month, day] = search.from.split("-").map(Number);
+        const from = new Date(year, month - 1, day);
+        return { from };
+      })()
+    : undefined;
 
   const { data: eventRooms } = useGetEventRooms(workspaceId);
 
@@ -38,6 +57,7 @@ function CreateReservationPage() {
           <ReservationForm
             workspaceId={workspaceId}
             eventRooms={eventRooms || []}
+            initialDateRange={initialDateRange}
             onSuccess={handleSuccess}
             onCancel={() => {
               navigate({

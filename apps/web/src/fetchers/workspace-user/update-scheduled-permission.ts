@@ -1,6 +1,6 @@
 import type {
-  UpdateScheduledPermissionRequest,
   ScheduledPermission,
+  UpdateScheduledPermissionRequest,
 } from "@/types/scheduled-permission";
 import { client } from "@palcodesk/libs";
 

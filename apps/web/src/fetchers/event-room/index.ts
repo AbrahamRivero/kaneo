@@ -352,12 +352,12 @@ export const updatePaymentStatus = async (
   id: string,
   paymentConfirmed: boolean,
 ): Promise<Reservation> => {
-  const response = await client["event-room"].reservations[":id"].payment.$patch(
-    {
-      param: { id },
-      json: { paymentConfirmed },
-    },
-  );
+  const response = await client["event-room"].reservations[
+    ":id"
+  ].payment.$patch({
+    param: { id },
+    json: { paymentConfirmed },
+  });
 
   if (!response.ok) {
     const error = await response.text();

@@ -1,5 +1,6 @@
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import { useCalendarStore } from "@/store/calendar-store";
+import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { useState } from "react";
 import { CalendarDayColumn } from "./calendar-day-column";
@@ -36,6 +37,7 @@ export function CalendarView({
   workspaceId,
   eventRooms,
 }: CalendarViewProps) {
+  const navigate = useNavigate();
   const {
     goToNextWeek,
     goToPreviousWeek,
@@ -43,6 +45,14 @@ export function CalendarView({
     getCurrentWeekReservations,
   } = useCalendarStore();
   const weekDays = getWeekDays();
+
+  const handleDayClick = (date: Date) => {
+    navigate({
+      to: "/dashboard/workspace/$workspaceId/event-rooms/reservations/new",
+      params: { workspaceId },
+      search: { from: format(date, "yyyy-MM-dd") },
+    });
+  };
 
   const eventRoomsMap = eventRooms.reduce(
     (acc, room) => {
@@ -82,10 +92,11 @@ export function CalendarView({
   };
 
   const handleReservationUpdate = (updatedReservation: Reservation) => {
-    setSelectedReservations((prev) =>
-      prev?.map((res) =>
-        res.id === updatedReservation.id ? updatedReservation : res
-      ) ?? null
+    setSelectedReservations(
+      (prev) =>
+        prev?.map((res) =>
+          res.id === updatedReservation.id ? updatedReservation : res,
+        ) ?? null,
     );
   };
 
@@ -104,6 +115,8 @@ export function CalendarView({
           weekDays={weekDays}
           onPreviousWeek={goToPreviousWeek}
           onNextWeek={goToNextWeek}
+          workspaceId={workspaceId}
+          onDayClick={handleDayClick}
         />
 
         <div className="flex min-w-full w-max">

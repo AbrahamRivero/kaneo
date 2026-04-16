@@ -12,7 +12,7 @@ import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import { useCalendarStore } from "@/store/calendar-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 
 const CalendarView = lazy(() =>
   import("@/components/calendar/calendar-view").then((m) => ({

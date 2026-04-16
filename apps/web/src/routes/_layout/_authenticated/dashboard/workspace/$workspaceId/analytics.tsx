@@ -21,7 +21,7 @@ import {
   Clock2,
   TrendingUp,
 } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { Suspense, lazy, useState } from "react";
 
 const TasksByProjectChart = lazy(() =>
   import("@/components/analytics/tasks-by-project-chart").then((m) => ({
