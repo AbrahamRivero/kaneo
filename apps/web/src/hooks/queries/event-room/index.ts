@@ -32,6 +32,7 @@ export function useGetReservations(workspaceId: string, date?: string) {
     queryKey: ["reservations", workspaceId, date],
     queryFn: () => getReservations(workspaceId, date),
     enabled: !!workspaceId,
+    refetchInterval: 7000,
   });
 }
 
