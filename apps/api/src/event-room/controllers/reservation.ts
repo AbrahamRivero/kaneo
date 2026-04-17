@@ -49,6 +49,11 @@ export type CreateReservationPayload = {
   serviceChargeAmount?: number;
   grandTotal?: number;
   expectedPax?: number;
+  ageBreakdown?: {
+    adults: number;
+    children: number;
+    infants: number;
+  };
   paymentConfirmed?: boolean;
   status?: "pending" | "confirmed" | "completed";
   services?: ReservationServicePayload[];
@@ -71,6 +76,11 @@ export type UpdateReservationPayload = {
   serviceChargeAmount?: number;
   grandTotal?: number;
   expectedPax?: number;
+  ageBreakdown?: {
+    adults: number;
+    children: number;
+    infants: number;
+  };
   status?: "all" | "pending" | "confirmed" | "completed";
   services?: ReservationServicePayload[];
   dayTariffs?: DayTariffPayload[];
@@ -282,6 +292,7 @@ async function createReservation(
       serviceChargeAmount: pricing.serviceChargeAmount,
       grandTotal: pricing.grandTotal,
       expectedPax: payload.expectedPax,
+      ageBreakdown: payload.ageBreakdown ?? null,
       paymentConfirmed: payload.paymentConfirmed,
       status: payload.status,
     })
@@ -343,6 +354,7 @@ async function createReservation(
     title: payload.title,
     dateRange: resDateRange,
     expectedPax: payload.expectedPax,
+    ageBreakdown: payload.ageBreakdown,
     roomName: room.name,
     userId,
   });
@@ -451,11 +463,14 @@ async function getReservations(
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
       expectedPax: reservationTable.expectedPax,
+      ageBreakdown: reservationTable.ageBreakdown,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
       roomName: eventRoomTable.name,
       roomCapacity: eventRoomTable.capacity,
+      allowsMultipleReservations: eventRoomTable.allowsMultipleReservations,
+      hasAgeBasedPricing: eventRoomTable.hasAgeBasedPricing,
     })
     .from(reservationTable)
     .innerJoin(
@@ -618,6 +633,7 @@ async function getReservation(userId: string, reservationId: string) {
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
       expectedPax: reservationTable.expectedPax,
+      ageBreakdown: reservationTable.ageBreakdown,
       status: reservationTable.status,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
@@ -822,7 +838,7 @@ async function updateReservation(
   );
 
   const { status: _, ...restPayload } = payload;
-  const { dateRange: payloadDateRange, ...restWithoutDateRange } = restPayload;
+  const { dateRange: payloadDateRange, ageBreakdown: payloadAgeBreakdown, ...restWithoutDateRange } = restPayload;
 
   const [updated] = await db
     .update(reservationTable)
@@ -833,6 +849,9 @@ async function updateReservation(
         : {}),
       ...(payload.status && payload.status !== "all"
         ? { status: payload.status }
+        : {}),
+      ...(payloadAgeBreakdown !== undefined
+        ? { ageBreakdown: payloadAgeBreakdown }
         : {}),
       totalRoomPrice: pricing.totalRoomPrice,
       totalServicePrice: pricing.totalServicePrice,
@@ -918,6 +937,7 @@ async function updateReservation(
     title: updated.title,
     dateRange: updatedDateRange,
     expectedPax: updated.expectedPax ?? undefined,
+    ageBreakdown: updated.ageBreakdown ?? undefined,
     roomName: roomForName?.name || "Unknown",
     userId,
   });

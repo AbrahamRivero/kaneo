@@ -234,6 +234,7 @@ subscribeToEvent(
     clientName,
     dateRange,
     expectedPax,
+    ageBreakdown,
     roomName,
     userId,
   }: {
@@ -242,6 +243,7 @@ subscribeToEvent(
     clientName: string;
     dateRange: { from: string; to?: string };
     expectedPax?: number;
+    ageBreakdown?: { adults: number; children: number; infants: number };
     roomName: string;
     userId: string;
   }) => {
@@ -253,7 +255,12 @@ subscribeToEvent(
     const dateFormatted =
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
-    const paxText = expectedPax ? `${expectedPax} guests` : "";
+    let paxText = "";
+    if (ageBreakdown && (ageBreakdown.adults > 0 || ageBreakdown.children > 0 || ageBreakdown.infants > 0)) {
+      paxText = `${ageBreakdown.adults} Adults, ${ageBreakdown.children} Children, ${ageBreakdown.infants} Infants`;
+    } else if (expectedPax) {
+      paxText = `${expectedPax} guests`;
+    }
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
@@ -282,6 +289,7 @@ subscribeToEvent(
     clientName,
     dateRange,
     expectedPax,
+    ageBreakdown,
     roomName,
     userId,
   }: {
@@ -290,6 +298,7 @@ subscribeToEvent(
     clientName: string;
     dateRange: { from: string; to?: string };
     expectedPax?: number;
+    ageBreakdown?: { adults: number; children: number; infants: number };
     roomName: string;
     userId: string;
   }) => {
@@ -301,7 +310,12 @@ subscribeToEvent(
     const dateFormatted =
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
-    const paxText = expectedPax ? `${expectedPax} guests` : "";
+    let paxText = "";
+    if (ageBreakdown && (ageBreakdown.adults > 0 || ageBreakdown.children > 0 || ageBreakdown.infants > 0)) {
+      paxText = `${ageBreakdown.adults} Adults, ${ageBreakdown.children} Children, ${ageBreakdown.infants} Infants`;
+    } else if (expectedPax) {
+      paxText = `${expectedPax} guests`;
+    }
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers

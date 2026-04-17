@@ -15,6 +15,7 @@ const roomSchema = z.object({
   capacity: z.number().min(1, { error: "Capacity must be at least 1" }),
   description: z.string().optional(),
   allowsMultipleReservations: z.boolean().optional(),
+  hasAgeBasedPricing: z.boolean().optional(),
 });
 
 export type RoomFormData = z.infer<typeof roomSchema>;
@@ -28,6 +29,7 @@ interface RoomFormProps {
     capacity: number;
     description?: string | null;
     allowsMultipleReservations?: boolean | null;
+    hasAgeBasedPricing?: boolean | null;
   } | null;
   isLoadingData?: boolean;
   onSuccess?: () => void;
@@ -52,6 +54,7 @@ export function RoomForm({
       capacity: 0,
       description: "",
       allowsMultipleReservations: false,
+      hasAgeBasedPricing: false,
     },
     values: initialData
       ? {
@@ -60,6 +63,7 @@ export function RoomForm({
           description: initialData.description ?? "",
           allowsMultipleReservations:
             initialData.allowsMultipleReservations ?? false,
+          hasAgeBasedPricing: initialData.hasAgeBasedPricing ?? false,
         }
       : undefined,
   });
@@ -163,6 +167,30 @@ export function RoomForm({
             render={({ field }) => (
               <Switch
                 id="allowsMultipleReservations"
+                checked={field.value ?? false}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+        </div>
+        <div className="flex items-center justify-between py-2">
+          <div className="flex flex-col gap-1">
+            <Label
+              htmlFor="hasAgeBasedPricing"
+              className="text-sm font-medium"
+            >
+              Age-based pricing
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              Enable this to use different prices by age (e.g., pool tickets)
+            </span>
+          </div>
+          <Controller
+            control={form.control}
+            name="hasAgeBasedPricing"
+            render={({ field }) => (
+              <Switch
+                id="hasAgeBasedPricing"
                 checked={field.value ?? false}
                 onCheckedChange={field.onChange}
               />

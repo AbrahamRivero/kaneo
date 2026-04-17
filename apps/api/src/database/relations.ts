@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   accountTable,
   activityTable,
+  ageGroupTariffTable,
   eventRoomTable,
   githubIntegrationTable,
   labelTable,
@@ -207,6 +208,20 @@ export const roomTariffTableRelations = relations(
       references: [eventRoomTable.id],
     }),
     reservations: many(reservationTable),
+  }),
+);
+
+export const ageGroupTariffTableRelations = relations(
+  ageGroupTariffTable,
+  ({ one }) => ({
+    workspace: one(workspaceTable, {
+      fields: [ageGroupTariffTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    eventRoom: one(eventRoomTable, {
+      fields: [ageGroupTariffTable.eventRoomId],
+      references: [eventRoomTable.id],
+    }),
   }),
 );
 

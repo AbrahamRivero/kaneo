@@ -1,5 +1,7 @@
 import {
   getAllServices,
+  getAgeGroupTariffById,
+  getAgeGroupTariffs,
   getEventRoomById,
   getEventRooms,
   getReservation,
@@ -82,6 +84,29 @@ export function useGetRoomTariffById(id?: string) {
     queryKey: ["room-tariff", id],
     queryFn: () => getRoomTariffById(id as string),
     enabled: Boolean(id),
+  });
+}
+
+export function useGetAgeGroupTariffs(
+  workspaceId: string,
+  eventRoomId?: string,
+  page = 1,
+  limit = 10,
+) {
+  return useQuery({
+    queryKey: ["age-group-tariffs", workspaceId, eventRoomId, page, limit],
+    queryFn: () => getAgeGroupTariffs(workspaceId, eventRoomId, page, limit),
+    enabled: !!workspaceId,
+  });
+}
+
+export function useGetAgeGroupTariffById(id?: string) {
+  return useQuery({
+    queryKey: ["age-group-tariff", id],
+    queryFn: () => getAgeGroupTariffById(id as string),
+    enabled: Boolean(id),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 

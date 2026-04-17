@@ -31,6 +31,7 @@ const eventRoom = new Hono<{
         capacity: z.number(),
         description: z.string().optional(),
         allowsMultipleReservations: z.boolean().optional(),
+        hasAgeBasedPricing: z.boolean().optional(),
       }),
     ),
     async (c) => {
@@ -57,6 +58,7 @@ const eventRoom = new Hono<{
         capacity: z.number().optional(),
         description: z.string().optional(),
         allowsMultipleReservations: z.boolean().optional(),
+        hasAgeBasedPricing: z.boolean().optional(),
       }),
     ),
     async (c) => {
@@ -114,6 +116,13 @@ const eventRoom = new Hono<{
           serviceChargeAmount: z.number().optional(),
           grandTotal: z.number().optional(),
           expectedPax: z.number().optional(),
+          ageBreakdown: z
+            .object({
+              adults: z.number(),
+              children: z.number(),
+              infants: z.number(),
+            })
+            .optional(),
           paymentConfirmed: z.boolean().optional(),
           status: z.enum(["pending", "confirmed", "completed"]).optional(),
           services: z
@@ -141,6 +150,7 @@ const eventRoom = new Hono<{
             .select({
               allowsMultipleReservations:
                 eventRoomTable.allowsMultipleReservations,
+              hasAgeBasedPricing: eventRoomTable.hasAgeBasedPricing,
             })
             .from(eventRoomTable)
             .where(
@@ -151,7 +161,24 @@ const eventRoom = new Hono<{
             )
             .limit(1);
 
-          if (room?.allowsMultipleReservations && !data.expectedPax) {
+          if (room?.hasAgeBasedPricing) {
+            if (!data.ageBreakdown) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Age breakdown is required for this room",
+                path: ["ageBreakdown"],
+              });
+            } else {
+              const total = data.ageBreakdown.adults + data.ageBreakdown.children + data.ageBreakdown.infants;
+              if (total === 0) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "At least one guest is required",
+                  path: ["ageBreakdown"],
+                });
+              }
+            }
+          } else if (room?.allowsMultipleReservations && !data.expectedPax) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Expected Pax is required",
@@ -204,6 +231,13 @@ const eventRoom = new Hono<{
           serviceChargeAmount: z.number().optional(),
           grandTotal: z.number().optional(),
           expectedPax: z.number().optional(),
+          ageBreakdown: z
+            .object({
+              adults: z.number(),
+              children: z.number(),
+              infants: z.number(),
+            })
+            .optional(),
           services: z
             .array(
               z.object({
@@ -231,12 +265,30 @@ const eventRoom = new Hono<{
             .select({
               allowsMultipleReservations:
                 eventRoomTable.allowsMultipleReservations,
+              hasAgeBasedPricing: eventRoomTable.hasAgeBasedPricing,
             })
             .from(eventRoomTable)
             .where(eq(eventRoomTable.id, data.eventRoomId))
             .limit(1);
 
-          if (room?.allowsMultipleReservations && !data.expectedPax) {
+          if (room?.hasAgeBasedPricing) {
+            if (!data.ageBreakdown) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Age breakdown is required for this room",
+                path: ["ageBreakdown"],
+              });
+            } else {
+              const total = data.ageBreakdown.adults + data.ageBreakdown.children + data.ageBreakdown.infants;
+              if (total === 0) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "At least one guest is required",
+                  path: ["ageBreakdown"],
+                });
+              }
+            }
+          } else if (room?.allowsMultipleReservations && !data.expectedPax) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Expected Pax is required",
@@ -436,6 +488,70 @@ const eventRoom = new Hono<{
     const userId = c.get("userId");
     const id = c.req.param("id");
     const result = await roomTariffController.deleteRoomTariff(userId, id);
+    return c.json(result);
+  })
+
+  .get("/:workspaceId/age-tariffs", async (c) => {
+    const workspaceId = c.req.param("workspaceId");
+    const eventRoomId = c.req.query("eventRoomId");
+    const page = Number(c.req.query("page")) || 1;
+    const limit = Number(c.req.query("limit")) || 10;
+    const { getAgeGroupTariffs } = await import("./controllers/age-group-tariff");
+    const tariffs = await getAgeGroupTariffs(workspaceId, eventRoomId, page, limit);
+    return c.json(tariffs);
+  })
+
+  .post(
+    "/age-tariffs",
+    zValidator(
+      "json",
+      z.object({
+        workspaceId: z.string(),
+        eventRoomId: z.string(),
+        minAge: z.number(),
+        maxAge: z.number().nullable(),
+        price: z.number(),
+      }),
+    ),
+    async (c) => {
+      const body = c.req.valid("json");
+      const { createAgeGroupTariff } = await import("./controllers/age-group-tariff");
+      const tariff = await createAgeGroupTariff(body);
+      return c.json(tariff);
+    },
+  )
+
+  .get("/age-tariffs/:id", async (c) => {
+    const id = c.req.param("id");
+    const { getAgeGroupTariffById } = await import("./controllers/age-group-tariff");
+    const tariff = await getAgeGroupTariffById(id);
+    return c.json(tariff);
+  })
+
+  .put(
+    "/age-tariffs/:id",
+    zValidator(
+      "json",
+      z.object({
+        eventRoomId: z.string().optional(),
+        minAge: z.number().optional(),
+        maxAge: z.number().nullable().optional(),
+        price: z.number().optional(),
+      }),
+    ),
+    async (c) => {
+      const id = c.req.param("id");
+      const body = c.req.valid("json");
+      const { updateAgeGroupTariff } = await import("./controllers/age-group-tariff");
+      const tariff = await updateAgeGroupTariff(id, body);
+      return c.json(tariff);
+    },
+  )
+
+  .delete("/age-tariffs/:id", async (c) => {
+    const id = c.req.param("id");
+    const { deleteAgeGroupTariff } = await import("./controllers/age-group-tariff");
+    const result = await deleteAgeGroupTariff(id);
     return c.json(result);
   });
 

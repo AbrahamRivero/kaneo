@@ -294,6 +294,7 @@ export const eventRoomTable = pgTable("event_room", {
   allowsMultipleReservations: boolean("allows_multiple_reservations").default(
     false,
   ),
+  hasAgeBasedPricing: boolean("has_age_based_pricing").default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
@@ -339,6 +340,27 @@ export const roomTariffTable = pgTable("room_tariff", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const ageGroupTariffTable = pgTable("age_group_tariff", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  eventRoomId: text("event_room_id")
+    .notNull()
+    .references(() => eventRoomTable.id, {
+      onDelete: "cascade",
+    }),
+  minAge: integer("min_age").notNull(),
+  maxAge: integer("max_age"),
+  price: integer("price").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 export const reservationTable = pgTable("reservation", {
   id: text("id")
     .$defaultFn(() => createId())
@@ -373,6 +395,11 @@ export const reservationTable = pgTable("reservation", {
   serviceChargeAmount: integer("service_charge_amount"),
   grandTotal: integer("grand_total"),
   expectedPax: integer("expected_pax").default(0),
+  ageBreakdown: jsonb("age_breakdown").$type<{
+    adults: number;
+    children: number;
+    infants: number;
+  }>(),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),

@@ -1,12 +1,15 @@
 import {
+  createAgeGroupTariff,
   createEventRoom,
   createReservation,
   createRoomTariff,
   createService,
+  deleteAgeGroupTariff,
   deleteEventRoom,
   deleteReservation,
   deleteRoomTariff,
   deleteService,
+  updateAgeGroupTariff,
   updateEventRoom,
   updatePaymentStatus,
   updateReservation,
@@ -277,6 +280,60 @@ export function useUpdatePaymentStatus() {
     onSuccess: () => {
       toast.success("Payment status updated");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useCreateAgeGroupTariff() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createAgeGroupTariff,
+    onSuccess: () => {
+      toast.success("Age group tariff created successfully");
+      queryClient.invalidateQueries({ queryKey: ["age-group-tariffs"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdateAgeGroupTariff() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Parameters<typeof updateAgeGroupTariff>[1];
+    }) => updateAgeGroupTariff(id, payload),
+    onSuccess: () => {
+      toast.success("Age group tariff updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["age-group-tariffs"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeleteAgeGroupTariff() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteAgeGroupTariff,
+    onSuccess: async () => {
+      toast.success("Age group tariff deleted successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["age-group-tariffs"],
+        refetchType: "all",
+      });
     },
     onError: (error: Error) => {
       toast.error(error.message);
