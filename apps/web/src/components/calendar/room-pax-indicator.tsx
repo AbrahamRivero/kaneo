@@ -20,6 +20,9 @@ export function RoomPaxIndicator({
   );
 
   const totalPax = roomReservations.reduce((sum, res) => {
+    if (res.ageBreakdown) {
+      return sum + res.ageBreakdown.adults + res.ageBreakdown.children + res.ageBreakdown.infants;
+    }
     if (res.expectedPax) {
       return sum + res.expectedPax;
     }

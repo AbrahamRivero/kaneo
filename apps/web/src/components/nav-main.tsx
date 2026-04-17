@@ -276,6 +276,28 @@ export function NavMain() {
                       </span>
                     </div>
                   </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleNavClick(
+                        `/dashboard/workspace/${workspace.id}/event-rooms/pricing/age-tariffs`,
+                      )
+                    }
+                    className={cn(
+                      "cursor-pointer",
+                      window.location.pathname.includes(
+                        "/event-rooms/pricing/age-tariffs",
+                      ) && "bg-accent",
+                    )}
+                  >
+                    <Tag className="w-4 h-4 mr-2" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Age Group Tariffs</span>
+                      <span className="text-xs text-muted-foreground">
+                        Manage age-based pricing
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>

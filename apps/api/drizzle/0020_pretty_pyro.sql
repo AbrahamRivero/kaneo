@@ -1,0 +1,1 @@
+ALTER TABLE "age_group_tariff" DROP COLUMN "name";

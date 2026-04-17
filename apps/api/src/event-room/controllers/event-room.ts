@@ -17,6 +17,7 @@ type CreateEventRoomPayload = {
   capacity: number;
   description?: string;
   allowsMultipleReservations?: boolean;
+  hasAgeBasedPricing?: boolean;
 };
 
 async function createEventRoom(
@@ -69,6 +70,7 @@ async function createEventRoom(
       capacity: payload.capacity,
       description: payload.description,
       allowsMultipleReservations: payload.allowsMultipleReservations ?? false,
+      hasAgeBasedPricing: payload.hasAgeBasedPricing ?? false,
     })
     .returning();
 
@@ -161,6 +163,7 @@ type UpdateEventRoomPayload = {
   capacity?: number;
   description?: string;
   allowsMultipleReservations?: boolean;
+  hasAgeBasedPricing?: boolean;
 };
 
 async function updateEventRoom(

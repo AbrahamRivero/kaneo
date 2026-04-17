@@ -89,10 +89,12 @@ export function EventCard({
         <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
           {dateStr}
         </p>
-        {allowsMultipleReservations && (event.expectedPax ?? 0) > 0 && (
+        {allowsMultipleReservations && ((event.ageBreakdown && (event.ageBreakdown.adults > 0 || event.ageBreakdown.children > 0 || event.ageBreakdown.infants > 0)) || (event.expectedPax ?? 0) > 0) && (
           <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
             <Users className="size-3" />
-            <span>{event.expectedPax}</span>
+            <span>{event.ageBreakdown && (event.ageBreakdown.adults > 0 || event.ageBreakdown.children > 0 || event.ageBreakdown.infants > 0)
+              ? `${event.ageBreakdown.adults}A, ${event.ageBreakdown.children}C, ${event.ageBreakdown.infants}I`
+              : event.expectedPax}</span>
           </div>
         )}
       </div>

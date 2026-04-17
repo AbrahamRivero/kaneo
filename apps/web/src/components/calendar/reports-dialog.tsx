@@ -357,7 +357,7 @@ export function ReportsDialog({
                 <th style="width: 25%">Event / Client / Company</th>
                 <th style="width: 12%">Date</th>
                 <th style="width: 18%">Room</th>
-                ${hasMultipleReservationRooms ? '<th style="width: 10%">Expected Pax</th>' : ""}
+                ${hasMultipleReservationRooms ? '<th style="width: 10%">Guests</th>' : ""}
                 <th style="width: 12%">Status</th>
                 <th style="width: 8%">Payment</th>
               </tr>
@@ -367,7 +367,7 @@ export function ReportsDialog({
                 reservationsWithRoom.length === 0
                   ? `
                 <tr>
-                  <td colspan="${hasMultipleReservationRooms ? 6 : 5}" style="text-align: center; padding: 30px; color: #888;">
+                  <td colspan="${hasMultipleReservationRooms ? 7 : 5}" style="text-align: center; padding: 30px; color: #888;">
                     No reservations found for this period
                   </td>
                 </tr>
@@ -384,7 +384,11 @@ export function ReportsDialog({
                   <td>${res.roomName}</td>
                   ${
                     hasMultipleReservationRooms
-                      ? `<td>${res.expectedPax && res.expectedPax > 0 ? res.expectedPax : "-"}</td>`
+                      ? `<td>${
+                          res.ageBreakdown && (res.ageBreakdown.adults > 0 || res.ageBreakdown.children > 0 || res.ageBreakdown.infants > 0)
+                            ? `${res.ageBreakdown.adults}A, ${res.ageBreakdown.children}C, ${res.ageBreakdown.infants}I`
+                            : (res.expectedPax && res.expectedPax > 0 ? `${res.expectedPax} Pax` : "-")
+                        }</td>`
                       : ""
                   }
                   <td><span class="status status-${res.status || "pending"}">${formatStatus(res.status)}</span></td>

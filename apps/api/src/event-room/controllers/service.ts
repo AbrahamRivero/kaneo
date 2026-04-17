@@ -1,15 +1,15 @@
 import { and, count, eq, ilike, or } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../../database";
 import {
   serviceTable,
   workspaceTable,
   workspaceUserTable,
-} from "../../database/schema";
-import createNotification from "../../notification/controllers/create-notification";
-import { hasScheduledPermission } from "../../utils/permissions";
-import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
-import { getUserName } from "../utils/get-user-name";
+} from "../../database/schema.js";
+import db from "../../database/index.js";
+import { hasScheduledPermission } from "../../utils/permissions.js";
+import { getUserName } from "../utils/get-user-name.js";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
+import createNotification from "../../notification/controllers/create-notification.js";
 
 export type CreateServicePayload = {
   workspaceId: string;
@@ -37,7 +37,9 @@ export type ServiceWithMaskedPrice = {
   updatedAt: Date;
 };
 
-function maskPrice(service: typeof serviceTable.$inferSelect): ServiceWithMaskedPrice {
+function maskPrice(
+  service: typeof serviceTable.$inferSelect,
+): ServiceWithMaskedPrice {
   return {
     ...service,
     pricePerPax: service.pricePerPax,
@@ -53,37 +55,11 @@ export interface PaginatedServices {
 
 export async function getServices(
   workspaceId: string,
-  userId?: string,
+  _userId?: string,
   page = 1,
   limit = 10,
   search?: string,
 ): Promise<PaginatedServices> {
-  let isViewer = false;
-
-  if (userId) {
-    const [workspace] = await db
-      .select({ ownerId: workspaceTable.ownerId })
-      .from(workspaceTable)
-      .where(eq(workspaceTable.id, workspaceId))
-      .limit(1);
-
-    if (workspace && workspace.ownerId !== userId) {
-      const [member] = await db
-        .select({ role: workspaceUserTable.role })
-        .from(workspaceUserTable)
-        .where(
-          and(
-            eq(workspaceUserTable.workspaceId, workspaceId),
-            eq(workspaceUserTable.userId, userId),
-            eq(workspaceUserTable.status, "active"),
-          ),
-        )
-        .limit(1);
-
-      isViewer = member?.role === "viewer";
-    }
-  }
-
   const offset = (page - 1) * limit;
 
   const baseCondition = eq(serviceTable.workspaceId, workspaceId);
@@ -117,7 +93,7 @@ export async function getServices(
   };
 }
 
-export async function getServiceById(userId: string, serviceId: string) {
+export async function getServiceById(serviceId: string) {
   const [service] = await db
     .select()
     .from(serviceTable)
@@ -137,22 +113,6 @@ export async function getServiceById(userId: string, serviceId: string) {
   if (!workspace) {
     throw new HTTPException(404, { message: "Workspace not found" });
   }
-
-  const isOwner = workspace.ownerId === userId;
-
-  const [member] = await db
-    .select({ role: workspaceUserTable.role })
-    .from(workspaceUserTable)
-    .where(
-      and(
-        eq(workspaceUserTable.workspaceId, service.workspaceId),
-        eq(workspaceUserTable.userId, userId),
-        eq(workspaceUserTable.status, "active"),
-      ),
-    )
-    .limit(1);
-
-  const isViewer = !isOwner && member?.role === "viewer";
 
   return maskPrice(service);
 }
@@ -228,7 +188,7 @@ export async function createService(
     `- Active: ${service.isActive ? "Yes" : "No"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -325,7 +285,7 @@ export async function updateService(
     `- Active: ${updated.isActive ? "Yes" : "No"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -402,7 +362,7 @@ export async function deleteService(userId: string, serviceId: string) {
     `- Previous Description: ${service.description || "N/A"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,

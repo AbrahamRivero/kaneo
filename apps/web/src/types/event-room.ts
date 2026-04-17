@@ -5,6 +5,7 @@ export interface EventRoom {
   capacity: number;
   description?: string | null;
   allowsMultipleReservations?: boolean | null;
+  hasAgeBasedPricing?: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,25 @@ export interface RoomTariff {
   createdAt: Date;
   updatedAt: Date;
   roomName?: string;
+}
+
+export interface AgeGroupTariff {
+  id: string;
+  workspaceId: string;
+  eventRoomId: string;
+  name?: string;
+  minAge: number;
+  maxAge: number | null;
+  price: number;
+  createdAt: Date;
+  updatedAt: Date;
+  roomName?: string;
+}
+
+export interface AgeBreakdown {
+  adults: number;
+  children: number;
+  infants: number;
 }
 
 export interface ReservationService {
@@ -82,6 +102,8 @@ export interface Reservation {
   roomChargeAmount?: number | null;
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
+  expectedPax?: number | null;
+  ageBreakdown?: AgeBreakdown | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -89,6 +111,8 @@ export interface Reservation {
   dayTariffs?: DayTariff[];
   roomName?: string;
   roomCapacity?: number;
+  allowsMultipleReservations?: boolean;
+  hasAgeBasedPricing?: boolean;
 }
 
 export interface ReservationWithRoom extends Reservation {

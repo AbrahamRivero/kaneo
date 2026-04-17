@@ -107,6 +107,37 @@ function getRoomBreakdown(
     );
   }
 
+  if (
+    reservation.ageBreakdown &&
+    (reservation.ageBreakdown.adults > 0 ||
+      reservation.ageBreakdown.children > 0 ||
+      reservation.ageBreakdown.infants > 0)
+  ) {
+    const items: { sessionType: string; days: number; price: number }[] = [];
+    if (reservation.ageBreakdown.adults > 0) {
+      items.push({
+        sessionType: `Adults · ${reservation.ageBreakdown.adults}`,
+        days: 1,
+        price: reservation.ageBreakdown.adults * 2500,
+      });
+    }
+    if (reservation.ageBreakdown.children > 0) {
+      items.push({
+        sessionType: `Children · ${reservation.ageBreakdown.children}`,
+        days: 1,
+        price: reservation.ageBreakdown.children * 2000,
+      });
+    }
+    if (reservation.ageBreakdown.infants > 0) {
+      items.push({
+        sessionType: `Infants · ${reservation.ageBreakdown.infants}`,
+        days: 1,
+        price: reservation.ageBreakdown.infants * 500,
+      });
+    }
+    return items;
+  }
+
   return reservation.totalRoomPrice
     ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
     : [];
@@ -158,7 +189,10 @@ function getStatusIcon(status?: string): React.ReactNode {
   }
 }
 
-function getReservationCharges(reservation: Reservation): {
+function getReservationCharges(
+  reservation: Reservation,
+  hasAgeBasedPricing = false,
+): {
   roomCharge: number;
   servicesCharge: number;
   roomServiceChargePercent: number;
@@ -181,12 +215,12 @@ function getReservationCharges(reservation: Reservation): {
     reservation.roomChargeAmount ??
     (legacyDerivedRoomCharge > 0
       ? legacyDerivedRoomCharge
-      : totalRoomPrice > 0
+      : totalRoomPrice > 0 && !hasAgeBasedPricing
         ? totalRoomPrice * 0.1
         : 0);
 
   const roomServiceChargePercent =
-    totalRoomPrice > 0
+    totalRoomPrice > 0 && !hasAgeBasedPricing
       ? reservation.roomChargeAmount != null || legacyDerivedRoomCharge > 0
         ? Math.round((roomCharge / totalRoomPrice) * 100)
         : 10
@@ -224,6 +258,9 @@ function SingleReservationSection({
 
   const { dateRangeStr, days } = getReservationDateMeta(reservation);
   const roomBreakdown = getRoomBreakdown(reservation, days);
+
+  const eventRoom = eventRooms.find((r) => r.id === reservation.eventRoomId);
+  const hasAgeBasedPricing = eventRoom?.hasAgeBasedPricing ?? false;
 
   const hasPricing = reservation.grandTotal != null;
 
@@ -295,6 +332,12 @@ function SingleReservationSection({
     const roomName =
       eventRooms.find((r) => r.id === reservation.eventRoomId)?.name ||
       "Event Room";
+
+    const eventRoomForReport = eventRooms.find(
+      (r) => r.id === reservation.eventRoomId,
+    );
+    const hasAgeBasedPricingForReport =
+      eventRoomForReport?.hasAgeBasedPricing ?? false;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -371,8 +414,17 @@ function SingleReservationSection({
               <span class="info-value">${reservation.email || "-"}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Expected Pax</span>
-              <span class="info-value">${reservation.expectedPax ?? "-"}</span>
+              <span class="info-label">Guests</span>
+              <span class="info-value">${
+                reservation.ageBreakdown &&
+                (reservation.ageBreakdown.adults > 0 ||
+                  reservation.ageBreakdown.children > 0 ||
+                  reservation.ageBreakdown.infants > 0)
+                  ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
+                  : reservation.expectedPax && reservation.expectedPax > 0
+                    ? `${reservation.expectedPax} Pax`
+                    : "-"
+              }</span>
             </div>
           </div>
         </div>
@@ -417,7 +469,13 @@ function SingleReservationSection({
                 .map(
                   (room) => `
                 <tr>
-                  <td>Room (${capitalizeWords(room.sessionType)})</td>
+                  <td>${
+                    room.sessionType.includes("Adults") ||
+                    room.sessionType.includes("Children") ||
+                    room.sessionType.includes("Infants")
+                      ? room.sessionType
+                      : `Room (${capitalizeWords(room.sessionType)})`
+                  }</td>
                   <td>${room.days > 1 ? room.days + " Days" : "1 Day"}</td>
                   <td style="text-align: right;">$${room.price.toFixed(2)}</td>
                 </tr>
@@ -437,7 +495,10 @@ function SingleReservationSection({
               }
               ${(() => {
                 const { roomCharge, servicesCharge, roomServiceChargePercent } =
-                  getReservationCharges(reservation);
+                  getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricingForReport,
+                  );
 
                 let html = "";
                 if (roomCharge > 0) {
@@ -463,9 +524,15 @@ function SingleReservationSection({
                 <td></td>
                 <td style="text-align: right;">$${(
                   roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
-                    (reservation.totalServicePrice ?? 0) +
-                    getReservationCharges(reservation).roomCharge +
-                    getReservationCharges(reservation).servicesCharge
+                  (reservation.totalServicePrice ?? 0) +
+                  getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricingForReport,
+                  ).roomCharge +
+                  getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricingForReport,
+                  ).servicesCharge
                 ).toFixed(2)}</td>
               </tr>
             </tbody>
@@ -697,12 +764,23 @@ function SingleReservationSection({
             </div>
             {eventRooms.find((r) => r.id === reservation.eventRoomId)
               ?.allowsMultipleReservations &&
-              (reservation.expectedPax ?? 0) > 0 && (
+              ((reservation.ageBreakdown &&
+                (reservation.ageBreakdown.adults > 0 ||
+                  reservation.ageBreakdown.children > 0 ||
+                  reservation.ageBreakdown.infants > 0)) ||
+                (reservation.expectedPax ?? 0) > 0) && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <div className="p-1">
                     <Users className="size-4" />
                   </div>
-                  <span>Expected Pax: {reservation.expectedPax}</span>
+                  <span>
+                    {reservation.ageBreakdown &&
+                    (reservation.ageBreakdown.adults > 0 ||
+                      reservation.ageBreakdown.children > 0 ||
+                      reservation.ageBreakdown.infants > 0)
+                      ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
+                      : `Pax: ${reservation.expectedPax}`}
+                  </span>
                 </div>
               )}
           </div>
@@ -717,8 +795,13 @@ function SingleReservationSection({
                 {roomBreakdown.map((room) => (
                   <div key={room.sessionType} className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Room ({capitalizeWords(room.sessionType)}
-                      {room.days > 1 ? ` ${room.days} Days` : ""})
+                      {room.sessionType.includes("Adults") ||
+                      room.sessionType.includes("Children") ||
+                      room.sessionType.includes("Infants")
+                        ? room.sessionType
+                        : `Room (${capitalizeWords(room.sessionType)}${
+                            room.days > 1 ? ` ${room.days} Days` : ""
+                          })`}
                     </span>
                     <span>${room.price.toFixed(2)}</span>
                   </div>
@@ -738,7 +821,7 @@ function SingleReservationSection({
                     roomCharge,
                     servicesCharge,
                     roomServiceChargePercent,
-                  } = getReservationCharges(reservation);
+                  } = getReservationCharges(reservation, hasAgeBasedPricing);
 
                   return (
                     <>
@@ -766,8 +849,10 @@ function SingleReservationSection({
                     {(
                       roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
                       (reservation.totalServicePrice ?? 0) +
-                      getReservationCharges(reservation).roomCharge +
-                      getReservationCharges(reservation).servicesCharge
+                      getReservationCharges(reservation, hasAgeBasedPricing)
+                        .roomCharge +
+                      getReservationCharges(reservation, hasAgeBasedPricing)
+                        .servicesCharge
                     ).toFixed(2)}
                   </span>
                 </div>

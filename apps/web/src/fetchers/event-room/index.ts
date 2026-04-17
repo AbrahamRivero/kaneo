@@ -15,6 +15,7 @@ export type EventRoom = {
   capacity: number;
   description?: string | null;
   allowsMultipleReservations?: boolean | null;
+  hasAgeBasedPricing?: boolean | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -62,6 +63,25 @@ export type RoomTariff = {
   roomName?: string;
 };
 
+export type AgeGroupTariff = {
+  id: string;
+  workspaceId: string;
+  eventRoomId: string;
+  name?: string;
+  minAge: number;
+  maxAge: number | null;
+  price: number;
+  createdAt: Date;
+  updatedAt: Date;
+  roomName?: string;
+};
+
+export type AgeBreakdown = {
+  adults: number;
+  children: number;
+  infants: number;
+};
+
 export type Reservation = {
   id: string;
   workspaceId: string;
@@ -81,11 +101,14 @@ export type Reservation = {
   serviceChargeAmount?: number | null;
   grandTotal?: number | null;
   expectedPax?: number | null;
+  ageBreakdown?: AgeBreakdown | null;
   status: string;
   createdAt: string;
   updatedAt: string;
   roomName?: string;
   roomCapacity?: number;
+  allowsMultipleReservations?: boolean;
+  hasAgeBasedPricing?: boolean;
   services?: ReservationService[];
   dayTariffs?: DayTariff[];
 };
@@ -560,6 +583,101 @@ export const deleteRoomTariff = async (
   id: string,
 ): Promise<{ success: boolean }> => {
   const url = `${base ? base : ""}/event-room/room-tariffs/${id}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getAgeGroupTariffs = async (
+  workspaceId: string,
+  eventRoomId?: string,
+  page = 1,
+  limit = 10,
+): Promise<PaginatedResponse<AgeGroupTariff>> => {
+  const params = new URLSearchParams();
+  if (eventRoomId) {
+    params.append("eventRoomId", eventRoomId);
+  }
+  params.append("page", page.toString());
+  params.append("limit", limit.toString());
+  const url = `${base ? base : ""}/event-room/${workspaceId}/age-tariffs?${params.toString()}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const getAgeGroupTariffById = async (
+  id: string,
+): Promise<AgeGroupTariff> => {
+  const url = `${base ? base : ""}/event-room/age-tariffs/${id}`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const createAgeGroupTariff = async (
+  payload: Omit<AgeGroupTariff, "id" | "createdAt" | "updatedAt" | "roomName">,
+): Promise<AgeGroupTariff> => {
+  const url = `${base ? base : ""}/event-room/age-tariffs`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const updateAgeGroupTariff = async (
+  id: string,
+  payload: Partial<
+    Omit<AgeGroupTariff, "id" | "workspaceId" | "createdAt" | "updatedAt" | "roomName">
+  >,
+): Promise<AgeGroupTariff> => {
+  const url = `${base ? base : ""}/event-room/age-tariffs/${id}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+
+  return response.json();
+};
+
+export const deleteAgeGroupTariff = async (
+  id: string,
+): Promise<{ success: boolean }> => {
+  const url = `${base ? base : ""}/event-room/age-tariffs/${id}`;
   const response = await fetch(url, {
     method: "DELETE",
     credentials: "include",

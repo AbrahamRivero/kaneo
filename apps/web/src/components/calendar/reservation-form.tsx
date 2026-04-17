@@ -51,6 +51,7 @@ import {
 } from "@/hooks/mutations/event-room";
 import {
   useGetAllServices,
+  useGetAgeGroupTariffs,
   useGetRoomTariffs,
   useGetServices,
 } from "@/hooks/queries/event-room";
@@ -87,6 +88,12 @@ export type ServiceWithPax = {
   pax: number;
 };
 
+export type AgeBreakdown = {
+  adults: number;
+  children: number;
+  infants: number;
+};
+
 export type ReservationFormValues = {
   title?: string;
   clientName: string;
@@ -105,6 +112,7 @@ export type ReservationFormValues = {
     price: number;
   }[];
   expectedPax?: number;
+  ageBreakdown?: AgeBreakdown;
   status?: "all" | "pending" | "confirmed" | "completed";
 };
 
@@ -145,6 +153,13 @@ const reservationSchema = z
       )
       .optional(),
     expectedPax: z.number().optional(),
+    ageBreakdown: z
+      .object({
+        adults: z.number(),
+        children: z.number(),
+        infants: z.number(),
+      })
+      .optional(),
     status: z.enum(["all", "pending", "confirmed", "completed"]).default("all"),
   })
   .refine(
@@ -175,6 +190,7 @@ interface ReservationFormProps {
       | { date: string; roomTariffId: string | null; price: number }[]
       | null;
     expectedPax?: number | null;
+    ageBreakdown?: { adults: number; children: number; infants: number } | null;
     status?: string | null;
   } | null;
   initialDateRange?: DateRange;
@@ -281,6 +297,11 @@ export function ReservationForm({
       services: initialData?.services || [],
       dayTariffs: initialData?.dayTariffs || [],
       expectedPax: initialData?.expectedPax ?? 0,
+      ageBreakdown: initialData?.ageBreakdown || {
+        adults: 0,
+        children: 0,
+        infants: 0,
+      },
     },
   });
 
@@ -347,6 +368,11 @@ export function ReservationForm({
         services: initialData.services || [],
         dayTariffs: initialData.dayTariffs || [],
         expectedPax: initialData.expectedPax ?? 0,
+        ageBreakdown: initialData.ageBreakdown || {
+          adults: 0,
+          children: 0,
+          infants: 0,
+        },
       });
     }
   }, [initialData, form.reset]);
@@ -383,6 +409,20 @@ export function ReservationForm({
   );
   const allowsMultipleReservations =
     selectedEventRoom?.allowsMultipleReservations ?? false;
+  const hasAgeBasedPricing = selectedEventRoom?.hasAgeBasedPricing ?? false;
+
+  const { data: ageTariffsData } = useGetAgeGroupTariffs(
+    workspaceId,
+    hasAgeBasedPricing ? selectedEventRoomId : undefined,
+  );
+  const ageTariffs = ageTariffsData?.data ?? [];
+
+  const getAgePrice = (name: "adult" | "child" | "infant") => {
+    const tariff = ageTariffs.find(
+      (t) => t.name?.toLowerCase() === name.toLowerCase(),
+    );
+    return tariff?.price ?? 0;
+  };
 
   const selectedTariffId = form.watch("roomTariffId");
   const selectedServicesWithPax = form.watch("services") || [];
@@ -424,9 +464,57 @@ export function ReservationForm({
     const days = effectiveDateRange.to
       ? differenceInDays(effectiveDateRange.to, effectiveDateRange.from) + 1
       : 1;
+
+    const ageBreakdown = form.watch("ageBreakdown") || {
+      adults: 0,
+      children: 0,
+      infants: 0,
+    };
+    const adultsPrice = getAgePrice("adult");
+    const childrenPrice = getAgePrice("child");
+    const infantsPrice = getAgePrice("infant");
+
+    const ageBasedTotal = hasAgeBasedPricing
+      ? ageBreakdown.adults * adultsPrice +
+        ageBreakdown.children * childrenPrice +
+        ageBreakdown.infants * infantsPrice
+      : 0;
+
     let tariffPrice: number;
     let roomBreakdown: { sessionType: string; days: number; price: number }[];
-    if (useDifferentTariffsPerDay && dayTariffs.length > 0) {
+    if (hasAgeBasedPricing) {
+      const breakdownItems: {
+        sessionType: string;
+        days: number;
+        price: number;
+      }[] = [];
+      if (ageBreakdown.adults > 0 && adultsPrice > 0) {
+        breakdownItems.push({
+          sessionType: `Adults · ${ageBreakdown.adults}`,
+          days: 1,
+          price: ageBreakdown.adults * adultsPrice,
+        });
+      }
+      if (ageBreakdown.children > 0 && childrenPrice > 0) {
+        breakdownItems.push({
+          sessionType: `Children · ${ageBreakdown.children}`,
+          days: 1,
+          price: ageBreakdown.children * childrenPrice,
+        });
+      }
+      if (ageBreakdown.infants > 0 && infantsPrice > 0) {
+        breakdownItems.push({
+          sessionType: `Infants · ${ageBreakdown.infants}`,
+          days: 1,
+          price: ageBreakdown.infants * infantsPrice,
+        });
+      }
+      tariffPrice = ageBasedTotal;
+      roomBreakdown =
+        breakdownItems.length > 0
+          ? breakdownItems
+          : [{ sessionType: "age_based", days: 1, price: 0 }];
+    } else if (useDifferentTariffsPerDay && dayTariffs.length > 0) {
       tariffPrice = dayTariffs.reduce((sum, dt) => sum + (dt.price ?? 0), 0);
       const grouped = dayTariffs.reduce(
         (acc, dt) => {
@@ -561,9 +649,28 @@ export function ReservationForm({
         serviceChargeAmount: pricing.serviceChargeAmount || undefined,
         grandTotal: pricing.grandTotal || undefined,
         expectedPax: restFormData.expectedPax || 0,
+        ...(hasAgeBasedPricing && {
+          ageBreakdown: restFormData.ageBreakdown || {
+            adults: 0,
+            children: 0,
+            infants: 0,
+          },
+        }),
       };
 
-      if (allowsMultipleReservations && !payload.expectedPax) {
+      if (hasAgeBasedPricing) {
+        const ageBreakdown = restFormData.ageBreakdown || {
+          adults: 0,
+          children: 0,
+          infants: 0,
+        };
+        const totalGuests =
+          ageBreakdown.adults + ageBreakdown.children + ageBreakdown.infants;
+        if (totalGuests === 0) {
+          toast.error("At least one guest is required for this room");
+          return;
+        }
+      } else if (allowsMultipleReservations && !payload.expectedPax) {
         toast.error("Expected Pax is required for this room");
         return;
       }
@@ -933,22 +1040,81 @@ export function ReservationForm({
             </div>
           </div>
 
-          {allowsMultipleReservations && (
-            <div className="grid gap-2 mt-4 max-w-xs">
-              <Label htmlFor="expectedPax">Expected Pax</Label>
-              <Input
-                id="expectedPax"
-                type="number"
-                min="0"
-                placeholder="Expected number of guests"
-                {...form.register("expectedPax", {
-                  valueAsNumber: true,
-                })}
-              />
-              <span className="text-xs text-muted-foreground">
-                Number of expected guests for this reservation
-              </span>
+          {hasAgeBasedPricing ? (
+            <div className="grid gap-4 mt-4 max-w-md">
+              <Label className="font-medium">Guests by Age Group</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="adults"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Adults (12+)
+                  </Label>
+                  <Input
+                    id="adults"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    {...form.register("ageBreakdown.adults", {
+                      valueAsNumber: true,
+                    })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="children"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Children (5-12)
+                  </Label>
+                  <Input
+                    id="children"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    {...form.register("ageBreakdown.children", {
+                      valueAsNumber: true,
+                    })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="infants"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Infants (&lt;5)
+                  </Label>
+                  <Input
+                    id="infants"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    {...form.register("ageBreakdown.infants", {
+                      valueAsNumber: true,
+                    })}
+                  />
+                </div>
+              </div>
             </div>
+          ) : (
+            allowsMultipleReservations && (
+              <div className="grid gap-2 mt-4 max-w-xs">
+                <Label htmlFor="expectedPax">Expected Pax</Label>
+                <Input
+                  id="expectedPax"
+                  type="number"
+                  min="0"
+                  placeholder="Expected number of guests"
+                  {...form.register("expectedPax", {
+                    valueAsNumber: true,
+                  })}
+                />
+                <span className="text-xs text-muted-foreground">
+                  Number of expected guests for this reservation
+                </span>
+              </div>
+            )
           )}
         </SectionCard>
       </Collapsible>
@@ -1419,7 +1585,9 @@ export function ReservationForm({
         </DialogContent>
       </Dialog>
 
-      {(selectedTariff || selectedServices.length > 0) && (
+      {(selectedTariff ||
+        selectedServices.length > 0 ||
+        hasAgeBasedPricing) && (
         <div className="border rounded-lg p-4 bg-muted/30">
           <div className="flex items-center gap-2 mb-3">
             <UtensilsCrossed className="size-5" />

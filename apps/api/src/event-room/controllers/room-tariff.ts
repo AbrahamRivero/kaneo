@@ -1,16 +1,16 @@
 import { and, count, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../../database";
 import {
   eventRoomTable,
   roomTariffTable,
   workspaceTable,
   workspaceUserTable,
-} from "../../database/schema";
-import createNotification from "../../notification/controllers/create-notification";
-import { hasScheduledPermission } from "../../utils/permissions";
-import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
-import { getUserName } from "../utils/get-user-name";
+} from "../../database/schema.js";
+import createNotification from "../../notification/controllers/create-notification.js";
+import { hasScheduledPermission } from "../../utils/permissions.js";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
+import { getUserName } from "../utils/get-user-name.js";
+import db from "../../database/index.js";
 
 export type SessionType =
   | "half_session"
@@ -71,30 +71,8 @@ export async function getRoomTariffs(
   page = 1,
   limit = 10,
 ): Promise<PaginatedRoomTariffs> {
-  let isViewer = false;
-
   if (userId) {
-    const [workspace] = await db
-      .select({ ownerId: workspaceTable.ownerId })
-      .from(workspaceTable)
-      .where(eq(workspaceTable.id, workspaceId))
-      .limit(1);
-
-    if (workspace && workspace.ownerId !== userId) {
-      const [member] = await db
-        .select({ role: workspaceUserTable.role })
-        .from(workspaceUserTable)
-        .where(
-          and(
-            eq(workspaceUserTable.workspaceId, workspaceId),
-            eq(workspaceUserTable.userId, userId),
-            eq(workspaceUserTable.status, "active"),
-          ),
-        )
-        .limit(1);
-
-      isViewer = member?.role === "viewer";
-    }
+    // Check if user has access - placeholder for future permission logic
   }
 
   const offset = (page - 1) * limit;
@@ -115,7 +93,7 @@ export async function getRoomTariffs(
   const total = countResult[0]?.count ?? 0;
 
   const tariffsWithRoom = await Promise.all(
-    tariffs.map(async (tariff) => {
+    tariffs.map(async (tariff: typeof roomTariffTable.$inferSelect) => {
       const [room] = await db
         .select({ name: eventRoomTable.name })
         .from(eventRoomTable)
@@ -138,7 +116,7 @@ export async function getRoomTariffs(
   };
 }
 
-export async function getRoomTariffById(userId: string, tariffId: string) {
+export async function getRoomTariffById(tariffId: string) {
   const [tariff] = await db
     .select()
     .from(roomTariffTable)
@@ -158,22 +136,6 @@ export async function getRoomTariffById(userId: string, tariffId: string) {
   if (!workspace) {
     throw new HTTPException(404, { message: "Workspace not found" });
   }
-
-  const isOwner = workspace.ownerId === userId;
-
-  const [member] = await db
-    .select({ role: workspaceUserTable.role })
-    .from(workspaceUserTable)
-    .where(
-      and(
-        eq(workspaceUserTable.workspaceId, tariff.workspaceId),
-        eq(workspaceUserTable.userId, userId),
-        eq(workspaceUserTable.status, "active"),
-      ),
-    )
-    .limit(1);
-
-  const isViewer = !isOwner && member?.role === "viewer";
 
   const [room] = await db
     .select({ name: eventRoomTable.name })
@@ -281,7 +243,7 @@ export async function createRoomTariff(
     `- Active: ${tariff.isActive ? "Yes" : "No"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -413,7 +375,7 @@ export async function updateRoomTariff(
     `- Active: ${updated.isActive ? "Yes" : "No"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -509,7 +471,7 @@ export async function deleteRoomTariff(userId: string, tariffId: string) {
     `- Modification Charge: €${(tariff.modificationCharge / 100).toFixed(2)}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
