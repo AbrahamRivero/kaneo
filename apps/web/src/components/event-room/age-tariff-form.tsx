@@ -38,6 +38,7 @@ interface AgeGroupTariffFormProps {
   initialData?: {
     id: string;
     eventRoomId: string;
+    name: string;
     minAge: number;
     maxAge: number | null;
     price: number;

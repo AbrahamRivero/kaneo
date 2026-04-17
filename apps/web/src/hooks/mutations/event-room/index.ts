@@ -292,9 +292,18 @@ export function useCreateAgeGroupTariff() {
 
   return useMutation({
     mutationFn: createAgeGroupTariff,
-    onSuccess: () => {
+    onSuccess: async (data) => {
       toast.success("Age group tariff created successfully");
-      queryClient.invalidateQueries({ queryKey: ["age-group-tariffs"] });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["age-group-tariffs"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["age-group-tariff", data.id],
+          refetchType: "all",
+        }),
+      ]);
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -313,9 +322,18 @@ export function useUpdateAgeGroupTariff() {
       id: string;
       payload: Parameters<typeof updateAgeGroupTariff>[1];
     }) => updateAgeGroupTariff(id, payload),
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       toast.success("Age group tariff updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["age-group-tariffs"] });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["age-group-tariffs"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["age-group-tariff", variables.id],
+          refetchType: "all",
+        }),
+      ]);
     },
     onError: (error: Error) => {
       toast.error(error.message);

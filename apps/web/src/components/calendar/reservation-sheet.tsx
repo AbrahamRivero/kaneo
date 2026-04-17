@@ -189,7 +189,10 @@ function getStatusIcon(status?: string): React.ReactNode {
   }
 }
 
-function getReservationCharges(reservation: Reservation, hasAgeBasedPricing = false): {
+function getReservationCharges(
+  reservation: Reservation,
+  hasAgeBasedPricing = false,
+): {
   roomCharge: number;
   servicesCharge: number;
   roomServiceChargePercent: number;
@@ -330,8 +333,11 @@ function SingleReservationSection({
       eventRooms.find((r) => r.id === reservation.eventRoomId)?.name ||
       "Event Room";
 
-    const eventRoomForReport = eventRooms.find((r) => r.id === reservation.eventRoomId);
-    const hasAgeBasedPricingForReport = eventRoomForReport?.hasAgeBasedPricing ?? false;
+    const eventRoomForReport = eventRooms.find(
+      (r) => r.id === reservation.eventRoomId,
+    );
+    const hasAgeBasedPricingForReport =
+      eventRoomForReport?.hasAgeBasedPricing ?? false;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -410,10 +416,14 @@ function SingleReservationSection({
             <div class="info-item">
               <span class="info-label">Guests</span>
               <span class="info-value">${
-                reservation.ageBreakdown && 
-                (reservation.ageBreakdown.adults > 0 || reservation.ageBreakdown.children > 0 || reservation.ageBreakdown.infants > 0)
-                  ? `${reservation.ageBreakdown.adults} Adults, ${reservation.ageBreakdown.children} Children, ${reservation.ageBreakdown.infants} Infants`
-                  : (reservation.expectedPax && reservation.expectedPax > 0 ? `${reservation.expectedPax} Pax` : "-")
+                reservation.ageBreakdown &&
+                (reservation.ageBreakdown.adults > 0 ||
+                  reservation.ageBreakdown.children > 0 ||
+                  reservation.ageBreakdown.infants > 0)
+                  ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
+                  : reservation.expectedPax && reservation.expectedPax > 0
+                    ? `${reservation.expectedPax} Pax`
+                    : "-"
               }</span>
             </div>
           </div>
@@ -485,7 +495,10 @@ function SingleReservationSection({
               }
               ${(() => {
                 const { roomCharge, servicesCharge, roomServiceChargePercent } =
-                  getReservationCharges(reservation, hasAgeBasedPricingForReport);
+                  getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricingForReport,
+                  );
 
                 let html = "";
                 if (roomCharge > 0) {
@@ -511,9 +524,15 @@ function SingleReservationSection({
                 <td></td>
                 <td style="text-align: right;">$${(
                   roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
-                    (reservation.totalServicePrice ?? 0) +
-                    getReservationCharges(reservation, hasAgeBasedPricingForReport).roomCharge +
-                    getReservationCharges(reservation, hasAgeBasedPricingForReport).servicesCharge
+                  (reservation.totalServicePrice ?? 0) +
+                  getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricingForReport,
+                  ).roomCharge +
+                  getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricingForReport,
+                  ).servicesCharge
                 ).toFixed(2)}</td>
               </tr>
             </tbody>
@@ -745,14 +764,23 @@ function SingleReservationSection({
             </div>
             {eventRooms.find((r) => r.id === reservation.eventRoomId)
               ?.allowsMultipleReservations &&
-              ((reservation.ageBreakdown && (reservation.ageBreakdown.adults > 0 || reservation.ageBreakdown.children > 0 || reservation.ageBreakdown.infants > 0)) || (reservation.expectedPax ?? 0) > 0) && (
+              ((reservation.ageBreakdown &&
+                (reservation.ageBreakdown.adults > 0 ||
+                  reservation.ageBreakdown.children > 0 ||
+                  reservation.ageBreakdown.infants > 0)) ||
+                (reservation.expectedPax ?? 0) > 0) && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <div className="p-1">
                     <Users className="size-4" />
                   </div>
-                  <span>{reservation.ageBreakdown && (reservation.ageBreakdown.adults > 0 || reservation.ageBreakdown.children > 0 || reservation.ageBreakdown.infants > 0)
-                    ? `${reservation.ageBreakdown.adults}A, ${reservation.ageBreakdown.children}C, ${reservation.ageBreakdown.infants}I`
-                    : `Pax: ${reservation.expectedPax}`}</span>
+                  <span>
+                    {reservation.ageBreakdown &&
+                    (reservation.ageBreakdown.adults > 0 ||
+                      reservation.ageBreakdown.children > 0 ||
+                      reservation.ageBreakdown.infants > 0)
+                      ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
+                      : `Pax: ${reservation.expectedPax}`}
+                  </span>
                 </div>
               )}
           </div>
@@ -821,8 +849,10 @@ function SingleReservationSection({
                     {(
                       roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
                       (reservation.totalServicePrice ?? 0) +
-                      getReservationCharges(reservation, hasAgeBasedPricing).roomCharge +
-                      getReservationCharges(reservation, hasAgeBasedPricing).servicesCharge
+                      getReservationCharges(reservation, hasAgeBasedPricing)
+                        .roomCharge +
+                      getReservationCharges(reservation, hasAgeBasedPricing)
+                        .servicesCharge
                     ).toFixed(2)}
                   </span>
                 </div>

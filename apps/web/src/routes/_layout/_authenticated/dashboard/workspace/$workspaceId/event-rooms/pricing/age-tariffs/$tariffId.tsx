@@ -59,7 +59,7 @@ function EditAgeGroupTariffPage() {
             size="icon"
             onClick={() =>
               navigate({
-                to: "/dashboard/workspace/$workspaceId/event-rooms/pricing/age-tariff",
+                to: "/dashboard/workspace/$workspaceId/event-rooms/pricing/age-tariffs",
                 params: { workspaceId },
               })
             }
@@ -81,7 +81,7 @@ function EditAgeGroupTariffPage() {
               ? {
                   id: tariff.id,
                   eventRoomId: tariff.eventRoomId,
-                  name: tariff.name,
+                  name: tariff.name || "Unknown",
                   minAge: tariff.minAge,
                   maxAge: tariff.maxAge,
                   price: tariff.price,

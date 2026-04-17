@@ -2,12 +2,13 @@ import { zValidator } from "@hono/zod-validator";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import db from "../database";
-import { eventRoomTable } from "../database/schema";
-import eventRoomController from "./controllers/event-room";
-import reservationController from "./controllers/reservation";
-import * as roomTariffController from "./controllers/room-tariff";
-import * as serviceController from "./controllers/service";
+import eventRoomController from "./controllers/event-room.js";
+import reservationController from "./controllers/reservation.js";
+import * as roomTariffController from "./controllers/room-tariff.js";
+import * as serviceController from "./controllers/service.js";
+import db from "../database/index.js";
+import { eventRoomTable } from "../database/schema.js";
+import { createAgeGroupTariff, deleteAgeGroupTariff, getAgeGroupTariffById, getAgeGroupTariffs, updateAgeGroupTariff } from "./controllers/age-group-tariff.js";
 
 const eventRoom = new Hono<{
   Variables: {
@@ -169,7 +170,10 @@ const eventRoom = new Hono<{
                 path: ["ageBreakdown"],
               });
             } else {
-              const total = data.ageBreakdown.adults + data.ageBreakdown.children + data.ageBreakdown.infants;
+              const total =
+                data.ageBreakdown.adults +
+                data.ageBreakdown.children +
+                data.ageBreakdown.infants;
               if (total === 0) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
@@ -279,7 +283,10 @@ const eventRoom = new Hono<{
                 path: ["ageBreakdown"],
               });
             } else {
-              const total = data.ageBreakdown.adults + data.ageBreakdown.children + data.ageBreakdown.infants;
+              const total =
+                data.ageBreakdown.adults +
+                data.ageBreakdown.children +
+                data.ageBreakdown.infants;
               if (total === 0) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
@@ -375,9 +382,8 @@ const eventRoom = new Hono<{
   )
 
   .get("/services/:id", async (c) => {
-    const userId = c.get("userId");
     const id = c.req.param("id");
-    const service = await serviceController.getServiceById(userId, id);
+    const service = await serviceController.getServiceById(id);
     return c.json(service);
   })
 
@@ -450,9 +456,8 @@ const eventRoom = new Hono<{
   )
 
   .get("/room-tariffs/:id", async (c) => {
-    const userId = c.get("userId");
     const id = c.req.param("id");
-    const tariff = await roomTariffController.getRoomTariffById(userId, id);
+    const tariff = await roomTariffController.getRoomTariffById(id);
     return c.json(tariff);
   })
 
@@ -496,8 +501,12 @@ const eventRoom = new Hono<{
     const eventRoomId = c.req.query("eventRoomId");
     const page = Number(c.req.query("page")) || 1;
     const limit = Number(c.req.query("limit")) || 10;
-    const { getAgeGroupTariffs } = await import("./controllers/age-group-tariff");
-    const tariffs = await getAgeGroupTariffs(workspaceId, eventRoomId, page, limit);
+    const tariffs = await getAgeGroupTariffs(
+      workspaceId,
+      eventRoomId,
+      page,
+      limit,
+    );
     return c.json(tariffs);
   })
 
@@ -515,7 +524,6 @@ const eventRoom = new Hono<{
     ),
     async (c) => {
       const body = c.req.valid("json");
-      const { createAgeGroupTariff } = await import("./controllers/age-group-tariff");
       const tariff = await createAgeGroupTariff(body);
       return c.json(tariff);
     },
@@ -523,7 +531,6 @@ const eventRoom = new Hono<{
 
   .get("/age-tariffs/:id", async (c) => {
     const id = c.req.param("id");
-    const { getAgeGroupTariffById } = await import("./controllers/age-group-tariff");
     const tariff = await getAgeGroupTariffById(id);
     return c.json(tariff);
   })
@@ -542,7 +549,6 @@ const eventRoom = new Hono<{
     async (c) => {
       const id = c.req.param("id");
       const body = c.req.valid("json");
-      const { updateAgeGroupTariff } = await import("./controllers/age-group-tariff");
       const tariff = await updateAgeGroupTariff(id, body);
       return c.json(tariff);
     },
@@ -550,7 +556,6 @@ const eventRoom = new Hono<{
 
   .delete("/age-tariffs/:id", async (c) => {
     const id = c.req.param("id");
-    const { deleteAgeGroupTariff } = await import("./controllers/age-group-tariff");
     const result = await deleteAgeGroupTariff(id);
     return c.json(result);
   });

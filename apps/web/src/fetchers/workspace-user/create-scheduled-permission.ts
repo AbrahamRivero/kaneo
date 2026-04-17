@@ -7,12 +7,12 @@ import { client } from "@palcodesk/libs";
 async function createScheduledPermission(
   data: CreateScheduledPermissionRequest,
 ): Promise<ScheduledPermission> {
-  const { workspaceId, userId, action, startTime, endTime, isActive } = data;
+  const { workspaceId, userId, action, startTime, endTime } = data;
 
   const response = await client["workspace-user"][":workspaceId"].users[
     ":userId"
   ].permissions.$post({
-    json: { action, startTime, endTime, isActive },
+    json: { action, startTime, endTime },
     param: { workspaceId, userId },
   });
 
