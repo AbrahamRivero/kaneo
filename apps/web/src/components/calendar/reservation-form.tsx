@@ -670,7 +670,7 @@ export function ReservationForm({
           toast.error("At least one guest is required for this room");
           return;
         }
-      } else if (allowsMultipleReservations && !payload.expectedPax) {
+      } else if (allowsMultipleReservations && !hasAgeBasedPricing && !payload.expectedPax) {
         toast.error("Expected Pax is required for this room");
         return;
       }

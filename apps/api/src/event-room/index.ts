@@ -182,7 +182,7 @@ const eventRoom = new Hono<{
                 });
               }
             }
-          } else if (room?.allowsMultipleReservations && !data.expectedPax) {
+          } else if (room?.allowsMultipleReservations && !room?.hasAgeBasedPricing && !data.expectedPax) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Expected Pax is required",
@@ -295,7 +295,7 @@ const eventRoom = new Hono<{
                 });
               }
             }
-          } else if (room?.allowsMultipleReservations && !data.expectedPax) {
+          } else if (room?.allowsMultipleReservations && !room?.hasAgeBasedPricing && !data.expectedPax) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Expected Pax is required",

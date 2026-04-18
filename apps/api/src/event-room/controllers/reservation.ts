@@ -241,7 +241,7 @@ async function createReservation(
     throw new HTTPException(404, { message: "Event room not found" });
   }
 
-  if (room.allowsMultipleReservations && !payload.expectedPax) {
+  if (room.allowsMultipleReservations && !room.hasAgeBasedPricing && !payload.expectedPax) {
     throw new HTTPException(400, {
       message:
         "Expected Pax is required for rooms that allow multiple reservations",
@@ -801,7 +801,7 @@ async function updateReservation(
     throw new HTTPException(404, { message: "Event room not found" });
   }
 
-  if (room.allowsMultipleReservations && !payload.expectedPax) {
+  if (room.allowsMultipleReservations && !room.hasAgeBasedPricing && !payload.expectedPax) {
     throw new HTTPException(400, {
       message:
         "Expected Pax is required for rooms that allow multiple reservations",
