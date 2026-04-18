@@ -357,6 +357,10 @@ export const ageGroupTariffTable = pgTable("age_group_tariff", {
   minAge: integer("min_age").notNull(),
   maxAge: integer("max_age"),
   price: integer("price").notNull(),
+  validFrom: timestamp("valid_from", { mode: "date" })
+    .defaultNow()
+    .notNull(),
+  validTo: timestamp("valid_to", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
@@ -499,5 +503,27 @@ export const reservationDayTariffTable = pgTable("reservation_day_tariff", {
     onDelete: "set null",
   }),
   price: integer("price").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const reservationAgeGroupTariffTable = pgTable("reservation_age_group_tariff", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  reservationId: text("reservation_id").notNull().references(() => reservationTable.id, {
+    onDelete: "cascade",
+  }),
+  ageGroupTariffId: text("age_group_tariff_id").references(
+    () => ageGroupTariffTable.id,
+    {
+      onDelete: "set null",
+    },
+  ),
+  groupName: text("group_name").notNull(),
+  minAge: integer("min_age").notNull(),
+  maxAge: integer("max_age"),
+  count: integer("count").notNull(),
+  unitPrice: integer("unit_price").notNull(),
+  totalPrice: integer("total_price").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });

@@ -520,6 +520,8 @@ const eventRoom = new Hono<{
         minAge: z.number(),
         maxAge: z.number().nullable(),
         price: z.number(),
+        validFrom: z.string().optional(),
+        validTo: z.string().optional(),
       }),
     ),
     async (c) => {
@@ -544,6 +546,8 @@ const eventRoom = new Hono<{
         minAge: z.number().optional(),
         maxAge: z.number().nullable().optional(),
         price: z.number().optional(),
+        validFrom: z.string().optional(),
+        validTo: z.string().optional(),
       }),
     ),
     async (c) => {

@@ -1,9 +1,9 @@
-import { count, eq, and } from "drizzle-orm";
-import db from "../../database";
+import { count, eq, and, isNull, or, sql } from "drizzle-orm";
+import db from "../../database/index.js";
 import {
   ageGroupTariffTable,
   eventRoomTable,
-} from "../../database/schema";
+} from "../../database/schema.js";
 
 export type AgeGroupTariff = typeof ageGroupTariffTable.$inferSelect;
 export type NewAgeGroupTariff = typeof ageGroupTariffTable.$inferInsert;
@@ -22,6 +22,40 @@ function deriveAgeGroupName(minAge: number, maxAge: number | null): string {
     return `${minAge}-${maxAge}`;
   }
   return `${minAge}+`;
+}
+
+export async function getActiveAgeGroupTariffs(
+  eventRoomId: string,
+  effectiveDate: string | Date = new Date().toISOString().slice(0, 10),
+) {
+  const targetDate =
+    effectiveDate instanceof Date
+      ? effectiveDate.toISOString().slice(0, 10)
+      : effectiveDate;
+
+  return db
+    .select({
+      id: ageGroupTariffTable.id,
+      workspaceId: ageGroupTariffTable.workspaceId,
+      eventRoomId: ageGroupTariffTable.eventRoomId,
+      minAge: ageGroupTariffTable.minAge,
+      maxAge: ageGroupTariffTable.maxAge,
+      price: ageGroupTariffTable.price,
+      validFrom: ageGroupTariffTable.validFrom,
+      validTo: ageGroupTariffTable.validTo,
+    })
+    .from(ageGroupTariffTable)
+    .where(
+      and(
+        eq(ageGroupTariffTable.eventRoomId, eventRoomId),
+        sql`${ageGroupTariffTable.validFrom} <= ${targetDate}`,
+        or(
+          isNull(ageGroupTariffTable.validTo),
+          sql`${ageGroupTariffTable.validTo} >= ${targetDate}`,
+        ),
+      ),
+    )
+    .orderBy(ageGroupTariffTable.minAge);
 }
 
 export async function getAgeGroupTariffs(
@@ -46,6 +80,8 @@ export async function getAgeGroupTariffs(
         minAge: ageGroupTariffTable.minAge,
         maxAge: ageGroupTariffTable.maxAge,
         price: ageGroupTariffTable.price,
+        validFrom: ageGroupTariffTable.validFrom,
+        validTo: ageGroupTariffTable.validTo,
         createdAt: ageGroupTariffTable.createdAt,
         updatedAt: ageGroupTariffTable.updatedAt,
         roomName: eventRoomTable.name,
@@ -81,6 +117,8 @@ export async function getAgeGroupTariffById(id: string) {
       minAge: ageGroupTariffTable.minAge,
       maxAge: ageGroupTariffTable.maxAge,
       price: ageGroupTariffTable.price,
+      validFrom: ageGroupTariffTable.validFrom,
+      validTo: ageGroupTariffTable.validTo,
       createdAt: ageGroupTariffTable.createdAt,
       updatedAt: ageGroupTariffTable.updatedAt,
       roomName: eventRoomTable.name,
@@ -103,6 +141,8 @@ export async function createAgeGroupTariff(data: {
   minAge: number;
   maxAge: number | null;
   price: number;
+  validFrom?: string;
+  validTo?: string;
 }) {
   const derivedName = deriveAgeGroupName(data.minAge, data.maxAge);
 
@@ -114,6 +154,8 @@ export async function createAgeGroupTariff(data: {
       minAge: data.minAge,
       maxAge: data.maxAge,
       price: data.price,
+      validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
+      validTo: data.validTo ? new Date(data.validTo) : undefined,
     })
     .returning();
 
@@ -133,14 +175,44 @@ export async function updateAgeGroupTariff(
     minAge?: number;
     maxAge?: number | null;
     price?: number;
+    validFrom?: string;
+    validTo?: string;
   },
 ) {
+  const updatedData: {
+    eventRoomId?: string;
+    minAge?: number;
+    maxAge?: number | null;
+    price?: number;
+    validFrom?: Date;
+    validTo?: Date;
+    updatedAt: Date;
+  } = {
+    updatedAt: new Date(),
+  };
+
+  if (data.eventRoomId !== undefined) {
+    updatedData.eventRoomId = data.eventRoomId;
+  }
+  if (data.minAge !== undefined) {
+    updatedData.minAge = data.minAge;
+  }
+  if (data.maxAge !== undefined) {
+    updatedData.maxAge = data.maxAge;
+  }
+  if (data.price !== undefined) {
+    updatedData.price = data.price;
+  }
+  if (data.validFrom !== undefined) {
+    updatedData.validFrom = data.validFrom ? new Date(data.validFrom) : undefined;
+  }
+  if (data.validTo !== undefined) {
+    updatedData.validTo = data.validTo ? new Date(data.validTo) : undefined;
+  }
+
   const [updated] = await db
     .update(ageGroupTariffTable)
-    .set({
-      ...data,
-      updatedAt: new Date(),
-    })
+    .set(updatedData)
     .where(eq(ageGroupTariffTable.id, id))
     .returning();
 

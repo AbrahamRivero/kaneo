@@ -1,11 +1,34 @@
-import { eq, inArray } from "drizzle-orm";
-import type db from "../../database";
-import { serviceTable, roomTariffTable } from "../../database/schema";
+import { eq, inArray, and, isNull, or, sql } from "drizzle-orm";
+import type db from "../../database/index.js";
+import {
+  ageGroupTariffTable,
+  serviceTable,
+  roomTariffTable,
+} from "../../database/schema.js";
+
+export type AgeBreakdown = {
+  adults: number;
+  children: number;
+  infants: number;
+};
+
+export type AgeGroupPricingLineItem = {
+  ageGroupTariffId: string | null;
+  groupName: string;
+  minAge: number;
+  maxAge: number | null;
+  count: number;
+  unitPrice: number;
+  totalPrice: number;
+};
 
 export type PricingInput = {
   totalRoomPrice: number;
   totalServicePrice: number;
   roomTariffId?: string | null;
+  eventRoomId?: string;
+  ageBreakdown?: AgeBreakdown;
+  pricingDate?: string;
   services: Array<{
     serviceId: string;
     unitPrice: number;
@@ -20,13 +43,133 @@ export type PricingOutput = {
   roomChargeAmount: number;
   serviceChargeAmount: number;
   grandTotal: number;
+  ageGroupPricingLineItems?: AgeGroupPricingLineItem[];
 };
+
+function deriveAgeGroupName(minAge: number, maxAge: number | null): string {
+  if (minAge >= 13) {
+    return "Adult";
+  }
+  if (minAge >= 6 && (maxAge === null || maxAge <= 12)) {
+    return "Child";
+  }
+  if (minAge >= 0 && (maxAge === null || maxAge <= 5)) {
+    return "Infant";
+  }
+  if (maxAge !== null) {
+    return `${minAge}-${maxAge}`;
+  }
+  return `${minAge}+`;
+}
+
+async function getActiveAgeGroupTariffs(
+  database: typeof db,
+  eventRoomId: string,
+  effectiveDate: string,
+) {
+  return database
+    .select({
+      id: ageGroupTariffTable.id,
+      minAge: ageGroupTariffTable.minAge,
+      maxAge: ageGroupTariffTable.maxAge,
+      price: ageGroupTariffTable.price,
+    })
+    .from(ageGroupTariffTable)
+    .where(
+      and(
+        eq(ageGroupTariffTable.eventRoomId, eventRoomId),
+        sql`${ageGroupTariffTable.validFrom} <= ${effectiveDate}`,
+        or(
+          isNull(ageGroupTariffTable.validTo),
+          sql`${ageGroupTariffTable.validTo} >= ${effectiveDate}`,
+        ),
+      ),
+    )
+    .orderBy(ageGroupTariffTable.minAge);
+}
+
+async function calculateAgeGroupPricing(
+  database: typeof db,
+  eventRoomId: string,
+  ageBreakdown: AgeBreakdown,
+  pricingDate: string,
+) {
+  const tariffs = await getActiveAgeGroupTariffs(
+    database,
+    eventRoomId,
+    pricingDate,
+  );
+
+  const ageGroups = [
+    { groupName: "Adult", minAge: 13, maxAge: null, count: ageBreakdown.adults },
+    { groupName: "Child", minAge: 6, maxAge: 12, count: ageBreakdown.children },
+    { groupName: "Infant", minAge: 0, maxAge: 5, count: ageBreakdown.infants },
+  ];
+
+  const lineItems: AgeGroupPricingLineItem[] = [];
+  let totalRoomPrice = 0;
+
+  for (const group of ageGroups) {
+    if (group.count <= 0) {
+      continue;
+    }
+
+    const tariff = tariffs.find(
+      (t) => deriveAgeGroupName(t.minAge, t.maxAge) === group.groupName,
+    );
+
+    if (!tariff) {
+      throw new Error(
+        `No active age-group tariff defined for ${group.groupName}`,
+      );
+    }
+
+    const totalPrice = Math.round(tariff.price * group.count);
+    totalRoomPrice += totalPrice;
+
+    lineItems.push({
+      ageGroupTariffId: tariff.id,
+      groupName: group.groupName,
+      minAge: tariff.minAge,
+      maxAge: tariff.maxAge,
+      count: group.count,
+      unitPrice: tariff.price,
+      totalPrice,
+    });
+  }
+
+  return { totalRoomPrice, lineItems };
+}
 
 export async function calculateReservationPricing(
   input: PricingInput,
   database: typeof db,
 ): Promise<PricingOutput> {
-  const { totalRoomPrice, totalServicePrice, roomTariffId, services } = input;
+  const {
+    totalRoomPrice,
+    totalServicePrice,
+    roomTariffId,
+    eventRoomId,
+    ageBreakdown,
+    pricingDate,
+    services,
+  } = input;
+
+  const effectivePricingDate = pricingDate ?? new Date().toISOString().slice(0, 10);
+
+  let effectiveRoomPrice = totalRoomPrice;
+  let ageGroupPricingLineItems: AgeGroupPricingLineItem[] | undefined;
+
+  if (eventRoomId && ageBreakdown) {
+    const priced = await calculateAgeGroupPricing(
+      database,
+      eventRoomId,
+      ageBreakdown,
+      effectivePricingDate,
+    );
+    effectiveRoomPrice = priced.totalRoomPrice;
+    ageGroupPricingLineItems = priced.lineItems;
+  }
 
   let roomChargePercent = 0;
 
@@ -65,16 +208,17 @@ export async function calculateReservationPricing(
   }
 
   const roomChargeAmount = Math.round(
-    totalRoomPrice * (roomChargePercent / 100),
+    effectiveRoomPrice * (roomChargePercent / 100),
   );
   const grandTotal =
-    totalRoomPrice + totalServicePrice + roomChargeAmount + serviceChargeAmount;
+    effectiveRoomPrice + totalServicePrice + roomChargeAmount + serviceChargeAmount;
 
   return {
-    totalRoomPrice,
+    totalRoomPrice: effectiveRoomPrice,
     totalServicePrice,
     roomChargeAmount,
     serviceChargeAmount,
     grandTotal,
+    ageGroupPricingLineItems,
   };
 }
