@@ -114,6 +114,9 @@ export function AgeGroupTariffsTable({
               <TableHead className="h-11 px-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Price
               </TableHead>
+              <TableHead className="h-11 px-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Validity Period
+              </TableHead>
               <TableHead className="h-11 px-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground text-right">
                 Actions
               </TableHead>
@@ -149,6 +152,21 @@ export function AgeGroupTariffsTable({
                   <span className="text-muted-foreground">
                     {tariff.price ? `${tariff.price} CUP` : "—"}
                   </span>
+                </TableCell>
+                <TableCell className="px-4 py-3.5">
+                  <div className="text-xs text-muted-foreground">
+                    {tariff.validFrom && tariff.validTo ? (
+                      <span>
+                        {new Date(tariff.validFrom).toLocaleDateString()} - {new Date(tariff.validTo).toLocaleDateString()}
+                      </span>
+                    ) : tariff.validFrom ? (
+                      <span>From {new Date(tariff.validFrom).toLocaleDateString()}</span>
+                    ) : tariff.validTo ? (
+                      <span>Until {new Date(tariff.validTo).toLocaleDateString()}</span>
+                    ) : (
+                      <span className="text-green-600">Always active</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-1">

@@ -270,7 +270,7 @@ async function createReservation(
       roomTariffId: payload.roomTariffId,
       eventRoomId: payload.eventRoomId,
       ageBreakdown: payload.ageBreakdown,
-      pricingDate: payload.dateRange.from,
+      pricingDate: payload.dateRange.from, // Use reservation date to select appropriate age-group tariffs
       services: payload.services || [],
     },
     db,
@@ -885,7 +885,7 @@ async function updateReservation(
         payload.ageBreakdown !== undefined
           ? payload.ageBreakdown
           : reservation.ageBreakdown || undefined,
-      pricingDate: dateRange.from,
+      pricingDate: dateRange.from, // Use reservation date to select appropriate age-group tariffs
       services: payload.services || [],
     },
     db,

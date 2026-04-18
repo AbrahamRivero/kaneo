@@ -24,6 +24,23 @@ function deriveAgeGroupName(minAge: number, maxAge: number | null): string {
   return `${minAge}+`;
 }
 
+function parseLocalDate(value?: string): Date | undefined {
+  if (!value) return undefined;
+
+  const datePart = value.split("T")[0];
+  if (!datePart) return undefined;
+
+  const parts = datePart.split("-");
+  if (parts.length !== 3) return undefined;
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  if ([year, month, day].some((n) => Number.isNaN(n))) return undefined;
+
+  return new Date(year, month - 1, day);
+}
+
 export async function getActiveAgeGroupTariffs(
   eventRoomId: string,
   effectiveDate: string | Date = new Date().toISOString().slice(0, 10),
@@ -154,8 +171,8 @@ export async function createAgeGroupTariff(data: {
       minAge: data.minAge,
       maxAge: data.maxAge,
       price: data.price,
-      validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
-      validTo: data.validTo ? new Date(data.validTo) : undefined,
+      validFrom: parseLocalDate(data.validFrom),
+      validTo: parseLocalDate(data.validTo),
     })
     .returning();
 
@@ -204,10 +221,10 @@ export async function updateAgeGroupTariff(
     updatedData.price = data.price;
   }
   if (data.validFrom !== undefined) {
-    updatedData.validFrom = data.validFrom ? new Date(data.validFrom) : undefined;
+    updatedData.validFrom = data.validFrom ? parseLocalDate(data.validFrom) : undefined;
   }
   if (data.validTo !== undefined) {
-    updatedData.validTo = data.validTo ? new Date(data.validTo) : undefined;
+    updatedData.validTo = data.validTo ? parseLocalDate(data.validTo) : undefined;
   }
 
   const [updated] = await db

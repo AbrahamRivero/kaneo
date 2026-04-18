@@ -67,6 +67,12 @@ async function getActiveAgeGroupTariffs(
   eventRoomId: string,
   effectiveDate: string,
 ) {
+  // This function selects age-group tariffs that are valid for the given effectiveDate.
+  // Tariffs are considered valid if:
+  // - validFrom <= effectiveDate
+  // - validTo is null (no end date) OR validTo >= effectiveDate
+  // This ensures that future tariff changes don't retroactively affect existing reservations,
+  // but new reservations use the correct tariff for their event date.
   return database
     .select({
       id: ageGroupTariffTable.id,
