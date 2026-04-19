@@ -1,15 +1,15 @@
 import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../../database";
+import db from "../../database/index.js";
 import {
   eventRoomTable,
   workspaceTable,
   workspaceUserTable,
-} from "../../database/schema";
-import createNotification from "../../notification/controllers/create-notification";
-import { hasScheduledPermission } from "../../utils/permissions";
-import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
-import { getUserName } from "../utils/get-user-name";
+} from "../../database/schema.js";
+import createNotification from "../../notification/controllers/create-notification.js";
+import { hasScheduledPermission } from "../../utils/permissions.js";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
+import { getUserName } from "../utils/get-user-name.js";
 
 type CreateEventRoomPayload = {
   workspaceId: string;
@@ -88,7 +88,7 @@ async function createEventRoom(
     `- Multiple Reservations: ${eventRoom.allowsMultipleReservations ? "Yes" : "No"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -244,7 +244,7 @@ async function updateEventRoom(
     `- Multiple Reservations: ${updated.allowsMultipleReservations ? "Yes" : "No"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -318,7 +318,7 @@ async function deleteEventRoom(userId: string, eventRoomId: string) {
     `- Previous description: ${eventRoom.description || "N/A"}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
