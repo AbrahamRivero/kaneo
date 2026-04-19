@@ -71,6 +71,8 @@ export type AgeGroupTariff = {
   minAge: number;
   maxAge: number | null;
   price: number;
+  validFrom?: string;
+  validTo?: string;
   createdAt: Date;
   updatedAt: Date;
   roomName?: string;

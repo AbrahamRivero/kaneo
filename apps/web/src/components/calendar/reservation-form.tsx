@@ -417,9 +417,11 @@ export function ReservationForm({
   );
   const ageTariffs = ageTariffsData?.data ?? [];
 
-  const getAgePrice = (name: "adult" | "child" | "infant") => {
+  const getAgePrice = (name: "adult" | "child" | "infant", date: string) => {
     const tariff = ageTariffs.find(
-      (t) => t.name?.toLowerCase() === name.toLowerCase(),
+      (t) => t.name?.toLowerCase() === name.toLowerCase() &&
+        (!t.validFrom || new Date(t.validFrom) <= new Date(date)) &&
+        (!t.validTo || new Date(t.validTo) >= new Date(date))
     );
     return tariff?.price ?? 0;
   };
@@ -470,14 +472,27 @@ export function ReservationForm({
       children: 0,
       infants: 0,
     };
-    const adultsPrice = getAgePrice("adult");
-    const childrenPrice = getAgePrice("child");
-    const infantsPrice = getAgePrice("infant");
+
+    let totalAdultsPrice = 0;
+    let totalChildrenPrice = 0;
+    let totalInfantsPrice = 0;
+    
+    const startDate = new Date(effectiveDateRange.from);
+    const endDate = effectiveDateRange.to ? new Date(effectiveDateRange.to) : startDate;
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+      const dateStr = format(currentDate, "yyyy-MM-dd");
+      totalAdultsPrice += getAgePrice("adult", dateStr);
+      totalChildrenPrice += getAgePrice("child", dateStr);
+      totalInfantsPrice += getAgePrice("infant", dateStr);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
 
     const ageBasedTotal = hasAgeBasedPricing
-      ? ageBreakdown.adults * adultsPrice +
-        ageBreakdown.children * childrenPrice +
-        ageBreakdown.infants * infantsPrice
+      ? ageBreakdown.adults * totalAdultsPrice +
+        ageBreakdown.children * totalChildrenPrice +
+        ageBreakdown.infants * totalInfantsPrice
       : 0;
 
     let tariffPrice: number;
@@ -488,25 +503,25 @@ export function ReservationForm({
         days: number;
         price: number;
       }[] = [];
-      if (ageBreakdown.adults > 0 && adultsPrice > 0) {
+      if (ageBreakdown.adults > 0 && totalAdultsPrice > 0) {
         breakdownItems.push({
           sessionType: `Adults · ${ageBreakdown.adults}`,
-          days: 1,
-          price: ageBreakdown.adults * adultsPrice,
+          days,
+          price: ageBreakdown.adults * totalAdultsPrice,
         });
       }
-      if (ageBreakdown.children > 0 && childrenPrice > 0) {
+      if (ageBreakdown.children > 0 && totalChildrenPrice > 0) {
         breakdownItems.push({
           sessionType: `Children · ${ageBreakdown.children}`,
-          days: 1,
-          price: ageBreakdown.children * childrenPrice,
+          days,
+          price: ageBreakdown.children * totalChildrenPrice,
         });
       }
-      if (ageBreakdown.infants > 0 && infantsPrice > 0) {
+      if (ageBreakdown.infants > 0 && totalInfantsPrice > 0) {
         breakdownItems.push({
           sessionType: `Infants · ${ageBreakdown.infants}`,
-          days: 1,
-          price: ageBreakdown.infants * infantsPrice,
+          days,
+          price: ageBreakdown.infants * totalInfantsPrice,
         });
       }
       tariffPrice = ageBasedTotal;

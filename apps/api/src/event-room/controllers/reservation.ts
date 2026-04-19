@@ -1,8 +1,9 @@
 import { type SQL, and, eq, ne, or, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../../database";
+import db from "../../database/index.js";
 import {
   eventRoomTable,
+  reservationAgeGroupTariffTable,
   reservationDayTariffTable,
   reservationServiceTable,
   reservationTable,
@@ -10,13 +11,13 @@ import {
   serviceTable,
   workspaceTable,
   workspaceUserTable,
-} from "../../database/schema";
-import { publishEvent } from "../../events";
-import createNotification from "../../notification/controllers/create-notification";
-import { hasScheduledPermission } from "../../utils/permissions";
-import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users";
-import { getUserName } from "../utils/get-user-name";
-import { calculateReservationPricing } from "../utils/pricing";
+} from "../../database/schema.js";
+import { publishEvent } from "../../events/index.js";
+import createNotification from "../../notification/controllers/create-notification.js";
+import { hasScheduledPermission } from "../../utils/permissions.js";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
+import { getUserName } from "../utils/get-user-name.js";
+import { calculateReservationPricing } from "../utils/pricing.js";
 
 export type DateRange = { from: string; to?: string };
 
@@ -115,14 +116,14 @@ function datesOverlap(
 type ConflictResult =
   | { hasConflict: false }
   | {
-    hasConflict: true;
-    type: "date_overlap";
-    conflictingReservation: {
-      id: string;
-      title: string;
-      dateRange: DateRange;
+      hasConflict: true;
+      type: "date_overlap";
+      conflictingReservation: {
+        id: string;
+        title: string;
+        dateRange: DateRange;
+      };
     };
-  };
 
 async function checkReservationConflict(
   eventRoomId: string,
@@ -267,6 +268,9 @@ async function createReservation(
       totalRoomPrice: payload.totalRoomPrice || 0,
       totalServicePrice: payload.totalServicePrice || 0,
       roomTariffId: payload.roomTariffId,
+      eventRoomId: payload.eventRoomId,
+      ageBreakdown: payload.ageBreakdown,
+      pricingDate: payload.dateRange.from, // Use reservation date to select appropriate age-group tariffs
       services: payload.services || [],
     },
     db,
@@ -327,6 +331,21 @@ async function createReservation(
     );
   }
 
+  if (pricing.ageGroupPricingLineItems && pricing.ageGroupPricingLineItems.length > 0) {
+    await db.insert(reservationAgeGroupTariffTable).values(
+      pricing.ageGroupPricingLineItems.map((item) => ({
+        reservationId: reservation.id,
+        ageGroupTariffId: item.ageGroupTariffId,
+        groupName: item.groupName,
+        minAge: item.minAge,
+        maxAge: item.maxAge,
+        count: item.count,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+      })),
+    );
+  }
+
   const services = await db
     .select({
       id: reservationServiceTable.id,
@@ -382,7 +401,7 @@ async function createReservation(
     `- Total: ${totalFormatted}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -704,6 +723,22 @@ async function getReservation(userId: string, reservationId: string) {
     )
     .where(eq(reservationDayTariffTable.reservationId, reservationId));
 
+  const ageGroupTariffs = await db
+    .select({
+      id: reservationAgeGroupTariffTable.id,
+      reservationId: reservationAgeGroupTariffTable.reservationId,
+      ageGroupTariffId: reservationAgeGroupTariffTable.ageGroupTariffId,
+      groupName: reservationAgeGroupTariffTable.groupName,
+      minAge: reservationAgeGroupTariffTable.minAge,
+      maxAge: reservationAgeGroupTariffTable.maxAge,
+      count: reservationAgeGroupTariffTable.count,
+      unitPrice: reservationAgeGroupTariffTable.unitPrice,
+      totalPrice: reservationAgeGroupTariffTable.totalPrice,
+      createdAt: reservationAgeGroupTariffTable.createdAt,
+    })
+    .from(reservationAgeGroupTariffTable)
+    .where(eq(reservationAgeGroupTariffTable.reservationId, reservationId));
+
   return {
     ...reservation,
     services: services.map((s) => ({
@@ -729,6 +764,18 @@ async function getReservation(userId: string, reservationId: string) {
       price: dt.price,
       createdAt: dt.createdAt,
       sessionType: dt.sessionType,
+    })),
+    ageGroupTariffs: ageGroupTariffs.map((item) => ({
+      id: item.id,
+      reservationId: item.reservationId,
+      ageGroupTariffId: item.ageGroupTariffId,
+      groupName: item.groupName,
+      minAge: item.minAge,
+      maxAge: item.maxAge,
+      count: item.count,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      createdAt: item.createdAt,
     })),
   };
 }
@@ -830,15 +877,26 @@ async function updateReservation(
   const pricing = await calculateReservationPricing(
     {
       totalRoomPrice: payload.totalRoomPrice || reservation.totalRoomPrice || 0,
-      totalServicePrice: payload.totalServicePrice || reservation.totalServicePrice || 0,
+      totalServicePrice:
+        payload.totalServicePrice || reservation.totalServicePrice || 0,
       roomTariffId: payload.roomTariffId ?? reservation.roomTariffId,
+      eventRoomId,
+      ageBreakdown:
+        payload.ageBreakdown !== undefined
+          ? payload.ageBreakdown
+          : reservation.ageBreakdown || undefined,
+      pricingDate: dateRange.from, // Use reservation date to select appropriate age-group tariffs
       services: payload.services || [],
     },
     db,
   );
 
   const { status: _, ...restPayload } = payload;
-  const { dateRange: payloadDateRange, ageBreakdown: payloadAgeBreakdown, ...restWithoutDateRange } = restPayload;
+  const {
+    dateRange: payloadDateRange,
+    ageBreakdown: payloadAgeBreakdown,
+    ...restWithoutDateRange
+  } = restPayload;
 
   const [updated] = await db
     .update(reservationTable)
@@ -910,6 +968,27 @@ async function updateReservation(
     }
   }
 
+  if (payload.ageBreakdown !== undefined) {
+    await db
+      .delete(reservationAgeGroupTariffTable)
+      .where(eq(reservationAgeGroupTariffTable.reservationId, reservationId));
+
+    if (pricing.ageGroupPricingLineItems && pricing.ageGroupPricingLineItems.length > 0) {
+      await db.insert(reservationAgeGroupTariffTable).values(
+        pricing.ageGroupPricingLineItems.map((item) => ({
+          reservationId: reservationId,
+          ageGroupTariffId: item.ageGroupTariffId,
+          groupName: item.groupName,
+          minAge: item.minAge,
+          maxAge: item.maxAge,
+          count: item.count,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+        })),
+      );
+    }
+  }
+
   const services = await db
     .select({
       id: reservationServiceTable.id,
@@ -955,8 +1034,8 @@ async function updateReservation(
   const paxStr = updated.expectedPax ? `${updated.expectedPax} pax` : "N/A";
   const changedFields = payload
     ? Object.keys(payload)
-      .filter((k) => k !== "services" && k !== "dayTariffs")
-      .join(", ")
+        .filter((k) => k !== "services" && k !== "dayTariffs")
+        .join(", ")
     : "N/A";
 
   const notificationTitle = `${updated.title ? `Reservation Updated: ${updated.title}` : "Reservation Updated"}`;
@@ -971,7 +1050,7 @@ async function updateReservation(
     `- Changed fields: ${changedFields}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -1000,6 +1079,22 @@ async function updateReservation(
     )
     .where(eq(reservationDayTariffTable.reservationId, reservationId));
 
+  const ageGroupTariffs = await db
+    .select({
+      id: reservationAgeGroupTariffTable.id,
+      reservationId: reservationAgeGroupTariffTable.reservationId,
+      ageGroupTariffId: reservationAgeGroupTariffTable.ageGroupTariffId,
+      groupName: reservationAgeGroupTariffTable.groupName,
+      minAge: reservationAgeGroupTariffTable.minAge,
+      maxAge: reservationAgeGroupTariffTable.maxAge,
+      count: reservationAgeGroupTariffTable.count,
+      unitPrice: reservationAgeGroupTariffTable.unitPrice,
+      totalPrice: reservationAgeGroupTariffTable.totalPrice,
+      createdAt: reservationAgeGroupTariffTable.createdAt,
+    })
+    .from(reservationAgeGroupTariffTable)
+    .where(eq(reservationAgeGroupTariffTable.reservationId, reservationId));
+
   return {
     ...updated,
     services: services.map((s) => ({
@@ -1025,6 +1120,18 @@ async function updateReservation(
       price: dt.price,
       createdAt: dt.createdAt,
       sessionType: dt.sessionType,
+    })),
+    ageGroupTariffs: ageGroupTariffs.map((item) => ({
+      id: item.id,
+      reservationId: item.reservationId,
+      ageGroupTariffId: item.ageGroupTariffId,
+      groupName: item.groupName,
+      minAge: item.minAge,
+      maxAge: item.maxAge,
+      count: item.count,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      createdAt: item.createdAt,
     })),
   };
 }
@@ -1121,7 +1228,7 @@ async function deleteReservation(userId: string, reservationId: string) {
     `- Total: ${totalFormatted}`;
 
   await Promise.all(
-    workspaceUsers.map((wu) =>
+    workspaceUsers.map((wu: { userId: string }) =>
       createNotification({
         userId: wu.userId,
         title: notificationTitle,
@@ -1223,8 +1330,8 @@ async function updatePaymentStatus(
 
   await Promise.all(
     workspaceUsers
-      .filter((wu) => wu.userId !== userId)
-      .map((wu) =>
+      .filter((wu: { userId: string }) => wu.userId !== userId)
+      .map((wu: { userId: string }) =>
         createNotification({
           userId: wu.userId,
           title: "Payment Status Updated",

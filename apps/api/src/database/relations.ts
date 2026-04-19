@@ -9,6 +9,7 @@ import {
   notificationTable,
   projectTable,
   reservationDayTariffTable,
+  reservationAgeGroupTariffTable,
   reservationServiceTable,
   reservationTable,
   roomTariffTable,
@@ -21,7 +22,7 @@ import {
   verificationTable,
   workspaceTable,
   workspaceUserTable,
-} from "./schema";
+} from "./schema.js";
 
 export const userTableRelations = relations(userTable, ({ many }) => ({
   sessions: many(sessionTable),
@@ -182,6 +183,7 @@ export const reservationTableRelations = relations(
     }),
     services: many(reservationServiceTable),
     dayTariffs: many(reservationDayTariffTable),
+    ageGroupTariffs: many(reservationAgeGroupTariffTable),
   }),
 );
 
@@ -249,6 +251,20 @@ export const reservationDayTariffTableRelations = relations(
     roomTariff: one(roomTariffTable, {
       fields: [reservationDayTariffTable.roomTariffId],
       references: [roomTariffTable.id],
+    }),
+  }),
+);
+
+export const reservationAgeGroupTariffTableRelations = relations(
+  reservationAgeGroupTariffTable,
+  ({ one }) => ({
+    reservation: one(reservationTable, {
+      fields: [reservationAgeGroupTariffTable.reservationId],
+      references: [reservationTable.id],
+    }),
+    ageGroupTariff: one(ageGroupTariffTable, {
+      fields: [reservationAgeGroupTariffTable.ageGroupTariffId],
+      references: [ageGroupTariffTable.id],
     }),
   }),
 );

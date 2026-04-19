@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
 import type { AgeGroupTariff } from "@/types/event-room";
+import { format } from "date-fns";
 import {
   CalendarDays,
   ChevronLeft,
@@ -25,6 +26,11 @@ import {
 } from "lucide-react";
 
 const PAGE_SIZES = [5, 10, 15, 25];
+
+function formatDateForDisplay(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  return format(new Date(dateStr.split("T")[0] + "T00:00:00"), "MMM d, yyyy");
+}
 
 export interface AgeGroupTariffsTableProps {
   tariffs: AgeGroupTariff[];
@@ -114,6 +120,9 @@ export function AgeGroupTariffsTable({
               <TableHead className="h-11 px-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Price
               </TableHead>
+              <TableHead className="h-11 px-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Validity Period
+              </TableHead>
               <TableHead className="h-11 px-4 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground text-right">
                 Actions
               </TableHead>
@@ -149,6 +158,21 @@ export function AgeGroupTariffsTable({
                   <span className="text-muted-foreground">
                     {tariff.price ? `${tariff.price} CUP` : "—"}
                   </span>
+                </TableCell>
+                <TableCell className="px-4 py-3.5">
+                  <div className="text-xs text-muted-foreground">
+                    {tariff.validFrom && tariff.validTo ? (
+                      <span>
+                        {formatDateForDisplay(tariff.validFrom)} - {formatDateForDisplay(tariff.validTo)}
+                      </span>
+                    ) : tariff.validFrom ? (
+                      <span>From {formatDateForDisplay(tariff.validFrom)}</span>
+                    ) : tariff.validTo ? (
+                      <span>Until {formatDateForDisplay(tariff.validTo)}</span>
+                    ) : (
+                      <span className="text-green-600">Always active</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-1">

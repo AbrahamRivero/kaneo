@@ -1,4 +1,5 @@
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
+import { useGetRoomTariffs } from "@/hooks/queries/event-room";
 import { useCalendarStore } from "@/store/calendar-store";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -77,6 +78,9 @@ export function CalendarView({
   >(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const { data: roomTariffsData } = useGetRoomTariffs(workspaceId);
+  const roomTariffs = roomTariffsData?.data ?? [];
+
   const reservationsByDay: Record<string, Reservation[]> = {};
   for (const day of weekDays) {
     const dayStr = format(day, "yyyy-MM-dd");
@@ -108,6 +112,7 @@ export function CalendarView({
         onOpenChange={setSheetOpen}
         workspaceId={workspaceId}
         eventRooms={eventRooms}
+        roomTariffs={roomTariffs}
         onReservationUpdate={handleReservationUpdate}
       />
       <div className="flex flex-col h-full overflow-x-auto w-full">
