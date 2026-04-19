@@ -38,7 +38,7 @@ function parseLocalDate(value?: string): Date | undefined {
   const day = Number(parts[2]);
   if ([year, month, day].some((n) => Number.isNaN(n))) return undefined;
 
-  return new Date(year, month - 1, day);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 export async function getActiveAgeGroupTariffs(
