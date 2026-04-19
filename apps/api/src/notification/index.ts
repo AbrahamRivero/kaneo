@@ -2,16 +2,16 @@ import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import db from "../database";
-import { projectTable, taskTable } from "../database/schema";
-import { subscribeToEvent } from "../events";
-import { requireAtLeastMember } from "../utils/permissions";
-import getActiveWorkspaceUsers from "../workspace-user/controllers/get-active-workspace-users";
-import clearNotifications from "./controllers/clear-notifications";
-import createNotification from "./controllers/create-notification";
-import getNotifications from "./controllers/get-notifications";
-import markAllNotificationsAsRead from "./controllers/mark-all-notifications-as-read";
-import markNotificationAsRead from "./controllers/mark-notification-as-read";
+import db from "../database/index.js";
+import { projectTable, taskTable } from "../database/schema.js";
+import { subscribeToEvent } from "../events/index.js";
+import { requireAtLeastMember } from "../utils/permissions.js";
+import getActiveWorkspaceUsers from "../workspace-user/controllers/get-active-workspace-users.js";
+import clearNotifications from "./controllers/clear-notifications.js";
+import createNotification from "./controllers/create-notification.js";
+import getNotifications from "./controllers/get-notifications.js";
+import markAllNotificationsAsRead from "./controllers/mark-all-notifications-as-read.js";
+import markNotificationAsRead from "./controllers/mark-notification-as-read.js";
 
 const notification = new Hono<{
   Variables: {
@@ -122,7 +122,11 @@ subscribeToEvent(
     workspaceId,
     ownerId,
     workspaceName,
-  }: { workspaceId: string; ownerId: string; workspaceName: string }) => {
+  }: {
+    workspaceId: string;
+    ownerId: string;
+    workspaceName: string;
+  }) => {
     if (!workspaceId || !ownerId) {
       return;
     }
@@ -256,7 +260,12 @@ subscribeToEvent(
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     let paxText = "";
-    if (ageBreakdown && (ageBreakdown.adults > 0 || ageBreakdown.children > 0 || ageBreakdown.infants > 0)) {
+    if (
+      ageBreakdown &&
+      (ageBreakdown.adults > 0 ||
+        ageBreakdown.children > 0 ||
+        ageBreakdown.infants > 0)
+    ) {
       paxText = `${ageBreakdown.adults} Adults, ${ageBreakdown.children} Children, ${ageBreakdown.infants} Infants`;
     } else if (expectedPax) {
       paxText = `${expectedPax} guests`;
@@ -264,8 +273,8 @@ subscribeToEvent(
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
-      .filter((u) => u.userId !== userId)
-      .map((u) =>
+      .filter((u: { userId: string }) => u.userId !== userId)
+      .map((u: { userId: string }) =>
         createNotification({
           userId: u.userId,
           title: "New Reservation",
@@ -311,7 +320,12 @@ subscribeToEvent(
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     let paxText = "";
-    if (ageBreakdown && (ageBreakdown.adults > 0 || ageBreakdown.children > 0 || ageBreakdown.infants > 0)) {
+    if (
+      ageBreakdown &&
+      (ageBreakdown.adults > 0 ||
+        ageBreakdown.children > 0 ||
+        ageBreakdown.infants > 0)
+    ) {
       paxText = `${ageBreakdown.adults} Adults, ${ageBreakdown.children} Children, ${ageBreakdown.infants} Infants`;
     } else if (expectedPax) {
       paxText = `${expectedPax} guests`;
@@ -319,8 +333,8 @@ subscribeToEvent(
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
-      .filter((u) => u.userId !== userId)
-      .map((u) =>
+      .filter((u: { userId: string }) => u.userId !== userId)
+      .map((u: { userId: string }) =>
         createNotification({
           userId: u.userId,
           title: "Reservation Updated",
@@ -366,8 +380,8 @@ subscribeToEvent(
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
-      .filter((u) => u.userId !== userId)
-      .map((u) =>
+      .filter((u: { userId: string }) => u.userId !== userId)
+      .map((u: { userId: string }) =>
         createNotification({
           userId: u.userId,
           title: "Reservation Deleted",
@@ -408,12 +422,14 @@ subscribeToEvent(
     const dateFormatted =
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
-    const statusText = paymentConfirmed ? "marked as paid" : "marked as pending";
+    const statusText = paymentConfirmed
+      ? "marked as paid"
+      : "marked as pending";
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers
-      .filter((u) => u.userId !== userId)
-      .map((u) =>
+      .filter((u: { userId: string }) => u.userId !== userId)
+      .map((u: { userId: string }) =>
         createNotification({
           userId: u.userId,
           title: "Payment Status Updated",
