@@ -256,7 +256,7 @@ export function ReservationForm({
     client: true,
     event: true,
     tariff: false,
-    services: true,
+    services: false,
     extras: false,
   });
 
@@ -396,14 +396,16 @@ export function ReservationForm({
     servicesLimit,
     servicesSearch || undefined,
   );
-  const { data: roomTariffsData } = useGetRoomTariffs(workspaceId);
+  const selectedEventRoomId = form.watch("eventRoomId");
+  const { data: roomTariffsData } = useGetRoomTariffs(
+    workspaceId,
+    selectedEventRoomId,
+    1,
+    50,
+  );
 
   const services = allServicesData ?? [];
   const roomTariffs = roomTariffsData?.data ?? [];
-  const selectedEventRoomId = form.watch("eventRoomId");
-  const filteredTariffs = selectedEventRoomId
-    ? roomTariffs.filter((tariff) => tariff.eventRoomId === selectedEventRoomId)
-    : [];
   const selectedEventRoom = eventRooms.find(
     (r) => r.id === selectedEventRoomId,
   );
@@ -623,7 +625,7 @@ export function ReservationForm({
       let dayTariffsPayload:
         | { date: string; roomTariffId: string; price: number }[]
         | undefined;
-      if (days > 1 && formDayTariffs && formDayTariffs.length > 0) {
+      if (useDifferentTariffsPerDay && days > 1 && formDayTariffs && formDayTariffs.length > 0) {
         dayTariffsPayload = formDayTariffs
           .filter(
             (dt): dt is { date: string; roomTariffId: string; price: number } =>
@@ -634,6 +636,8 @@ export function ReservationForm({
             roomTariffId: dt.roomTariffId,
             price: dt.price,
           }));
+      } else if (!useDifferentTariffsPerDay) {
+        dayTariffsPayload = [];
       }
 
       const payload = {
@@ -670,7 +674,11 @@ export function ReservationForm({
           toast.error("At least one guest is required for this room");
           return;
         }
-      } else if (allowsMultipleReservations && !hasAgeBasedPricing && !payload.expectedPax) {
+      } else if (
+        allowsMultipleReservations &&
+        !hasAgeBasedPricing &&
+        !payload.expectedPax
+      ) {
         toast.error("Expected Pax is required for this room");
         return;
       }
@@ -1152,7 +1160,7 @@ export function ReservationForm({
                     form.setValue("roomTariffId", value || undefined)
                   }
                   disabled={
-                    !selectedEventRoomId || filteredTariffs.length === 0
+                    !selectedEventRoomId || roomTariffs.length === 0
                   }
                 >
                   <SelectTrigger className="w-full">
@@ -1160,14 +1168,14 @@ export function ReservationForm({
                       placeholder={
                         !selectedEventRoomId
                           ? "Select a room first"
-                          : filteredTariffs.length === 0
+                          : roomTariffs.length === 0
                             ? "No tariffs available"
                             : "Select tariff"
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredTariffs.map((tariff) => (
+                    {roomTariffs.map((tariff) => (
                       <SelectItem key={tariff.id} value={tariff.id}>
                         {capitalizeWords(tariff.sessionType)}:
                         {tariff.price ? `$${tariff.price}/Day` : "No price"}
@@ -1198,8 +1206,10 @@ export function ReservationForm({
                   checked={useDifferentTariffsPerDay}
                   onCheckedChange={(checked) => {
                     setUseDifferentTariffsPerDay(checked);
-                    if (
-                      checked &&
+                    if (!checked) {
+                      setDayTariffs([]);
+                      form.setValue("dayTariffs", []);
+                    } else if (
                       dayTariffs.length === 0 &&
                       selectedTariffId
                     ) {
@@ -1222,9 +1232,9 @@ export function ReservationForm({
                   const currentTariff = dayTariffs.find(
                     (dt) => dt.date === date,
                   );
-                  const tariffOptions = filteredTariffs.map((tariff) => (
+                  const tariffOptions = roomTariffs.map((tariff) => (
                     <SelectItem key={tariff.id} value={tariff.id}>
-                      {capitalizeWords(tariff.sessionType)}: ${tariff.price}/Day
+                      {capitalizeWords(tariff.sessionType)}: ${tariff.price} / Day
                     </SelectItem>
                   ));
                   return (

@@ -505,6 +505,7 @@ export const deleteService = async (
 
 export const getRoomTariffs = async (
   workspaceId: string,
+  eventRoomId?: string,
   page = 1,
   limit = 10,
 ): Promise<PaginatedResponse<RoomTariff>> => {
@@ -512,6 +513,9 @@ export const getRoomTariffs = async (
     page: page.toString(),
     limit: limit.toString(),
   });
+  if (eventRoomId) {
+    params.set("eventRoomId", eventRoomId);
+  }
   const url = `${base ? base : ""}/event-room/${workspaceId}/room-tariffs?${params}`;
   const response = await fetch(url, { credentials: "include" });
 

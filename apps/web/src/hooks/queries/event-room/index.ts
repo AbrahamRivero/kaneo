@@ -43,6 +43,8 @@ export function useGetReservationById(id?: string) {
     queryKey: ["reservation", id],
     queryFn: () => getReservation(id as string),
     enabled: Boolean(id),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 
@@ -71,10 +73,15 @@ export function useGetServiceById(id?: string) {
   });
 }
 
-export function useGetRoomTariffs(workspaceId: string, page = 1, limit = 10) {
+export function useGetRoomTariffs(
+  workspaceId: string,
+  eventRoomId?: string,
+  page = 1,
+  limit = 10,
+) {
   return useQuery({
-    queryKey: ["room-tariffs", workspaceId, page, limit],
-    queryFn: () => getRoomTariffs(workspaceId, page, limit),
+    queryKey: ["room-tariffs", workspaceId, eventRoomId, page, limit],
+    queryFn: () => getRoomTariffs(workspaceId, eventRoomId, page, limit),
     enabled: !!workspaceId,
     staleTime: 0,
     refetchOnMount: "always",

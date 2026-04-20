@@ -413,15 +413,16 @@ const eventRoom = new Hono<{
     const result = await serviceController.deleteService(userId, id);
     return c.json(result);
   })
-
   .get("/:workspaceId/room-tariffs", async (c) => {
     const workspaceId = c.req.param("workspaceId");
     const userId = c.get("userId");
+    const eventRoomId = c.req.query("eventRoomId");
     const page = c.req.query("page");
     const limit = c.req.query("limit");
     const tariffs = await roomTariffController.getRoomTariffs(
       workspaceId,
       userId,
+      eventRoomId || undefined,
       page ? Number.parseInt(page) : undefined,
       limit ? Number.parseInt(limit) : undefined,
     );

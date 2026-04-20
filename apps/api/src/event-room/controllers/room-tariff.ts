@@ -68,6 +68,7 @@ export interface PaginatedRoomTariffs {
 export async function getRoomTariffs(
   workspaceId: string,
   userId?: string,
+  eventRoomId?: string,
   page = 1,
   limit = 10,
 ): Promise<PaginatedRoomTariffs> {
@@ -77,17 +78,22 @@ export async function getRoomTariffs(
 
   const offset = (page - 1) * limit;
 
+  const baseCondition = eq(roomTariffTable.workspaceId, workspaceId);
+  const condition = eventRoomId
+    ? and(baseCondition, eq(roomTariffTable.eventRoomId, eventRoomId))
+    : baseCondition;
+
   const [tariffs, countResult] = await Promise.all([
     db
       .select()
       .from(roomTariffTable)
-      .where(eq(roomTariffTable.workspaceId, workspaceId))
+      .where(condition)
       .limit(limit)
       .offset(offset),
     db
       .select({ count: count() })
       .from(roomTariffTable)
-      .where(eq(roomTariffTable.workspaceId, workspaceId)),
+      .where(condition),
   ]);
 
   const total = countResult[0]?.count ?? 0;
