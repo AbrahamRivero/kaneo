@@ -85,6 +85,8 @@ function EditAgeGroupTariffPage() {
                   minAge: tariff.minAge,
                   maxAge: tariff.maxAge,
                   price: tariff.price,
+                  validFrom: tariff.validFrom,
+                  validTo: tariff.validTo,
                 }
               : null
           }

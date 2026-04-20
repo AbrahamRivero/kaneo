@@ -11,6 +11,7 @@ import {
   notificationTableRelations,
   projectTableRelations,
   reservationDayTariffTableRelations,
+  reservationAgeGroupTariffTableRelations,
   reservationServiceTableRelations,
   reservationTableRelations,
   roomTariffTableRelations,
@@ -23,7 +24,7 @@ import {
   verificationTableRelations,
   workspaceTableRelations,
   workspaceUserTableRelations,
-} from "./relations";
+} from "./relations.js";
 import {
   accountTable,
   activityTable,
@@ -34,6 +35,7 @@ import {
   notificationTable,
   projectTable,
   reservationDayTariffTable,
+  reservationAgeGroupTariffTable,
   reservationServiceTable,
   reservationTable,
   roomTariffTable,
@@ -46,7 +48,7 @@ import {
   verificationTable,
   workspaceTable,
   workspaceUserTable,
-} from "./schema";
+} from "./schema.js";
 
 dotenv.config();
 
@@ -69,6 +71,7 @@ export const schema = {
   reservationServiceTable,
   reservationTable,
   reservationDayTariffTable,
+  reservationAgeGroupTariffTable,
   roomTariffTable,
   scheduledPermissionTable,
   sessionTable,
@@ -96,6 +99,7 @@ export const schema = {
   reservationServiceTableRelations,
   reservationTableRelations,
   reservationDayTariffTableRelations,
+  reservationAgeGroupTariffTableRelations,
   roomTariffTableRelations,
   scheduledPermissionTableRelations,
   ageGroupTariffTableRelations,
