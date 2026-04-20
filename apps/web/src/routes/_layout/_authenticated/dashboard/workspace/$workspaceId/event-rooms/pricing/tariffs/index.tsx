@@ -25,6 +25,7 @@ function PricingTariffsRoute() {
   });
   const { data: tariffsData, refetch } = useGetRoomTariffs(
     workspaceId,
+    undefined,
     pagination.page,
     pagination.limit,
   );
