@@ -12,10 +12,10 @@ function deriveAgeGroupName(minAge: number, maxAge: number | null): string {
   if (minAge >= 13) {
     return "Adult";
   }
-  if (minAge >= 6 && (maxAge === null || maxAge <= 12)) {
+  if (minAge >= 5 && (maxAge === null || maxAge <= 12)) {
     return "Child";
   }
-  if (minAge >= 0 && (maxAge === null || maxAge <= 5)) {
+  if (minAge >= 0 && (maxAge === null || maxAge <= 4)) {
     return "Infant";
   }
   if (maxAge !== null) {

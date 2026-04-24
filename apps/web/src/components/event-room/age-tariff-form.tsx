@@ -221,8 +221,8 @@ export function AgeGroupTariffForm({
               const minAge = Number(form.watch("minAge")) || 0;
               const maxAge = form.watch("maxAge") ? Number(form.watch("maxAge")) : null;
               if (minAge >= 13) return "Adult";
-              if (minAge >= 6 && (maxAge === null || maxAge <= 12)) return "Child";
-              if (minAge >= 0 && (maxAge === null || maxAge <= 5)) return "Infant";
+              if (minAge >= 5 && (maxAge === null || maxAge <= 12)) return "Child";
+              if (minAge >= 0 && (maxAge === null || maxAge <= 4)) return "Infant";
               return maxAge !== null ? `${minAge}-${maxAge}` : `${minAge}+`;
             })()}
           </div>

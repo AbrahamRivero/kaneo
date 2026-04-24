@@ -50,10 +50,10 @@ function deriveAgeGroupName(minAge: number, maxAge: number | null): string {
   if (minAge >= 13) {
     return "Adult";
   }
-  if (minAge >= 6 && (maxAge === null || maxAge <= 12)) {
+  if (minAge >= 5 && (maxAge === null || maxAge <= 12)) {
     return "Child";
   }
-  if (minAge >= 0 && (maxAge === null || maxAge <= 5)) {
+  if (minAge >= 0 && (maxAge === null || maxAge <= 4)) {
     return "Infant";
   }
   if (maxAge !== null) {
@@ -108,8 +108,8 @@ async function calculateAgeGroupPricing(
 
   const ageGroups = [
     { groupName: "Adult", minAge: 13, maxAge: null, count: ageBreakdown.adults },
-    { groupName: "Child", minAge: 6, maxAge: 12, count: ageBreakdown.children },
-    { groupName: "Infant", minAge: 0, maxAge: 5, count: ageBreakdown.infants },
+    { groupName: "Child", minAge: 5, maxAge: 12, count: ageBreakdown.children },
+    { groupName: "Infant", minAge: 0, maxAge: 4, count: ageBreakdown.infants },
   ];
 
   const lineItems: AgeGroupPricingLineItem[] = [];
