@@ -51,7 +51,6 @@ import {
 } from "@/hooks/mutations/event-room";
 import {
   useGetAllServices,
-  useGetAgeGroupTariffs,
   useGetRoomTariffs,
   useGetServices,
 } from "@/hooks/queries/event-room";
@@ -413,21 +412,6 @@ export function ReservationForm({
     selectedEventRoom?.allowsMultipleReservations ?? false;
   const hasAgeBasedPricing = selectedEventRoom?.hasAgeBasedPricing ?? false;
 
-  const { data: ageTariffsData } = useGetAgeGroupTariffs(
-    workspaceId,
-    hasAgeBasedPricing ? selectedEventRoomId : undefined,
-  );
-  const ageTariffs = ageTariffsData?.data ?? [];
-
-  const getAgePrice = (name: "adult" | "child" | "infant", date: string) => {
-    const tariff = ageTariffs.find(
-      (t) => t.name?.toLowerCase() === name.toLowerCase() &&
-        (!t.validFrom || new Date(t.validFrom) <= new Date(date)) &&
-        (!t.validTo || new Date(t.validTo) >= new Date(date))
-    );
-    return tariff?.price ?? 0;
-  };
-
   const selectedTariffId = form.watch("roomTariffId");
   const selectedServicesWithPax = form.watch("services") || [];
 
@@ -463,144 +447,6 @@ export function ReservationForm({
   const selectedServices = services.filter((s) =>
     selectedServicesWithPax.some((sp) => sp.serviceId === s.id),
   );
-
-  const calculatePricing = () => {
-    const days = effectiveDateRange.to
-      ? differenceInDays(effectiveDateRange.to, effectiveDateRange.from) + 1
-      : 1;
-
-    const ageBreakdown = form.watch("ageBreakdown") || {
-      adults: 0,
-      children: 0,
-      infants: 0,
-    };
-
-    let totalAdultsPrice = 0;
-    let totalChildrenPrice = 0;
-    let totalInfantsPrice = 0;
-    
-    const startDate = new Date(effectiveDateRange.from);
-    const endDate = effectiveDateRange.to ? new Date(effectiveDateRange.to) : startDate;
-    const currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-      const dateStr = format(currentDate, "yyyy-MM-dd");
-      totalAdultsPrice += getAgePrice("adult", dateStr);
-      totalChildrenPrice += getAgePrice("child", dateStr);
-      totalInfantsPrice += getAgePrice("infant", dateStr);
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    const ageBasedTotal = hasAgeBasedPricing
-      ? ageBreakdown.adults * totalAdultsPrice +
-        ageBreakdown.children * totalChildrenPrice +
-        ageBreakdown.infants * totalInfantsPrice
-      : 0;
-
-    let tariffPrice: number;
-    let roomBreakdown: { sessionType: string; days: number; price: number }[];
-    if (hasAgeBasedPricing) {
-      const breakdownItems: {
-        sessionType: string;
-        days: number;
-        price: number;
-      }[] = [];
-      if (ageBreakdown.adults > 0 && totalAdultsPrice > 0) {
-        breakdownItems.push({
-          sessionType: `Adults · ${ageBreakdown.adults}`,
-          days,
-          price: ageBreakdown.adults * totalAdultsPrice,
-        });
-      }
-      if (ageBreakdown.children > 0 && totalChildrenPrice > 0) {
-        breakdownItems.push({
-          sessionType: `Children · ${ageBreakdown.children}`,
-          days,
-          price: ageBreakdown.children * totalChildrenPrice,
-        });
-      }
-      if (ageBreakdown.infants > 0 && totalInfantsPrice > 0) {
-        breakdownItems.push({
-          sessionType: `Infants · ${ageBreakdown.infants}`,
-          days,
-          price: ageBreakdown.infants * totalInfantsPrice,
-        });
-      }
-      tariffPrice = ageBasedTotal;
-      roomBreakdown =
-        breakdownItems.length > 0
-          ? breakdownItems
-          : [{ sessionType: "age_based", days: 1, price: 0 }];
-    } else if (useDifferentTariffsPerDay && dayTariffs.length > 0) {
-      tariffPrice = dayTariffs.reduce((sum, dt) => sum + (dt.price ?? 0), 0);
-      const grouped = dayTariffs.reduce(
-        (acc, dt) => {
-          const tariff = roomTariffs.find((t) => t.id === dt.roomTariffId);
-          const sessionType = tariff?.sessionType ?? "unknown";
-          if (!acc[sessionType]) {
-            acc[sessionType] = { sessionType, days: 0, price: 0 };
-          }
-          acc[sessionType].days += 1;
-          acc[sessionType].price += dt.price ?? 0;
-          return acc;
-        },
-        {} as Record<
-          string,
-          { sessionType: string; days: number; price: number }
-        >,
-      );
-      roomBreakdown = Object.values(grouped);
-    } else {
-      tariffPrice = (selectedTariff?.price ?? 0) * days;
-      roomBreakdown = selectedTariff
-        ? [
-            {
-              sessionType: selectedTariff.sessionType,
-              days,
-              price: tariffPrice,
-            },
-          ]
-        : [];
-    }
-    const servicesPrice = selectedServicesWithPax.reduce(
-      (sum: number, sp: ServiceWithPax) => {
-        const svc = services.find((s) => s.id === sp.serviceId);
-        return sum + (svc?.pricePerPax ?? 0) * sp.pax;
-      },
-      0,
-    );
-    // Room service charge: use tariff's serviceChargePercent (only if there's a tariff)
-    const roomServiceChargePercent = selectedTariff?.serviceChargePercent ?? 0;
-    const roomServiceCharge = tariffPrice * (roomServiceChargePercent / 100);
-
-    // Services service charge: always apply 10% on services (independent of room tariff)
-    const servicesServiceChargePercent = 10;
-    const servicesServiceCharge =
-      servicesPrice * (servicesServiceChargePercent / 100);
-
-    // Combined service charge
-    const serviceChargeAmount = roomServiceCharge + servicesServiceCharge;
-
-    // Display percentage: show room's if tariff exists, otherwise show services' 10%
-    const serviceChargePercent =
-      tariffPrice > 0 ? roomServiceChargePercent : servicesServiceChargePercent;
-
-    const subTotal = tariffPrice + servicesPrice;
-    const grandTotal = subTotal + serviceChargeAmount;
-    return {
-      tariffPrice,
-      servicesPrice,
-      serviceChargePercent,
-      serviceChargeAmount,
-      grandTotal,
-      days,
-      roomBreakdown,
-      roomServiceCharge,
-      servicesServiceCharge,
-    };
-  };
-
-  const pricing = calculatePricing();
 
   const onSubmitHandler = async (formData: ReservationFormValues) => {
     try {
@@ -640,7 +486,12 @@ export function ReservationForm({
       let dayTariffsPayload:
         | { date: string; roomTariffId: string; price: number }[]
         | undefined;
-      if (useDifferentTariffsPerDay && days > 1 && formDayTariffs && formDayTariffs.length > 0) {
+      if (
+        useDifferentTariffsPerDay &&
+        days > 1 &&
+        formDayTariffs &&
+        formDayTariffs.length > 0
+      ) {
         dayTariffsPayload = formDayTariffs
           .filter(
             (dt): dt is { date: string; roomTariffId: string; price: number } =>
@@ -663,10 +514,6 @@ export function ReservationForm({
         dateRange: dateRangePayload,
         services: servicesPayload.length > 0 ? servicesPayload : undefined,
         dayTariffs: dayTariffsPayload,
-        totalRoomPrice: pricing.tariffPrice || undefined,
-        totalServicePrice: pricing.servicesPrice || undefined,
-        serviceChargeAmount: pricing.serviceChargeAmount || undefined,
-        grandTotal: pricing.grandTotal || undefined,
         expectedPax: restFormData.expectedPax || 0,
         ...(hasAgeBasedPricing && {
           ageBreakdown: restFormData.ageBreakdown || {
@@ -1152,21 +999,10 @@ export function ReservationForm({
           icon={Wallet}
           title="Rate"
           hasError={hasErrorInSection("tariff")}
-          badge={
-            selectedTariff && (
-              <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                $
-                {pricing.days > 1 && useDifferentTariffsPerDay
-                  ? pricing.tariffPrice.toFixed(2)
-                  : pricing.days > 1
-                    ? ((selectedTariff?.price ?? 0) * pricing.days).toFixed(2)
-                    : (selectedTariff?.price ?? 0)}
-              </span>
-            )
-          }
         >
           <div className="grid gap-4">
-            {(!useDifferentTariffsPerDay || pricing.days === 1) && (
+            {(!useDifferentTariffsPerDay ||
+              effectiveDateRange.to === undefined) && (
               <div className="grid gap-2">
                 <Label htmlFor="roomTariff">Room Rate</Label>
                 <Select
@@ -1174,9 +1010,7 @@ export function ReservationForm({
                   onValueChange={(value) =>
                     form.setValue("roomTariffId", value || undefined)
                   }
-                  disabled={
-                    !selectedEventRoomId || roomTariffs.length === 0
-                  }
+                  disabled={!selectedEventRoomId || roomTariffs.length === 0}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
@@ -1203,7 +1037,7 @@ export function ReservationForm({
               </div>
             )}
 
-            {pricing.days > 1 && (
+            {effectiveDateRange.to && (
               <div className="flex items-center justify-between py-2 border-t">
                 <div className="flex flex-col gap-1">
                   <Label
@@ -1224,10 +1058,7 @@ export function ReservationForm({
                     if (!checked) {
                       setDayTariffs([]);
                       form.setValue("dayTariffs", []);
-                    } else if (
-                      dayTariffs.length === 0 &&
-                      selectedTariffId
-                    ) {
+                    } else if (dayTariffs.length === 0 && selectedTariffId) {
                       const initialDayTariffs = daysInRange.map((date) => ({
                         date,
                         roomTariffId: selectedTariffId,
@@ -1240,7 +1071,7 @@ export function ReservationForm({
               </div>
             )}
 
-            {pricing.days > 1 && useDifferentTariffsPerDay && (
+            {effectiveDateRange.to && useDifferentTariffsPerDay && (
               <div className="space-y-2 border-t pt-4">
                 <Label className="text-sm font-medium">Rate per day</Label>
                 {daysInRange.map((date) => {
@@ -1249,7 +1080,8 @@ export function ReservationForm({
                   );
                   const tariffOptions = roomTariffs.map((tariff) => (
                     <SelectItem key={tariff.id} value={tariff.id}>
-                      {capitalizeWords(tariff.sessionType)}: ${tariff.price} / Day
+                      {capitalizeWords(tariff.sessionType)}: ${tariff.price} /
+                      Day
                     </SelectItem>
                   ));
                   return (
@@ -1610,54 +1442,6 @@ export function ReservationForm({
         </DialogContent>
       </Dialog>
 
-      {(selectedTariff ||
-        selectedServices.length > 0 ||
-        hasAgeBasedPricing) && (
-        <div className="border rounded-lg p-4 bg-muted/30">
-          <div className="flex items-center gap-2 mb-3">
-            <UtensilsCrossed className="size-5" />
-            <Label className="font-medium text-lg">Pricing Summary</Label>
-          </div>
-          <div className="space-y-2 text-sm">
-            {pricing.roomBreakdown.map((room) => (
-              <div key={room.sessionType} className="flex justify-between">
-                <span>
-                  Room ({capitalizeWords(room.sessionType)}
-                  {room.days > 1 ? ` ${room.days} Days` : ""})
-                </span>
-                <span>${room.price.toFixed(2)}</span>
-              </div>
-            ))}
-            {selectedServices.length > 0 && (
-              <div className="flex justify-between">
-                <span>Total Services</span>
-                <span>${pricing.servicesPrice.toFixed(2)}</span>
-              </div>
-            )}
-            {pricing.roomServiceCharge > 0 && (
-              <div className="flex justify-between text-muted-foreground">
-                <span>
-                  Room Service Charge (
-                  {selectedTariff?.serviceChargePercent ?? 0}%)
-                </span>
-                <span>${pricing.roomServiceCharge.toFixed(2)}</span>
-              </div>
-            )}
-            {pricing.servicesServiceCharge > 0 && (
-              <div className="flex justify-between text-muted-foreground">
-                <span>Services Charge (10%)</span>
-                <span>${pricing.servicesServiceCharge.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-medium border-t pt-2 mt-2 text-lg">
-              <span>Total</span>
-              <span className="text-primary">
-                ${pricing.grandTotal.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="flex justify-end gap-3 pt-4">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>

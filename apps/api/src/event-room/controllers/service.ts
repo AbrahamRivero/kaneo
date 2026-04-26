@@ -1,15 +1,15 @@
 import { and, count, eq, ilike, or } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import db from "../../database/index.js";
 import {
   serviceTable,
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema.js";
-import db from "../../database/index.js";
-import { hasScheduledPermission } from "../../utils/permissions.js";
-import { getUserName } from "../utils/get-user-name.js";
-import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
 import createNotification from "../../notification/controllers/create-notification.js";
+import { hasScheduledPermission } from "../../utils/permissions.js";
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
+import { getUserName } from "../utils/get-user-name.js";
 
 export type CreateServicePayload = {
   workspaceId: string;

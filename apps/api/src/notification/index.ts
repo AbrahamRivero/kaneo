@@ -256,7 +256,12 @@ subscribeToEvent(
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     let paxText = "";
-    if (ageBreakdown && (ageBreakdown.adults > 0 || ageBreakdown.children > 0 || ageBreakdown.infants > 0)) {
+    if (
+      ageBreakdown &&
+      (ageBreakdown.adults > 0 ||
+        ageBreakdown.children > 0 ||
+        ageBreakdown.infants > 0)
+    ) {
       paxText = `${ageBreakdown.adults} Adults, ${ageBreakdown.children} Children, ${ageBreakdown.infants} Infants`;
     } else if (expectedPax) {
       paxText = `${expectedPax} guests`;
@@ -311,7 +316,12 @@ subscribeToEvent(
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
     let paxText = "";
-    if (ageBreakdown && (ageBreakdown.adults > 0 || ageBreakdown.children > 0 || ageBreakdown.infants > 0)) {
+    if (
+      ageBreakdown &&
+      (ageBreakdown.adults > 0 ||
+        ageBreakdown.children > 0 ||
+        ageBreakdown.infants > 0)
+    ) {
       paxText = `${ageBreakdown.adults} Adults, ${ageBreakdown.children} Children, ${ageBreakdown.infants} Infants`;
     } else if (expectedPax) {
       paxText = `${expectedPax} guests`;
@@ -408,7 +418,9 @@ subscribeToEvent(
     const dateFormatted =
       dateRange.from === to ? dateRange.from : `${dateRange.from} - ${to}`;
 
-    const statusText = paymentConfirmed ? "marked as paid" : "marked as pending";
+    const statusText = paymentConfirmed
+      ? "marked as paid"
+      : "marked as pending";
 
     const workspaceUsers = await getActiveWorkspaceUsers(workspaceId);
     const promises = workspaceUsers

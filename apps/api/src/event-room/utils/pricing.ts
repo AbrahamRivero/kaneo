@@ -1,9 +1,9 @@
-import { eq, inArray, and, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type db from "../../database/index.js";
 import {
   ageGroupTariffTable,
-  serviceTable,
   roomTariffTable,
+  serviceTable,
 } from "../../database/schema.js";
 
 export type AgeBreakdown = {
@@ -23,17 +23,23 @@ export type AgeGroupPricingLineItem = {
 };
 
 export type PricingInput = {
-  totalRoomPrice: number;
-  totalServicePrice: number;
   roomTariffId?: string | null;
   eventRoomId?: string;
   ageBreakdown?: AgeBreakdown;
-  pricingDate?: string;
+  dateRange?: {
+    from: string;
+    to?: string;
+  };
   services: Array<{
     serviceId: string;
     unitPrice: number;
     pax: number;
     totalPrice: number;
+  }>;
+  dayTariffs?: Array<{
+    date: string;
+    roomTariffId?: string;
+    price: number;
   }>;
 };
 
@@ -50,10 +56,10 @@ function deriveAgeGroupName(minAge: number, maxAge: number | null): string {
   if (minAge >= 13) {
     return "Adult";
   }
-  if (minAge >= 6 && (maxAge === null || maxAge <= 12)) {
+  if (minAge >= 5 && (maxAge === null || maxAge <= 12)) {
     return "Child";
   }
-  if (minAge >= 0 && (maxAge === null || maxAge <= 5)) {
+  if (minAge >= 0 && (maxAge === null || maxAge <= 4)) {
     return "Infant";
   }
   if (maxAge !== null) {
@@ -94,22 +100,37 @@ async function getActiveAgeGroupTariffs(
     .orderBy(ageGroupTariffTable.minAge);
 }
 
+function calculateDaysInRange(from: string, to?: string): number {
+  const start = new Date(from);
+  const end = to ? new Date(to) : start;
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+}
+
 async function calculateAgeGroupPricing(
   database: typeof db,
   eventRoomId: string,
   ageBreakdown: AgeBreakdown,
-  pricingDate: string,
+  dateRange: { from: string; to?: string },
 ) {
+  const days = calculateDaysInRange(dateRange.from, dateRange.to);
+  const effectivePricingDate = dateRange.from;
+
   const tariffs = await getActiveAgeGroupTariffs(
     database,
     eventRoomId,
-    pricingDate,
+    effectivePricingDate,
   );
 
   const ageGroups = [
-    { groupName: "Adult", minAge: 13, maxAge: null, count: ageBreakdown.adults },
-    { groupName: "Child", minAge: 6, maxAge: 12, count: ageBreakdown.children },
-    { groupName: "Infant", minAge: 0, maxAge: 5, count: ageBreakdown.infants },
+    {
+      groupName: "Adult",
+      minAge: 13,
+      maxAge: null,
+      count: ageBreakdown.adults,
+    },
+    { groupName: "Child", minAge: 5, maxAge: 12, count: ageBreakdown.children },
+    { groupName: "Infant", minAge: 0, maxAge: 4, count: ageBreakdown.infants },
   ];
 
   const lineItems: AgeGroupPricingLineItem[] = [];
@@ -130,7 +151,8 @@ async function calculateAgeGroupPricing(
       );
     }
 
-    const totalPrice = Math.round(tariff.price * group.count);
+    const pricePerDay = tariff.price * group.count;
+    const totalPrice = Math.round(pricePerDay * days);
     totalRoomPrice += totalPrice;
 
     lineItems.push({
@@ -144,7 +166,7 @@ async function calculateAgeGroupPricing(
     });
   }
 
-  return { totalRoomPrice, lineItems };
+  return { totalRoomPrice, lineItems, days };
 }
 
 export async function calculateReservationPricing(
@@ -152,29 +174,62 @@ export async function calculateReservationPricing(
   database: typeof db,
 ): Promise<PricingOutput> {
   const {
-    totalRoomPrice,
-    totalServicePrice,
     roomTariffId,
     eventRoomId,
     ageBreakdown,
-    pricingDate,
+    dateRange,
     services,
+    dayTariffs,
   } = input;
 
-  const effectivePricingDate = pricingDate ?? new Date().toISOString().slice(0, 10);
+  const effectiveDateRange = dateRange ?? {
+    from: new Date().toISOString().slice(0, 10),
+  };
+  const days = calculateDaysInRange(
+    effectiveDateRange.from,
+    effectiveDateRange.to,
+  );
 
-  let effectiveRoomPrice = totalRoomPrice;
+  let totalServicePrice = 0;
+  if (services.length > 0) {
+    totalServicePrice = services.reduce(
+      (sum, s) => sum + s.unitPrice * s.pax,
+      0,
+    );
+  }
+
+  let effectiveRoomPrice = 0;
   let ageGroupPricingLineItems: AgeGroupPricingLineItem[] | undefined;
 
-  if (eventRoomId && ageBreakdown) {
+  const hasValidAgeBreakdown =
+    ageBreakdown &&
+    (ageBreakdown.adults > 0 ||
+      ageBreakdown.children > 0 ||
+      ageBreakdown.infants > 0);
+
+  if (dayTariffs && dayTariffs?.length > 0) {
+    effectiveRoomPrice = dayTariffs.reduce((sum, dt) => sum + dt.price, 0);
+  } else if (eventRoomId && hasValidAgeBreakdown) {
     const priced = await calculateAgeGroupPricing(
       database,
       eventRoomId,
       ageBreakdown,
-      effectivePricingDate,
+      effectiveDateRange,
     );
     effectiveRoomPrice = priced.totalRoomPrice;
     ageGroupPricingLineItems = priced.lineItems;
+  } else if (roomTariffId) {
+    const [tariff] = await database
+      .select({
+        price: roomTariffTable.price,
+      })
+      .from(roomTariffTable)
+      .where(eq(roomTariffTable.id, roomTariffId))
+      .limit(1);
+
+    if (tariff && tariff.price !== null) {
+      effectiveRoomPrice = tariff.price * days;
+    }
   }
 
   let roomChargePercent = 0;
@@ -217,7 +272,10 @@ export async function calculateReservationPricing(
     effectiveRoomPrice * (roomChargePercent / 100),
   );
   const grandTotal =
-    effectiveRoomPrice + totalServicePrice + roomChargeAmount + serviceChargeAmount;
+    effectiveRoomPrice +
+    totalServicePrice +
+    roomChargeAmount +
+    serviceChargeAmount;
 
   return {
     totalRoomPrice: effectiveRoomPrice,

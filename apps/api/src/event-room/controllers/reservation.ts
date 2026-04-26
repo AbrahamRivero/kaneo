@@ -45,10 +45,6 @@ export type CreateReservationPayload = {
   dateRange: DateRange;
   notes?: string;
   roomTariffId?: string;
-  totalRoomPrice?: number;
-  totalServicePrice?: number;
-  serviceChargeAmount?: number;
-  grandTotal?: number;
   expectedPax?: number;
   ageBreakdown?: {
     adults: number;
@@ -72,10 +68,6 @@ export type UpdateReservationPayload = {
   notes?: string;
   paymentConfirmed?: boolean;
   roomTariffId?: string;
-  totalRoomPrice?: number;
-  totalServicePrice?: number;
-  serviceChargeAmount?: number;
-  grandTotal?: number;
   expectedPax?: number;
   ageBreakdown?: {
     adults: number;
@@ -102,6 +94,58 @@ function dateRangeToString(dateRange: DateRange): string {
 
 function dateRangeFromString(dateRangeStr: string): DateRange {
   return JSON.parse(dateRangeStr) as DateRange;
+}
+
+function buildRoomBreakdown(params: {
+  ageGroupTariffs?: Array<{
+    groupName: string;
+    count: number;
+    totalPrice: number;
+  }>;
+  dayTariffs?: Array<{ sessionType: string | null; price: number }>;
+  totalRoomPrice: number | null;
+  days?: number;
+}): Array<{ sessionType: string; days: number; price: number }> {
+  const { ageGroupTariffs, dayTariffs, totalRoomPrice, days } = params;
+
+  if (ageGroupTariffs && ageGroupTariffs.length > 0) {
+    return ageGroupTariffs.map((agt) => ({
+      sessionType: `${agt.groupName} · ${agt.count}`,
+      days: days ?? 1,
+      price: agt.totalPrice,
+    }));
+  }
+
+  if (dayTariffs && dayTariffs.length > 0) {
+    const grouped = dayTariffs.reduce(
+      (acc, dt) => {
+        const type = dt.sessionType ?? "unknown";
+        if (!acc[type]) {
+          acc[type] = { sessionType: type, days: 0, price: 0 };
+        }
+        acc[type].days += 1;
+        acc[type].price += dt.price ?? 0;
+        return acc;
+      },
+      {} as Record<
+        string,
+        { sessionType: string; days: number; price: number }
+      >,
+    );
+    return Object.values(grouped);
+  }
+
+  if (totalRoomPrice) {
+    return [
+      {
+        sessionType: "room",
+        days: days ?? 1,
+        price: totalRoomPrice,
+      },
+    ];
+  }
+
+  return [];
 }
 
 function datesOverlap(
@@ -191,6 +235,13 @@ async function checkReservationConflict(
   return { hasConflict: false };
 }
 
+function daysInRange(dateRange: DateRange): number {
+  const from = new Date(dateRange.from);
+  const to = dateRange.to ? new Date(dateRange.to) : from;
+  const diffTime = Math.abs(to.getTime() - from.getTime());
+  return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+}
+
 async function createReservation(
   userId: string,
   payload: CreateReservationPayload,
@@ -242,7 +293,11 @@ async function createReservation(
     throw new HTTPException(404, { message: "Event room not found" });
   }
 
-  if (room.allowsMultipleReservations && !room.hasAgeBasedPricing && !payload.expectedPax) {
+  if (
+    room.allowsMultipleReservations &&
+    !room.hasAgeBasedPricing &&
+    !payload.expectedPax
+  ) {
     throw new HTTPException(400, {
       message:
         "Expected Pax is required for rooms that allow multiple reservations",
@@ -263,15 +318,19 @@ async function createReservation(
     }
   }
 
+  console.log("[DEBUG] Payload roomTariffId:", payload.roomTariffId);
+  console.log("[DEBUG] Payload dayTariffs:", payload.dayTariffs);
+  console.log("[DEBUG] Payload ageBreakdown:", payload.ageBreakdown);
+  console.log("[DEBUG] Payload dateRange:", payload.dateRange);
+
   const pricing = await calculateReservationPricing(
     {
-      totalRoomPrice: payload.totalRoomPrice || 0,
-      totalServicePrice: payload.totalServicePrice || 0,
       roomTariffId: payload.roomTariffId,
       eventRoomId: payload.eventRoomId,
       ageBreakdown: payload.ageBreakdown,
-      pricingDate: payload.dateRange.from, // Use reservation date to select appropriate age-group tariffs
+      dateRange: payload.dateRange,
       services: payload.services || [],
+      dayTariffs: payload.dayTariffs,
     },
     db,
   );
@@ -331,7 +390,10 @@ async function createReservation(
     );
   }
 
-  if (pricing.ageGroupPricingLineItems && pricing.ageGroupPricingLineItems.length > 0) {
+  if (
+    pricing.ageGroupPricingLineItems &&
+    pricing.ageGroupPricingLineItems.length > 0
+  ) {
     await db.insert(reservationAgeGroupTariffTable).values(
       pricing.ageGroupPricingLineItems.map((item) => ({
         reservationId: reservation.id,
@@ -384,8 +446,8 @@ async function createReservation(
     resDateRange.from === resDateRange.to
       ? resDateRange.from
       : `${resDateRange.from} to ${resDateRange.to}`;
-  const totalFormatted = payload.grandTotal
-    ? `€${(payload.grandTotal / 100).toFixed(2)}`
+  const totalFormatted = pricing.grandTotal
+    ? `€${(pricing.grandTotal / 100).toFixed(2)}`
     : "N/A";
   const statusStr = payload.status || "pending";
   const paxStr = payload.expectedPax ? `${payload.expectedPax} pax` : "N/A";
@@ -430,6 +492,32 @@ async function createReservation(
         pricePerPax: s.pricePerPax,
       },
     })),
+    totalRoomPrice: pricing.totalRoomPrice,
+    totalServicePrice: pricing.totalServicePrice,
+    roomChargeAmount: pricing.roomChargeAmount,
+    serviceChargeAmount: pricing.serviceChargeAmount,
+    grandTotal: pricing.grandTotal,
+    roomBreakdown: pricing.ageGroupPricingLineItems
+      ? pricing.ageGroupPricingLineItems.map((item) => ({
+          sessionType: `${item.groupName} · ${item.count}`,
+          days: daysInRange(payload.dateRange),
+          price: item.totalPrice,
+        }))
+      : payload.dayTariffs && payload.dayTariffs.length > 0
+        ? buildRoomBreakdown({
+            dayTariffs: payload.dayTariffs.map((dt) => ({
+              sessionType: null,
+              price: dt.price,
+            })),
+            totalRoomPrice: pricing.totalRoomPrice,
+          })
+        : [
+            {
+              sessionType: "room",
+              days: daysInRange(payload.dateRange),
+              price: pricing.totalRoomPrice,
+            },
+          ],
   };
 }
 
@@ -479,6 +567,7 @@ async function getReservations(
       roomTariffId: reservationTable.roomTariffId,
       totalRoomPrice: reservationTable.totalRoomPrice,
       totalServicePrice: reservationTable.totalServicePrice,
+      roomChargeAmount: reservationTable.roomChargeAmount,
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
       expectedPax: reservationTable.expectedPax,
@@ -502,7 +591,7 @@ async function getReservations(
 
   const reservationIds = reservations.map((r) => r.id);
 
-  const services = await db
+  const reservationServiceRows = await db
     .select({
       id: reservationServiceTable.id,
       reservationId: reservationServiceTable.reservationId,
@@ -528,7 +617,7 @@ async function getReservations(
       ) as SQL<unknown>,
     );
 
-  const dayTariffs = await db
+  const reservationDayTariffs = await db
     .select({
       id: reservationDayTariffTable.id,
       reservationId: reservationDayTariffTable.reservationId,
@@ -570,20 +659,7 @@ async function getReservations(
     }>
   > = {};
 
-  const dayTariffsByReservation: Record<
-    string,
-    Array<{
-      id: string;
-      reservationId: string;
-      date: string;
-      roomTariffId: string | null;
-      price: number;
-      createdAt: Date;
-      sessionType: string | null;
-    }>
-  > = {};
-
-  for (const service of services) {
+  for (const service of reservationServiceRows) {
     const resId = service.reservationId;
     let arr = servicesByReservation[resId];
     if (!arr) {
@@ -607,7 +683,20 @@ async function getReservations(
     });
   }
 
-  for (const dt of dayTariffs) {
+  const dayTariffsByReservation: Record<
+    string,
+    Array<{
+      id: string;
+      reservationId: string;
+      date: string;
+      roomTariffId: string | null;
+      price: number;
+      createdAt: Date;
+      sessionType: string | null;
+    }>
+  > = {};
+
+  for (const dt of reservationDayTariffs) {
     const resId = dt.reservationId;
     let arr = dayTariffsByReservation[resId];
     if (!arr) {
@@ -625,11 +714,77 @@ async function getReservations(
     });
   }
 
-  return reservations.map((reservation) => ({
-    ...reservation,
-    services: servicesByReservation[reservation.id] || [],
-    dayTariffs: dayTariffsByReservation[reservation.id] || [],
-  }));
+  const reservationAgeGroupTariffs = await db
+    .select({
+      id: reservationAgeGroupTariffTable.id,
+      reservationId: reservationAgeGroupTariffTable.reservationId,
+      groupName: reservationAgeGroupTariffTable.groupName,
+      count: reservationAgeGroupTariffTable.count,
+      unitPrice: reservationAgeGroupTariffTable.unitPrice,
+      totalPrice: reservationAgeGroupTariffTable.totalPrice,
+      createdAt: reservationAgeGroupTariffTable.createdAt,
+    })
+    .from(reservationAgeGroupTariffTable)
+    .where(
+      or(
+        ...reservationIds.map((id) =>
+          eq(reservationAgeGroupTariffTable.reservationId, id),
+        ),
+      ) as SQL<unknown>,
+    );
+
+  const ageGroupTariffsByReservation: Record<
+    string,
+    Array<{
+      id: string;
+      reservationId: string;
+      groupName: string;
+      count: number;
+      unitPrice: number;
+      totalPrice: number;
+      createdAt: Date;
+    }>
+  > = {};
+
+  for (const agt of reservationAgeGroupTariffs) {
+    const resId = agt.reservationId;
+    let arr = ageGroupTariffsByReservation[resId];
+    if (!arr) {
+      arr = [];
+      ageGroupTariffsByReservation[resId] = arr;
+    }
+    arr.push({
+      id: agt.id,
+      reservationId: agt.reservationId,
+      groupName: agt.groupName,
+      count: agt.count,
+      unitPrice: agt.unitPrice,
+      totalPrice: agt.totalPrice,
+      createdAt: agt.createdAt,
+    });
+  }
+
+  return reservations.map((reservation) => {
+    const parsedDateRange = dateRangeFromString(reservation.dateRange);
+    const days = daysInRange(parsedDateRange);
+    return {
+      ...reservation,
+      services: servicesByReservation[reservation.id] || [],
+      dayTariffs: dayTariffsByReservation[reservation.id] || [],
+      ageGroupTariffs: ageGroupTariffsByReservation[reservation.id] || [],
+      totalRoomPrice: reservation.totalRoomPrice ?? 0,
+      totalServicePrice: reservation.totalServicePrice ?? 0,
+      roomChargeAmount: reservation.roomChargeAmount ?? 0,
+      serviceChargeAmount: reservation.serviceChargeAmount ?? 0,
+      grandTotal: reservation.grandTotal ?? 0,
+      roomBreakdown: buildRoomBreakdown({
+        ageGroupTariffs: ageGroupTariffsByReservation[reservation.id] || [],
+        dayTariffs: dayTariffsByReservation[reservation.id] || [],
+        totalRoomPrice: reservation.totalRoomPrice ?? null,
+        days,
+      }),
+    };
+  });
 }
 
 async function getReservation(userId: string, reservationId: string) {
@@ -649,6 +804,7 @@ async function getReservation(userId: string, reservationId: string) {
       roomTariffId: reservationTable.roomTariffId,
       totalRoomPrice: reservationTable.totalRoomPrice,
       totalServicePrice: reservationTable.totalServicePrice,
+      roomChargeAmount: reservationTable.roomChargeAmount,
       serviceChargeAmount: reservationTable.serviceChargeAmount,
       grandTotal: reservationTable.grandTotal,
       expectedPax: reservationTable.expectedPax,
@@ -777,6 +933,24 @@ async function getReservation(userId: string, reservationId: string) {
       totalPrice: item.totalPrice,
       createdAt: item.createdAt,
     })),
+    totalRoomPrice: reservation.totalRoomPrice ?? 0,
+    totalServicePrice: reservation.totalServicePrice ?? 0,
+    roomChargeAmount: reservation.roomChargeAmount ?? 0,
+    serviceChargeAmount: reservation.serviceChargeAmount ?? 0,
+    grandTotal: reservation.grandTotal ?? 0,
+    roomBreakdown: buildRoomBreakdown({
+      ageGroupTariffs: ageGroupTariffs.map((agt) => ({
+        groupName: agt.groupName,
+        count: agt.count,
+        totalPrice: agt.totalPrice,
+      })),
+      dayTariffs: dayTariffs.map((dt) => ({
+        sessionType: dt.sessionType,
+        price: dt.price,
+      })),
+      totalRoomPrice: reservation.totalRoomPrice ?? null,
+      days: daysInRange(dateRangeFromString(reservation.dateRange)),
+    }),
   };
 }
 
@@ -848,7 +1022,11 @@ async function updateReservation(
     throw new HTTPException(404, { message: "Event room not found" });
   }
 
-  if (room.allowsMultipleReservations && !room.hasAgeBasedPricing && !payload.expectedPax) {
+  if (
+    room.allowsMultipleReservations &&
+    !room.hasAgeBasedPricing &&
+    !payload.expectedPax
+  ) {
     throw new HTTPException(400, {
       message:
         "Expected Pax is required for rooms that allow multiple reservations",
@@ -874,19 +1052,22 @@ async function updateReservation(
     }
   }
 
+  console.log("[DEBUG] Payload roomTariffId:", payload.roomTariffId);
+  console.log("[DEBUG] Payload dayTariffs:", payload.dayTariffs);
+  console.log("[DEBUG] Payload ageBreakdown:", payload.ageBreakdown);
+  console.log("[DEBUG] Payload dateRange:", payload.dateRange);
+
   const pricing = await calculateReservationPricing(
     {
-      totalRoomPrice: payload.totalRoomPrice || reservation.totalRoomPrice || 0,
-      totalServicePrice:
-        payload.totalServicePrice || reservation.totalServicePrice || 0,
       roomTariffId: payload.roomTariffId ?? reservation.roomTariffId,
       eventRoomId,
       ageBreakdown:
         payload.ageBreakdown !== undefined
           ? payload.ageBreakdown
           : reservation.ageBreakdown || undefined,
-      pricingDate: dateRange.from, // Use reservation date to select appropriate age-group tariffs
+      dateRange,
       services: payload.services || [],
+      dayTariffs: payload.dayTariffs,
     },
     db,
   );
@@ -966,6 +1147,10 @@ async function updateReservation(
         })),
       );
     }
+  } else if (payload.roomTariffId && !payload.dayTariffs) {
+    await db
+      .delete(reservationDayTariffTable)
+      .where(eq(reservationDayTariffTable.reservationId, reservationId));
   }
 
   if (payload.ageBreakdown !== undefined) {
@@ -973,7 +1158,10 @@ async function updateReservation(
       .delete(reservationAgeGroupTariffTable)
       .where(eq(reservationAgeGroupTariffTable.reservationId, reservationId));
 
-    if (pricing.ageGroupPricingLineItems && pricing.ageGroupPricingLineItems.length > 0) {
+    if (
+      pricing.ageGroupPricingLineItems &&
+      pricing.ageGroupPricingLineItems.length > 0
+    ) {
       await db.insert(reservationAgeGroupTariffTable).values(
         pricing.ageGroupPricingLineItems.map((item) => ({
           reservationId: reservationId,
@@ -1133,6 +1321,23 @@ async function updateReservation(
       totalPrice: item.totalPrice,
       createdAt: item.createdAt,
     })),
+    totalRoomPrice: updated.totalRoomPrice ?? 0,
+    totalServicePrice: updated.totalServicePrice ?? 0,
+    roomChargeAmount: updated.roomChargeAmount ?? 0,
+    serviceChargeAmount: updated.serviceChargeAmount ?? 0,
+    grandTotal: updated.grandTotal ?? 0,
+    roomBreakdown: buildRoomBreakdown({
+      ageGroupTariffs: ageGroupTariffs.map((agt) => ({
+        groupName: agt.groupName,
+        count: agt.count,
+        totalPrice: agt.totalPrice,
+      })),
+      dayTariffs: dayTariffs.map((dt) => ({
+        sessionType: dt.sessionType,
+        price: dt.price,
+      })),
+      totalRoomPrice: updated.totalRoomPrice ?? null,
+    }),
   };
 }
 

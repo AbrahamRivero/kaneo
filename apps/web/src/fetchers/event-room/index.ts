@@ -84,6 +84,19 @@ export type AgeBreakdown = {
   infants: number;
 };
 
+export type ReservationPricing = {
+  totalRoomPrice?: number | null;
+  totalServicePrice?: number | null;
+  roomChargeAmount?: number | null;
+  serviceChargeAmount?: number | null;
+  grandTotal?: number | null;
+  roomBreakdown?: Array<{
+    sessionType: string;
+    days: number;
+    price: number;
+  }> | null;
+};
+
 export type Reservation = {
   id: string;
   workspaceId: string;
@@ -97,11 +110,6 @@ export type Reservation = {
   notes?: string | null;
   paymentConfirmed?: boolean | null;
   roomTariffId?: string | null;
-  totalRoomPrice?: number | null;
-  totalServicePrice?: number | null;
-  roomChargeAmount?: number | null;
-  serviceChargeAmount?: number | null;
-  grandTotal?: number | null;
   expectedPax?: number | null;
   ageBreakdown?: AgeBreakdown | null;
   status: string;
@@ -113,6 +121,17 @@ export type Reservation = {
   hasAgeBasedPricing?: boolean;
   services?: ReservationService[];
   dayTariffs?: DayTariff[];
+  ageGroupTariffs?: ReservationAgeGroupTariff[];
+  totalRoomPrice?: number | null;
+  totalServicePrice?: number | null;
+  roomChargeAmount?: number | null;
+  serviceChargeAmount?: number | null;
+  grandTotal?: number | null;
+  roomBreakdown?: Array<{
+    sessionType: string;
+    days: number;
+    price: number;
+  }>;
 };
 
 export type DayTariff = {
@@ -123,6 +142,19 @@ export type DayTariff = {
   price: number;
   createdAt: string;
   sessionType: string | null;
+};
+
+export type ReservationAgeGroupTariff = {
+  id: string;
+  reservationId: string;
+  ageGroupTariffId: string;
+  groupName: string;
+  minAge: number | null;
+  maxAge: number | null;
+  count: number;
+  unitPrice: number;
+  totalPrice: number;
+  createdAt: string;
 };
 
 export type DateRange = { from: string; to?: string };
@@ -153,11 +185,6 @@ export type CreateReservationPayload = {
   dateRange: DateRange;
   notes?: string;
   roomTariffId?: string;
-  totalRoomPrice?: number;
-  totalServicePrice?: number;
-  roomChargeAmount?: number;
-  serviceChargeAmount?: number;
-  grandTotal?: number;
   expectedPax?: number;
   paymentConfirmed?: boolean;
   status?: "pending" | "confirmed" | "completed";
@@ -172,6 +199,7 @@ export type CreateReservationPayload = {
     roomTariffId: string;
     price: number;
   }[];
+  ageBreakdown?: AgeBreakdown;
 };
 
 export type UpdateReservationPayload = {
@@ -185,11 +213,6 @@ export type UpdateReservationPayload = {
   notes?: string;
   paymentConfirmed?: boolean;
   roomTariffId?: string;
-  totalRoomPrice?: number;
-  totalServicePrice?: number;
-  roomChargeAmount?: number;
-  serviceChargeAmount?: number;
-  grandTotal?: number;
   expectedPax?: number;
   services?: {
     serviceId: string;
@@ -203,6 +226,7 @@ export type UpdateReservationPayload = {
     price: number;
   }[];
   status?: "pending" | "confirmed" | "completed";
+  ageBreakdown?: AgeBreakdown;
 };
 
 export const getEventRooms = async (
@@ -310,7 +334,7 @@ export const getReservations = async (
     throw new Error(error);
   }
 
-  return response.json();
+  return response.json() as Promise<Reservation[]>;
 };
 
 export const createReservation = async (
@@ -338,7 +362,7 @@ export const getReservation = async (id: string): Promise<Reservation> => {
     throw new Error(error);
   }
 
-  return response.json();
+  return response.json() as Promise<Reservation>;
 };
 
 export const updateReservation = async (
@@ -355,7 +379,7 @@ export const updateReservation = async (
     throw new Error(error);
   }
 
-  return response.json();
+  return response.json() as Promise<Reservation>;
 };
 
 export const deleteReservation = async (
@@ -661,7 +685,10 @@ export const createAgeGroupTariff = async (
 export const updateAgeGroupTariff = async (
   id: string,
   payload: Partial<
-    Omit<AgeGroupTariff, "id" | "workspaceId" | "createdAt" | "updatedAt" | "roomName">
+    Omit<
+      AgeGroupTariff,
+      "id" | "workspaceId" | "createdAt" | "updatedAt" | "roomName"
+    >
   >,
 ): Promise<AgeGroupTariff> => {
   const url = `${base ? base : ""}/event-room/age-tariffs/${id}`;
