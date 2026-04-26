@@ -2,20 +2,25 @@ import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import getWorkspaceUser from "./controllers/get-workspace-user.js";
-import createRootWorkspaceUser from "./controllers/create-root-workspace-user.js";
-import getWorkspaceUsers from "./controllers/get-workspace-users.js";
-import deleteWorkspaceUser from "./controllers/delete-workspace-user.js";
-import updateWorkspaceUser from "./controllers/update-workspace-user.js";
-import getActiveWorkspaceUsers from "./controllers/get-active-workspace-users.js";
-import inviteWorkspaceUser from "./controllers/invite-workspace-user.js";
-import updateWorkspaceUserRole from "./controllers/update-workspace-user-role.js";
-import resetMemberPassword from "./controllers/reset-member-password.js";
-import { createScheduledPermission, deleteScheduledPermission, getScheduledPermissions, updateScheduledPermission } from "./controllers/scheduled-permissions.js";
-import { subscribeToEvent } from "../events/index.js";
 import db from "../database/index.js";
 import { userTable } from "../database/schema.js";
+import { subscribeToEvent } from "../events/index.js";
 import activatePendingWorkspaceUsers from "./controllers/activate-pending-workspace-users.js";
+import createRootWorkspaceUser from "./controllers/create-root-workspace-user.js";
+import deleteWorkspaceUser from "./controllers/delete-workspace-user.js";
+import getActiveWorkspaceUsers from "./controllers/get-active-workspace-users.js";
+import getWorkspaceUser from "./controllers/get-workspace-user.js";
+import getWorkspaceUsers from "./controllers/get-workspace-users.js";
+import inviteWorkspaceUser from "./controllers/invite-workspace-user.js";
+import resetMemberPassword from "./controllers/reset-member-password.js";
+import {
+  createScheduledPermission,
+  deleteScheduledPermission,
+  getScheduledPermissions,
+  updateScheduledPermission,
+} from "./controllers/scheduled-permissions.js";
+import updateWorkspaceUserRole from "./controllers/update-workspace-user-role.js";
+import updateWorkspaceUser from "./controllers/update-workspace-user.js";
 
 const workspaceUser = new Hono<{
   Variables: {
@@ -225,7 +230,7 @@ const workspaceUser = new Hono<{
       "param",
       z.object({ workspaceId: z.string(), userId: z.string() }),
     ),
-      zValidator(
+    zValidator(
       "json",
       z.object({
         action: z.enum([

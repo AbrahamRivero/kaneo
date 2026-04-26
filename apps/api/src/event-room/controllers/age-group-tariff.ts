@@ -1,9 +1,6 @@
-import { count, eq, and, isNull, or, sql } from "drizzle-orm";
+import { and, count, eq, isNull, or, sql } from "drizzle-orm";
 import db from "../../database/index.js";
-import {
-  ageGroupTariffTable,
-  eventRoomTable,
-} from "../../database/schema.js";
+import { ageGroupTariffTable, eventRoomTable } from "../../database/schema.js";
 
 export type AgeGroupTariff = typeof ageGroupTariffTable.$inferSelect;
 export type NewAgeGroupTariff = typeof ageGroupTariffTable.$inferInsert;
@@ -104,7 +101,10 @@ export async function getAgeGroupTariffs(
         roomName: eventRoomTable.name,
       })
       .from(ageGroupTariffTable)
-      .leftJoin(eventRoomTable, eq(ageGroupTariffTable.eventRoomId, eventRoomTable.id))
+      .leftJoin(
+        eventRoomTable,
+        eq(ageGroupTariffTable.eventRoomId, eventRoomTable.id),
+      )
       .where(and(...conditions))
       .orderBy(ageGroupTariffTable.minAge)
       .limit(limit)
@@ -141,7 +141,10 @@ export async function getAgeGroupTariffById(id: string) {
       roomName: eventRoomTable.name,
     })
     .from(ageGroupTariffTable)
-    .leftJoin(eventRoomTable, eq(ageGroupTariffTable.eventRoomId, eventRoomTable.id))
+    .leftJoin(
+      eventRoomTable,
+      eq(ageGroupTariffTable.eventRoomId, eventRoomTable.id),
+    )
     .where(eq(ageGroupTariffTable.id, id))
     .limit(1);
 
@@ -221,10 +224,14 @@ export async function updateAgeGroupTariff(
     updatedData.price = data.price;
   }
   if (data.validFrom !== undefined) {
-    updatedData.validFrom = data.validFrom ? parseLocalDate(data.validFrom) : undefined;
+    updatedData.validFrom = data.validFrom
+      ? parseLocalDate(data.validFrom)
+      : undefined;
   }
   if (data.validTo !== undefined) {
-    updatedData.validTo = data.validTo ? parseLocalDate(data.validTo) : undefined;
+    updatedData.validTo = data.validTo
+      ? parseLocalDate(data.validTo)
+      : undefined;
   }
 
   const [updated] = await db
