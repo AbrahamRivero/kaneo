@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/sheet";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import {
-  useDeleteReservation,  useUpdatePaymentStatus,
+  useDeleteReservation,
+  useUpdatePaymentStatus,
 } from "@/hooks/mutations/event-room";
 import { useGetAgeGroupTariffs } from "@/hooks/queries/event-room";
 import queryClient from "@/query-client";
@@ -48,7 +49,12 @@ interface ReservationSheetProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   eventRooms: EventRoom[];
-  roomTariffs?: { id: string; sessionType: string; price: number | null; serviceChargePercent: number }[];
+  roomTariffs?: {
+    id: string;
+    sessionType: string;
+    price: number | null;
+    serviceChargePercent: number;
+  }[];
   onReservationUpdate?: (updatedReservation: Reservation) => void;
 }
 
@@ -83,11 +89,32 @@ function getReservationDateMeta(reservation: Reservation): {
 }
 
 function getRoomBreakdown(
-  reservation: Reservation,
+  reservation: Reservation & {
+    roomBreakdown?: Array<{
+      sessionType: string;
+      days: number;
+      price: number;
+    }>;
+    totalRoomPrice?: number | null;
+    roomTariffId?: string | null;
+    dayTariffs?: Array<{
+      date: string;
+      price: number;
+      sessionType?: string;
+    }>;
+  },
   days: number,
-  getAgePrice?: (name: "adult" | "child" | "infant", date: string) => number,
-  dateRange?: DateRange,
+  _getAgePrice?: (name: "adult" | "child" | "infant", date: string) => number,
+  _dateRange?: DateRange,
 ): { sessionType: string; days: number; price: number }[] {
+  if (reservation.roomBreakdown && reservation.roomBreakdown.length > 0) {
+    return reservation.roomBreakdown.map((item) => ({
+      sessionType: item.sessionType,
+      days: item.days,
+      price: item.price,
+    }));
+  }
+
   const dayTariffs = reservation.dayTariffs ?? [];
 
   if (dayTariffs.length > 0) {
@@ -110,68 +137,20 @@ function getRoomBreakdown(
     );
   }
 
-  if (
-    reservation.ageBreakdown &&
-    (reservation.ageBreakdown.adults > 0 ||
-      reservation.ageBreakdown.children > 0 ||
-      reservation.ageBreakdown.infants > 0) &&
-    getAgePrice &&
-    dateRange
-  ) {
-    const items: { sessionType: string; days: number; price: number }[] = [];
-    
-    const startDate = new Date(`${dateRange.from}T00:00:00`);
-    const endDate = dateRange.to 
-      ? new Date(`${dateRange.to}T00:00:00`) 
-      : startDate;
-    
-    let totalAdultsPrice = 0;
-    let totalChildrenPrice = 0;
-    let totalInfantsPrice = 0;
-    const currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-      const dateStr = format(currentDate, "yyyy-MM-dd");
-      const adultsPrice = getAgePrice("adult", dateStr);
-      const childrenPrice = getAgePrice("child", dateStr);
-      const infantsPrice = getAgePrice("infant", dateStr);
-      
-      totalAdultsPrice += adultsPrice;
-      totalChildrenPrice += childrenPrice;
-      totalInfantsPrice += infantsPrice;
-      
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    const numDays = days;
-    
-    if (reservation.ageBreakdown.adults > 0 && totalAdultsPrice > 0) {
-      items.push({
-        sessionType: `Adults · ${reservation.ageBreakdown.adults}`,
-        days: numDays,
-        price: reservation.ageBreakdown.adults * totalAdultsPrice,
-      });
-    }
-    if (reservation.ageBreakdown.children > 0 && totalChildrenPrice > 0) {
-      items.push({
-        sessionType: `Children · ${reservation.ageBreakdown.children}`,
-        days: numDays,
-        price: reservation.ageBreakdown.children * totalChildrenPrice,
-      });
-    }
-    if (reservation.ageBreakdown.infants > 0 && totalInfantsPrice > 0) {
-      items.push({
-        sessionType: `Infants · ${reservation.ageBreakdown.infants}`,
-        days: numDays,
-        price: reservation.ageBreakdown.infants * totalInfantsPrice,
-      });
-    }
-    return items;
+  const totalRoomPrice = reservation.totalRoomPrice ?? 0;
+  const roomTariffId = reservation.roomTariffId;
+
+  if (roomTariffId && totalRoomPrice > 0) {
+    return [
+      {
+        sessionType: "room",
+        days: days,
+        price: totalRoomPrice,
+      },
+    ];
   }
 
-  return reservation.totalRoomPrice
-    ? [{ sessionType: "room", days, price: reservation.totalRoomPrice }]
-    : [];
+  return [];
 }
 
 function formatDateRangeFromObject(dateRange: DateRange): string {
@@ -221,44 +200,27 @@ function getStatusIcon(status?: string): React.ReactNode {
 }
 
 function getReservationCharges(
-  reservation: Reservation,
-  hasAgeBasedPricing = false,
-  tariffServiceChargePercent = 0,
+  reservation: Reservation & {
+    totalRoomPrice?: number | null;
+    totalServicePrice?: number | null;
+    roomChargeAmount?: number | null;
+    serviceChargeAmount?: number | null;
+  },
+  _hasAgeBasedPricing = false,
+  _tariffServiceChargePercent = 0,
 ): {
   roomCharge: number;
   servicesCharge: number;
   roomServiceChargePercent: number;
 } {
+  const roomCharge = reservation.roomChargeAmount ?? 0;
+  const servicesCharge = reservation.serviceChargeAmount ?? 0;
   const totalRoomPrice = reservation.totalRoomPrice ?? 0;
-  const totalServicePrice = reservation.totalServicePrice ?? 0;
 
-  const servicesCharge =
-    reservation.serviceChargeAmount ?? totalServicePrice * 0.1;
-
-  const legacyDerivedRoomCharge =
-    totalRoomPrice > 0
-      ? Math.max(
-          (reservation.serviceChargeAmount ?? 0) - totalServicePrice * 0.1,
-          0,
-        )
-      : 0;
-
-  const roomCharge =
-    reservation.roomChargeAmount ??
-    (legacyDerivedRoomCharge > 0
-      ? legacyDerivedRoomCharge
-      : totalRoomPrice > 0 && !hasAgeBasedPricing
-        ? totalRoomPrice * (tariffServiceChargePercent > 0 ? tariffServiceChargePercent / 100 : 0.1)
-        : 0);
-
-  const roomServiceChargePercent =
-    totalRoomPrice > 0 && !hasAgeBasedPricing
-      ? reservation.roomChargeAmount != null || legacyDerivedRoomCharge > 0
-        ? Math.round((roomCharge / totalRoomPrice) * 100)
-        : tariffServiceChargePercent > 0
-          ? tariffServiceChargePercent
-          : 10
-      : 0;
+  let roomServiceChargePercent = 0;
+  if (totalRoomPrice > 0 && roomCharge > 0) {
+    roomServiceChargePercent = Math.round((roomCharge / totalRoomPrice) * 100);
+  }
 
   return { roomCharge, servicesCharge, roomServiceChargePercent };
 }
@@ -270,7 +232,12 @@ interface SingleReservationSectionProps {
   total: number;
   workspaceId: string;
   eventRooms: EventRoom[];
-  roomTariffs?: { id: string; sessionType: string; price: number | null; serviceChargePercent: number }[];
+  roomTariffs?: {
+    id: string;
+    sessionType: string;
+    price: number | null;
+    serviceChargePercent: number;
+  }[];
   onDeleteSuccess: () => void;
   onReservationUpdate?: (updatedReservation: Reservation) => void;
 }
@@ -312,12 +279,20 @@ function SingleReservationSection({
     return validTariff?.price ?? 0;
   };
 
-  const selectedTariff = roomTariffs?.find((t) => t.id === reservation.roomTariffId);
+  const selectedTariff = roomTariffs?.find(
+    (t) => t.id === reservation.roomTariffId,
+  );
   const tariffServiceChargePercent = selectedTariff?.serviceChargePercent ?? 0;
 
-  const roomBreakdown = getRoomBreakdown(reservation, days, getAgePrice, dateRange);
+  const roomBreakdown = getRoomBreakdown(
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    reservation as any,
+    days,
+    getAgePrice,
+    dateRange,
+  );
 
-  const hasPricing = reservation.grandTotal != null;
+  const hasPricing = (reservation.grandTotal ?? 0) > 0;
 
   const handleDelete = async () => {
     try {
@@ -383,7 +358,10 @@ function SingleReservationSection({
         : `${startDate} - ${endDate}`;
     const services = reservation.services ?? [];
 
-    const getAgePriceForReport = (name: "adult" | "child" | "infant", date: string) => {
+    const getAgePriceForReport = (
+      name: "adult" | "child" | "infant",
+      date: string,
+    ) => {
       const validTariff = ageTariffs.find(
         (t) =>
           t.name?.toLowerCase() === name.toLowerCase() &&
@@ -393,7 +371,13 @@ function SingleReservationSection({
       return validTariff?.price ?? 0;
     };
 
-    const roomBreakdown = getRoomBreakdown(reservation, days, getAgePriceForReport, dateRange);
+    const roomBreakdown = getRoomBreakdown(
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      reservation as any,
+      days,
+      getAgePriceForReport,
+      dateRange,
+    );
 
     const roomName =
       eventRooms.find((r) => r.id === reservation.eventRoomId)?.name ||
@@ -404,9 +388,12 @@ function SingleReservationSection({
     );
     const hasAgeBasedPricingForReport =
       eventRoomForReport?.hasAgeBasedPricing ?? false;
-    
-    const selectedTariffForReport = roomTariffs?.find((t) => t.id === reservation.roomTariffId);
-    const tariffServiceChargePercentForReport = selectedTariffForReport?.serviceChargePercent ?? 0;
+
+    const selectedTariffForReport = roomTariffs?.find(
+      (t) => t.id === reservation.roomTariffId,
+    );
+    const tariffServiceChargePercentForReport =
+      selectedTariffForReport?.serviceChargePercent ?? 0;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -521,7 +508,7 @@ function SingleReservationSection({
         </div>
 
         ${
-          reservation.grandTotal
+          (reservation.grandTotal ?? 0) > 0
             ? `
         <div class="section">
           <div class="section-title">Pricing</div>
@@ -592,20 +579,7 @@ function SingleReservationSection({
               <tr class="total-row">
                 <td>Grand Total</td>
                 <td></td>
-                <td style="text-align: right;">$${(
-                  roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
-                  (reservation.totalServicePrice ?? 0) +
-                  getReservationCharges(
-                    reservation,
-                    hasAgeBasedPricingForReport,
-                    tariffServiceChargePercentForReport,
-                  ).roomCharge +
-                  getReservationCharges(
-                    reservation,
-                    hasAgeBasedPricingForReport,
-                    tariffServiceChargePercentForReport,
-                  ).servicesCharge
-                ).toFixed(2)}</td>
+                <td style="text-align: right;">$${(reservation.grandTotal ?? 0).toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
@@ -888,12 +862,16 @@ function SingleReservationSection({
                     </span>
                   </div>
                 )}
-{(() => {
+                {(() => {
                   const {
                     roomCharge,
                     servicesCharge,
                     roomServiceChargePercent,
-                  } = getReservationCharges(reservation, hasAgeBasedPricing, tariffServiceChargePercent);
+                  } = getReservationCharges(
+                    reservation,
+                    hasAgeBasedPricing,
+                    tariffServiceChargePercent,
+                  );
 
                   return (
                     <>
@@ -916,17 +894,7 @@ function SingleReservationSection({
                 })()}
                 <div className="flex justify-between font-medium border-t pt-2 mt-1">
                   <span>Total</span>
-                  <span>
-                    $
-                    {(
-                      roomBreakdown.reduce((sum, room) => sum + room.price, 0) +
-                      (reservation.totalServicePrice ?? 0) +
-                      getReservationCharges(reservation, hasAgeBasedPricing, tariffServiceChargePercent)
-                        .roomCharge +
-                      getReservationCharges(reservation, hasAgeBasedPricing, tariffServiceChargePercent)
-                        .servicesCharge
-).toFixed(2)}
-                  </span>
+                  <span>${(reservation.grandTotal ?? 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>

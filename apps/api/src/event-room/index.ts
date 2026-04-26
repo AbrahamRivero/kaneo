@@ -2,13 +2,19 @@ import { zValidator } from "@hono/zod-validator";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
+import db from "../database/index.js";
+import { eventRoomTable } from "../database/schema.js";
+import {
+  createAgeGroupTariff,
+  deleteAgeGroupTariff,
+  getAgeGroupTariffById,
+  getAgeGroupTariffs,
+  updateAgeGroupTariff,
+} from "./controllers/age-group-tariff.js";
 import eventRoomController from "./controllers/event-room.js";
 import reservationController from "./controllers/reservation.js";
 import * as roomTariffController from "./controllers/room-tariff.js";
 import * as serviceController from "./controllers/service.js";
-import db from "../database/index.js";
-import { eventRoomTable } from "../database/schema.js";
-import { createAgeGroupTariff, deleteAgeGroupTariff, getAgeGroupTariffById, getAgeGroupTariffs, updateAgeGroupTariff } from "./controllers/age-group-tariff.js";
 
 const eventRoom = new Hono<{
   Variables: {
@@ -182,7 +188,11 @@ const eventRoom = new Hono<{
                 });
               }
             }
-          } else if (room?.allowsMultipleReservations && !room?.hasAgeBasedPricing && !data.expectedPax) {
+          } else if (
+            room?.allowsMultipleReservations &&
+            !room?.hasAgeBasedPricing &&
+            !data.expectedPax
+          ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Expected Pax is required",
@@ -295,7 +305,11 @@ const eventRoom = new Hono<{
                 });
               }
             }
-          } else if (room?.allowsMultipleReservations && !room?.hasAgeBasedPricing && !data.expectedPax) {
+          } else if (
+            room?.allowsMultipleReservations &&
+            !room?.hasAgeBasedPricing &&
+            !data.expectedPax
+          ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Expected Pax is required",

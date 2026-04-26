@@ -1,5 +1,6 @@
 import { and, count, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import db from "../../database/index.js";
 import {
   eventRoomTable,
   roomTariffTable,
@@ -10,7 +11,6 @@ import createNotification from "../../notification/controllers/create-notificati
 import { hasScheduledPermission } from "../../utils/permissions.js";
 import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
 import { getUserName } from "../utils/get-user-name.js";
-import db from "../../database/index.js";
 
 export type SessionType =
   | "half_session"
@@ -51,7 +51,9 @@ export type RoomTariffWithMaskedPrice = {
   roomName?: string;
 };
 
-function maskPrice(tariff: typeof roomTariffTable.$inferSelect): RoomTariffWithMaskedPrice {
+function maskPrice(
+  tariff: typeof roomTariffTable.$inferSelect,
+): RoomTariffWithMaskedPrice {
   return {
     ...tariff,
     price: tariff.price,
@@ -90,10 +92,7 @@ export async function getRoomTariffs(
       .where(condition)
       .limit(limit)
       .offset(offset),
-    db
-      .select({ count: count() })
-      .from(roomTariffTable)
-      .where(condition),
+    db.select({ count: count() }).from(roomTariffTable).where(condition),
   ]);
 
   const total = countResult[0]?.count ?? 0;

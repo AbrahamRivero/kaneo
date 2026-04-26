@@ -1,8 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../../database/index.js";
+import {
+  scheduledPermissionTable,
+  workspaceUserTable,
+} from "../../database/schema.js";
 import type { ScheduledAction } from "../../utils/permissions.js";
-import { scheduledPermissionTable, workspaceUserTable } from "../../database/schema.js";
 
 export type CreateScheduledPermissionPayload = {
   workspaceId: string;
