@@ -473,9 +473,11 @@ function SingleReservationSection({
               <span class="info-label">Guests</span>
               <span class="info-value">${
                 reservation.ageBreakdown &&
-                (reservation.ageBreakdown.adults > 0 ||
-                  reservation.ageBreakdown.children > 0 ||
-                  reservation.ageBreakdown.infants > 0)
+                (
+                  reservation.ageBreakdown.adults > 0 ||
+                    reservation.ageBreakdown.children > 0 ||
+                    reservation.ageBreakdown.infants > 0
+                )
                   ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
                   : reservation.expectedPax && reservation.expectedPax > 0
                     ? `${reservation.expectedPax} Pax`
@@ -538,19 +540,8 @@ function SingleReservationSection({
               `,
                 )
                 .join("")}
-              ${
-                (reservation.totalServicePrice ?? 0) > 0
-                  ? `
-                <tr>
-                  <td>Total Services</td>
-                  <td></td>
-                  <td style="text-align: right;">$${(reservation.totalServicePrice ?? 0).toFixed(2)}</td>
-                </tr>
-              `
-                  : ""
-              }
               ${(() => {
-                const { roomCharge, servicesCharge, roomServiceChargePercent } =
+                const { roomCharge, roomServiceChargePercent } =
                   getReservationCharges(
                     reservation,
                     hasAgeBasedPricingForReport,
@@ -566,21 +557,19 @@ function SingleReservationSection({
                   <td style="text-align: right;">$${roomCharge.toFixed(2)}</td>
                 </tr>`;
                 }
-                if (servicesCharge > 0) {
+                const totalRoom =
+                  (reservation.totalRoomPrice ?? 0) +
+                  (reservation.roomChargeAmount ?? 0);
+                if (totalRoom > 0) {
                   html += `
-                <tr>
-                  <td>Services Charge (10%)</td>
+                <tr class="total-row">
+                  <td>Total Room</td>
                   <td></td>
-                  <td style="text-align: right;">$${servicesCharge.toFixed(2)}</td>
+                  <td style="text-align: right;">$${totalRoom.toFixed(2)}</td>
                 </tr>`;
                 }
                 return html;
               })()}
-              <tr class="total-row">
-                <td>Grand Total</td>
-                <td></td>
-                <td style="text-align: right;">$${(reservation.grandTotal ?? 0).toFixed(2)}</td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -615,6 +604,53 @@ function SingleReservationSection({
               `,
                 )
                 .join("")}
+              ${(() => {
+                const { servicesCharge } = getReservationCharges(
+                  reservation,
+                  hasAgeBasedPricingForReport,
+                  tariffServiceChargePercentForReport,
+                );
+
+                let html = "";
+                if (servicesCharge > 0) {
+                  html += `
+                <tr>
+                  <td>Services Charge (10%)</td>
+                  <td></td>
+                  <td style="text-align: right;">$${servicesCharge.toFixed(2)}</td>
+                </tr>`;
+                }
+                const totalServices =
+                  (reservation.totalServicePrice ?? 0) +
+                  (reservation.serviceChargeAmount ?? 0);
+                if (totalServices > 0) {
+                  html += `
+                <tr class="total-row">
+                  <td>Total Services</td>
+                  <td></td>
+                  <td style="text-align: right;">$${totalServices.toFixed(2)}</td>
+                </tr>`;
+                }
+                return html;
+              })()}
+            </tbody>
+          </table>
+        </div>
+        `
+            : ""
+        }
+
+        ${
+          (reservation.grandTotal ?? 0) > 0
+            ? `
+        <div class="section">
+          <table>
+            <tbody>
+              <tr class="total-row">
+                <td>Grand Total</td>
+                <td></td>
+                <td style="text-align: right;">$${(reservation.grandTotal ?? 0).toFixed(2)}</td>
+              </tr>
             </tbody>
           </table>
         </div>
