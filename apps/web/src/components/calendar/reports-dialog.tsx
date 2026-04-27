@@ -205,6 +205,23 @@ export function ReportsDialog({
         roomName: eventRooms.find((r) => r.id === res.eventRoomId)?.name || "",
       }));
 
+      const totalPax = filteredReservations.reduce((sum, res) => {
+        if (
+          res.ageBreakdown &&
+          (res.ageBreakdown.adults > 0 ||
+            res.ageBreakdown.children > 0 ||
+            res.ageBreakdown.infants > 0)
+        ) {
+          return (
+            sum +
+            res.ageBreakdown.adults +
+            res.ageBreakdown.children +
+            res.ageBreakdown.infants
+          );
+        }
+        return sum + (res.expectedPax || 0);
+      }, 0);
+
       const hasMultipleReservationRooms = eventRooms.some(
         (r) =>
           r.allowsMultipleReservations &&
@@ -349,6 +366,16 @@ export function ReportsDialog({
               <span class="meta-label">Total Reservations</span>
               <span class="meta-value">${reservationsWithRoom.length}</span>
             </div>
+            ${
+              hasMultipleReservationRooms
+                ? `
+            <div class="meta-item">
+              <span class="meta-label">Total Pax</span>
+              <span class="meta-value">${totalPax}</span>
+            </div>
+            `
+                : ""
+            }
           </div>
 
           <table>
@@ -385,9 +412,16 @@ export function ReportsDialog({
                   ${
                     hasMultipleReservationRooms
                       ? `<td>${
-                          res.ageBreakdown && (res.ageBreakdown.adults > 0 || res.ageBreakdown.children > 0 || res.ageBreakdown.infants > 0)
+                          res.ageBreakdown &&
+                          (
+                            res.ageBreakdown.adults > 0 ||
+                              res.ageBreakdown.children > 0 ||
+                              res.ageBreakdown.infants > 0
+                          )
                             ? `${res.ageBreakdown.adults}A, ${res.ageBreakdown.children}C, ${res.ageBreakdown.infants}I`
-                            : (res.expectedPax && res.expectedPax > 0 ? `${res.expectedPax} Pax` : "-")
+                            : res.expectedPax && res.expectedPax > 0
+                              ? `${res.expectedPax} Pax`
+                              : "-"
                         }</td>`
                       : ""
                   }
