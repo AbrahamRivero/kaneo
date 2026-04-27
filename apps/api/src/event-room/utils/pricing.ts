@@ -246,6 +246,21 @@ export async function calculateReservationPricing(
     }
   }
 
+  if (roomChargePercent === 0 && dayTariffs && dayTariffs.length > 0) {
+    const firstDayTariff = dayTariffs[0];
+    if (firstDayTariff?.roomTariffId) {
+      const [tariff] = await database
+        .select({ serviceChargePercent: roomTariffTable.serviceChargePercent })
+        .from(roomTariffTable)
+        .where(eq(roomTariffTable.id, firstDayTariff.roomTariffId))
+        .limit(1);
+
+      if (tariff) {
+        roomChargePercent = tariff.serviceChargePercent;
+      }
+    }
+  }
+
   let serviceChargeAmount = 0;
   if (services.length > 0) {
     const serviceIds = services.map((s) => s.serviceId);
