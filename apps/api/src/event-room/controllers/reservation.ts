@@ -169,6 +169,22 @@ type ConflictResult =
       };
     };
 
+type PaxSource = {
+  expectedPax: number | null;
+  ageBreakdown: { adults: number; children: number; infants: number } | null;
+};
+
+function getTotalPax(reservation: PaxSource): number {
+  if (reservation.ageBreakdown) {
+    return (
+      reservation.ageBreakdown.adults +
+      reservation.ageBreakdown.children +
+      reservation.ageBreakdown.infants
+    );
+  }
+  return reservation.expectedPax || 0;
+}
+
 async function checkReservationConflict(
   eventRoomId: string,
   dateRange: DateRange,
@@ -315,6 +331,64 @@ async function createReservation(
       throw new HTTPException(400, {
         message: `Date range conflict: The room is already reserved for "${title}" from ${dateRange.from} to ${dateRange.to}.`,
       });
+    }
+  }
+
+  if (room.allowsMultipleReservations) {
+    const normalizedDateRange = normalizeDateRange(payload.dateRange);
+    const fromDate = new Date(normalizedDateRange.from);
+    const toDate = new Date(normalizedDateRange.to);
+    const dates: string[] = [];
+    const currentDate = new Date(fromDate);
+    while (currentDate <= toDate) {
+      dates.push(currentDate.toISOString().split("T")[0] || "");
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const newPax = payload.ageBreakdown
+      ? payload.ageBreakdown.adults +
+        payload.ageBreakdown.children +
+        payload.ageBreakdown.infants
+      : payload.expectedPax || 0;
+
+    const existingReservationsForRoom = await db
+      .select({
+        id: reservationTable.id,
+        dateRange: reservationTable.dateRange,
+        expectedPax: reservationTable.expectedPax,
+        ageBreakdown: reservationTable.ageBreakdown,
+      })
+      .from(reservationTable)
+      .where(eq(reservationTable.eventRoomId, payload.eventRoomId));
+
+    const paxByDate: Record<string, number> = {};
+    for (const date of dates) {
+      paxByDate[date] = 0;
+    }
+
+    for (const res of existingReservationsForRoom) {
+      const resDateRange = normalizeDateRange(
+        dateRangeFromString(res.dateRange),
+      );
+      const resFrom = new Date(resDateRange.from);
+      const resTo = new Date(resDateRange.to);
+      const resStart = new Date(resFrom);
+      while (resStart <= resTo) {
+        const dateStr = resStart.toISOString().split("T")[0] || "";
+        if (Object.hasOwn(paxByDate, dateStr)) {
+          paxByDate[dateStr] = (paxByDate[dateStr] || 0) + getTotalPax(res);
+        }
+        resStart.setDate(resStart.getDate() + 1);
+      }
+    }
+
+    for (const date of dates) {
+      const totalPax = (paxByDate[date] ?? 0) + newPax;
+      if (totalPax > room.capacity) {
+        throw new HTTPException(400, {
+          message: `Cannot create reservation: Total pax (${totalPax}) would exceed room capacity of ${room.capacity} for date ${date}`,
+        });
+      }
     }
   }
 
