@@ -30,6 +30,7 @@ import {
   Bell,
   Calendar as CalendarIcon,
   CheckCircle2,
+  Clock,
   CreditCard,
   DollarSign,
   FileDown,
@@ -474,11 +475,9 @@ function SingleReservationSection({
               <span class="info-label">Guests</span>
               <span class="info-value">${
                 reservation.ageBreakdown &&
-                (
-                  reservation.ageBreakdown.adults > 0 ||
-                    reservation.ageBreakdown.children > 0 ||
-                    reservation.ageBreakdown.infants > 0
-                )
+                (reservation.ageBreakdown.adults > 0 ||
+                  reservation.ageBreakdown.children > 0 ||
+                  reservation.ageBreakdown.infants > 0)
                   ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
                   : reservation.expectedPax && reservation.expectedPax > 0
                     ? `${reservation.expectedPax} Pax`
@@ -494,6 +493,10 @@ function SingleReservationSection({
             <div class="info-item">
               <span class="info-label">Date Range</span>
               <span class="info-value">${dateRangeStr}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Created</span>
+              <span class="info-value">${reservation.createdAt ? format(new Date(reservation.createdAt), "MMM dd, yyyy 'at' HH:mm") : "-"}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Duration</span>
@@ -810,6 +813,18 @@ function SingleReservationSection({
                 <CalendarIcon className="size-4" />
               </div>
               <span>{dateRangeStr}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="p-1">
+                <Clock className="size-4" />
+              </div>
+              <span>
+                Created:{" "}
+                {format(
+                  new Date(reservation.createdAt),
+                  "MMM dd, yyyy 'at' HH:mm",
+                )}
+              </span>
             </div>
             {reservation.companyName && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
