@@ -341,6 +341,7 @@ export function ReportsDialog({
         </head>
         <body>
           <div class="header">
+            <img src="/HOTEL PALCO.jpeg" alt="Hotel Palco" style="max-width: 150px; margin-bottom: 15px;" />
             <h1>Reservations Report</h1>
             <div class="subtitle">Generated on ${format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}</div>
           </div>
