@@ -1,10 +1,16 @@
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,7 +34,7 @@ import {
   startOfQuarter,
   startOfWeek,
 } from "date-fns";
-import { FileDown, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, FileDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export type ReportPeriod =
@@ -38,7 +44,8 @@ export type ReportPeriod =
   | "monthly"
   | "quarterly"
   | "next_month"
-  | "last_month";
+  | "last_month"
+  | "specific_date";
 
 function parseDateRange(dateRangeStr: string): DateRange {
   try {
@@ -55,7 +62,7 @@ interface ReportsDialogProps {
   eventRooms: EventRoom[];
 }
 
-function getDateRange(period: ReportPeriod): {
+function getDateRange(period: ReportPeriod, specificDate?: Date): {
   startDate: string;
   endDate: string;
   label: string;
@@ -112,6 +119,14 @@ function getDateRange(period: ReportPeriod): {
         startDate: format(startOfMonth(nextMonth), "yyyy-MM-dd"),
         endDate: format(endOfMonth(nextMonth), "yyyy-MM-dd"),
         label: format(nextMonth, "MMMM yyyy"),
+      };
+    }
+    case "specific_date": {
+      const date = specificDate || today;
+      return {
+        startDate: format(date, "yyyy-MM-dd"),
+        endDate: format(date, "yyyy-MM-dd"),
+        label: format(date, "MMMM dd, yyyy"),
       };
     }
   }
@@ -173,9 +188,10 @@ export function ReportsDialog({
   const [selectedRoomId, setSelectedRoomId] = useState<string>("all");
   const [paymentStatus, setPaymentStatus] = useState<PaymentFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [specificDate, setSpecificDate] = useState<Date>(new Date());
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { startDate, endDate, label } = getDateRange(period);
+  const { startDate, endDate, label } = getDateRange(period, specificDate);
 
   const generateReport = async () => {
     setIsGenerating(true);
@@ -393,11 +409,12 @@ export function ReportsDialog({
           <table>
             <thead>
               <tr>
-                <th style="width: 25%">Event / Client / Company</th>
-                <th style="width: 12%">Date</th>
-                <th style="width: 18%">Room</th>
-                ${hasMultipleReservationRooms ? '<th style="width: 10%">Guests</th>' : ""}
-                <th style="width: 12%">Status</th>
+                <th style="width: 22%">Event / Client / Company</th>
+                <th style="width: 10%">Date</th>
+                <th style="width: 15%">Room</th>
+                ${hasMultipleReservationRooms ? '<th style="width: 8%">Guests</th>' : ""}
+                <th style="width: 12%">Phone</th>
+                <th style="width: 10%">Status</th>
                 <th style="width: 8%">Payment</th>
               </tr>
             </thead>
@@ -406,7 +423,7 @@ export function ReportsDialog({
                 reservationsWithRoom.length === 0
                   ? `
                 <tr>
-                  <td colspan="${hasMultipleReservationRooms ? 7 : 5}" style="text-align: center; padding: 30px; color: #888;">
+                  <td colspan="${hasMultipleReservationRooms ? 7 : 6}" style="text-align: center; padding: 30px; color: #888;">
                     No reservations found for this period
                   </td>
                 </tr>
@@ -437,6 +454,7 @@ export function ReportsDialog({
                         }</td>`
                       : ""
                   }
+                  <td>${res.phone ? "+53 " + res.phone : "-"}</td>
                   <td><span class="status status-${res.status || "pending"}">${formatStatus(res.status)}</span></td>
                   <td class="${res.paymentConfirmed ? "yes" : "no"}">${formatPayment(res.paymentConfirmed)}</td>
                 </tr>
@@ -508,8 +526,33 @@ export function ReportsDialog({
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="next_month">Next Month</SelectItem>
               <SelectItem value="quarterly">This Quarter</SelectItem>
+              <SelectItem value="specific_date">Specific Date</SelectItem>
             </SelectContent>
           </Select>
+
+          {period === "specific_date" && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full h-8 text-sm justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 size-4" />
+                  {specificDate ? format(specificDate, "P") : "Select date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={specificDate}
+                  onSelect={(date) => {
+                    if (date) setSpecificDate(date);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          )}
 
           <Select value={selectedRoomId} onValueChange={setSelectedRoomId}>
             <SelectTrigger className="w-full h-8 text-sm">
