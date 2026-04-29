@@ -137,6 +137,8 @@ function formatStatus(status: string | null): string {
       return "Pending";
     case "completed":
       return "Completed";
+    case "cancelled":
+      return "Cancelled";
     default:
       return "Pending";
   }
@@ -159,6 +161,7 @@ function formatDateRange(dateRange: DateRange): string {
 }
 
 export type PaymentFilter = "all" | "paid" | "not_paid";
+export type StatusFilter = "all" | "pending" | "confirmed" | "completed" | "cancelled";
 
 export function ReportsDialog({
   open,
@@ -169,6 +172,7 @@ export function ReportsDialog({
   const [period, setPeriod] = useState<ReportPeriod>("monthly");
   const [selectedRoomId, setSelectedRoomId] = useState<string>("all");
   const [paymentStatus, setPaymentStatus] = useState<PaymentFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { startDate, endDate, label } = getDateRange(period);
@@ -185,8 +189,14 @@ export function ReportsDialog({
 
       let filteredReservations = reservations;
 
+      if (statusFilter !== "all") {
+        filteredReservations = filteredReservations.filter(
+          (res) => res.status === statusFilter,
+        );
+      }
+
       if (paymentStatus !== "all") {
-        filteredReservations = reservations.filter((res) => {
+        filteredReservations = filteredReservations.filter((res) => {
           if (paymentStatus === "paid") return res.paymentConfirmed === true;
           if (paymentStatus === "not_paid")
             return res.paymentConfirmed === false;
@@ -322,6 +332,7 @@ export function ReportsDialog({
             .status-confirmed { background-color: #d1fae5; color: #065f46; }
             .status-pending { background-color: #fef3c7; color: #92400e; }
             .status-completed { background-color: #e0e7ff; color: #3730a3; }
+            .status-cancelled { background-color: #fee2e2; color: #991b1b; }
             .yes { color: #059669; font-weight: 600; }
             .no { color: #dc2626; font-weight: 600; }
             .footer {
@@ -525,6 +536,22 @@ export function ReportsDialog({
               <SelectItem value="all">All Payments</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="not_paid">Not Paid</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+          >
+            <SelectTrigger className="w-full h-8 text-sm">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
 

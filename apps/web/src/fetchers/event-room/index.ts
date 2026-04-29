@@ -113,6 +113,8 @@ export type Reservation = {
   expectedPax?: number | null;
   ageBreakdown?: AgeBreakdown | null;
   status: string;
+  cancellationReason?: string | null;
+  cancelledBy?: string | null;
   createdAt: string;
   updatedAt: string;
   roomName?: string;
@@ -225,8 +227,10 @@ export type UpdateReservationPayload = {
     roomTariffId?: string;
     price: number;
   }[];
-  status?: "pending" | "confirmed" | "completed";
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
   ageBreakdown?: AgeBreakdown;
+  cancellationReason?: string;
+  cancelledBy?: string;
 };
 
 export const getEventRooms = async (
@@ -317,11 +321,13 @@ export const getReservations = async (
   startDate?: string,
   endDate?: string,
   eventRoomId?: string,
+  status?: "pending" | "confirmed" | "completed" | "cancelled",
 ): Promise<Reservation[]> => {
   const queryParams: Record<string, string> = {};
   if (startDate) queryParams.startDate = startDate;
   if (endDate) queryParams.endDate = endDate;
   if (eventRoomId) queryParams.eventRoomId = eventRoomId;
+  if (status) queryParams.status = status;
 
   const url = new URLSearchParams(queryParams).toString();
   const baseUrl = `${base ? base : ""}/event-room/${workspaceId}/reservations`;
@@ -371,7 +377,7 @@ export const updateReservation = async (
 ): Promise<Reservation> => {
   const response = await client["event-room"].reservations[":id"].$put({
     param: { id },
-    json: payload,
+    json: payload as UpdateReservationPayload & Record<string, unknown>,
   });
 
   if (!response.ok) {

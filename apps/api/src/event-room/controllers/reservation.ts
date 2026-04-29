@@ -52,7 +52,7 @@ export type CreateReservationPayload = {
     infants: number;
   };
   paymentConfirmed?: boolean;
-  status?: "pending" | "confirmed" | "completed";
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
   services?: ReservationServicePayload[];
   dayTariffs?: DayTariffPayload[];
 };
@@ -74,7 +74,8 @@ export type UpdateReservationPayload = {
     children: number;
     infants: number;
   };
-  status?: "all" | "pending" | "confirmed" | "completed";
+  status?: "all" | "pending" | "confirmed" | "completed" | "cancelled";
+  cancellationReason?: string;
   services?: ReservationServicePayload[];
   dayTariffs?: DayTariffPayload[];
 };
@@ -216,6 +217,7 @@ async function checkReservationConflict(
     .where(
       and(
         eq(reservationTable.eventRoomId, eventRoomId),
+        ne(reservationTable.status, "cancelled"),
         excludeReservationId
           ? ne(reservationTable.id, excludeReservationId)
           : undefined,
@@ -359,7 +361,10 @@ async function createReservation(
         ageBreakdown: reservationTable.ageBreakdown,
       })
       .from(reservationTable)
-      .where(eq(reservationTable.eventRoomId, payload.eventRoomId));
+      .where(and(
+        eq(reservationTable.eventRoomId, payload.eventRoomId),
+        ne(reservationTable.status, "cancelled")
+      ));
 
     const paxByDate: Record<string, number> = {};
     for (const date of dates) {
@@ -600,6 +605,7 @@ async function getReservations(
   startDate?: string,
   endDate?: string,
   eventRoomId?: string,
+  status?: "pending" | "confirmed" | "completed" | "cancelled",
 ) {
   let conditions: SQL<unknown> = eq(reservationTable.workspaceId, workspaceId);
 
@@ -625,6 +631,13 @@ async function getReservations(
     ) as SQL<unknown>;
   }
 
+  if (status) {
+    conditions = and(
+      conditions,
+      eq(reservationTable.status, status),
+    ) as SQL<unknown>;
+  }
+
   const reservations = await db
     .select({
       id: reservationTable.id,
@@ -647,6 +660,8 @@ async function getReservations(
       expectedPax: reservationTable.expectedPax,
       ageBreakdown: reservationTable.ageBreakdown,
       status: reservationTable.status,
+      cancellationReason: reservationTable.cancellationReason,
+      cancelledBy: reservationTable.cancelledBy,
       createdAt: reservationTable.createdAt,
       updatedAt: reservationTable.updatedAt,
       roomName: eventRoomTable.name,
@@ -1163,6 +1178,18 @@ async function updateReservation(
       ...(payload.status && payload.status !== "all"
         ? { status: payload.status }
         : {}),
+      ...(payload.status === "cancelled"
+        ? {
+            cancellationReason: payload.cancellationReason || null,
+            cancelledBy: userId,
+          }
+        : {}),
+      ...(payload.status && payload.status !== "cancelled" && reservation.status === "cancelled"
+        ? {
+            cancellationReason: null,
+            cancelledBy: null,
+          }
+        : {}),
       ...(payloadAgeBreakdown !== undefined
         ? { ageBreakdown: payloadAgeBreakdown }
         : {}),
@@ -1294,22 +1321,46 @@ async function updateReservation(
     : "N/A";
   const statusStr = updated.status || "pending";
   const paxStr = updated.expectedPax ? `${updated.expectedPax} pax` : "N/A";
-  const changedFields = payload
-    ? Object.keys(payload)
-        .filter((k) => k !== "services" && k !== "dayTariffs")
-        .join(", ")
-    : "N/A";
 
-  const notificationTitle = `${updated.title ? `Reservation Updated: ${updated.title}` : "Reservation Updated"}`;
-  const notificationContent =
-    `User "${userName}" updated a reservation\n` +
-    `- Client: ${updated.clientName}${updated.companyName ? ` (${updated.companyName})` : ""}\n` +
-    `- Room: ${roomForName?.name || "Unknown"}\n` +
-    `- Date: ${dateStr}\n` +
-    `- Status: ${statusStr}\n` +
-    `- Expected Pax: ${paxStr}\n` +
-    `- Total: ${totalFormatted}\n` +
-    `- Changed fields: ${changedFields}`;
+  let notificationTitle: string;
+  let notificationType: string;
+  let notificationContent: string;
+
+  const clientInfo = `${updated.clientName}${updated.companyName ? ` (${updated.companyName})` : ""}`;
+  const reservationInfo = `- Client: ${clientInfo}\n- Room: ${roomForName?.name || "Unknown"}\n- Date: ${dateStr}`;
+
+  if (payload.status === "cancelled") {
+    const titlePrefix = updated.title ? `${updated.title} - ` : "";
+    notificationTitle = `Reservation Cancelled: ${titlePrefix}${updated.clientName}`;
+    notificationType = "reservation_cancelled";
+    notificationContent =
+      `User "${userName}" cancelled a reservation\n` +
+      `${reservationInfo}\n` +
+      `- Status: Cancelled\n` +
+      `- Reason: ${updated.cancellationReason || "Not specified"}`;
+  } else if (payload.status === "pending" && reservation.status === "cancelled") {
+    notificationTitle = `Reservation Reactivated: ${updated.title || updated.clientName}`;
+    notificationType = "reservation_reactivated";
+    notificationContent =
+      `User "${userName}" reactivated a cancelled reservation\n` +
+      `${reservationInfo}\n` +
+      `- Status: Pending (reactivated from cancelled)`;
+  } else {
+    const changedFields = payload
+      ? Object.keys(payload)
+          .filter((k) => k !== "services" && k !== "dayTariffs")
+          .join(", ")
+      : "N/A";
+    notificationTitle = `Reservation Updated: ${updated.title || updated.clientName}`;
+    notificationType = "reservation_updated";
+    notificationContent =
+      `User "${userName}" updated a reservation\n` +
+      `${reservationInfo}\n` +
+      `- Status: ${statusStr}\n` +
+      `- Expected Pax: ${paxStr}\n` +
+      `- Total: ${totalFormatted}\n` +
+      `- Changed fields: ${changedFields}`;
+  }
 
   await Promise.all(
     workspaceUsers.map((wu: { userId: string }) =>
@@ -1317,7 +1368,7 @@ async function updateReservation(
         userId: wu.userId,
         title: notificationTitle,
         content: notificationContent,
-        type: "reservation_updated",
+        type: notificationType,
         resourceId: updated.id,
         resourceType: "reservation",
       }),
