@@ -24,6 +24,7 @@ import {
   Plus,
   Search,
   X,
+  XCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -104,6 +105,8 @@ export function CalendarControls({
         return "Confirmed";
       case "completed":
         return "Completed";
+      case "cancelled":
+        return "Cancelled";
       default:
         return status;
     }
@@ -113,7 +116,7 @@ export function CalendarControls({
 
   const handleAddStatusFilter = (status: string) => {
     setReservationStatusFilter(
-      status as "all" | "pending" | "confirmed" | "completed",
+      status as "all" | "pending" | "confirmed" | "completed" | "cancelled",
     );
     setFilterPopoverOpen(false);
   };
@@ -307,6 +310,25 @@ export function CalendarControls({
                           </div>
                           {reservationStatusFilter === "completed" && (
                             <Check className="size-4 text-blue-500" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-between h-8 px-3 text-xs rounded-lg transition-all",
+                            reservationStatusFilter === "cancelled"
+                              ? "bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                          )}
+                          onClick={() => handleAddStatusFilter("cancelled")}
+                        >
+                          <div className="flex items-center gap-2">
+                            <XCircle className="size-3.5 text-red-500" />
+                            <span className="font-medium">Cancelled</span>
+                          </div>
+                          {reservationStatusFilter === "cancelled" && (
+                            <Check className="size-4 text-red-500" />
                           )}
                         </Button>
                       </div>

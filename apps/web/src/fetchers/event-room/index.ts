@@ -189,7 +189,7 @@ export type CreateReservationPayload = {
   roomTariffId?: string;
   expectedPax?: number;
   paymentConfirmed?: boolean;
-  status?: "pending" | "confirmed" | "completed";
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
   services?: {
     serviceId: string;
     pax: number;

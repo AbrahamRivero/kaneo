@@ -44,7 +44,7 @@ async function getPendingReservationsOlderThan72Hours(): Promise<
         eq(reservationTable.status, "pending"),
         eq(reservationTable.paymentConfirmed, false),
         eq(eventRoomTable.allowsMultipleReservations, true),
-        sql`NOW() >= (${reservationTable.dateRange}->>'from')::timestamp - interval '72 hours'`,
+        sql`NOW() >= ((${reservationTable.dateRange}::jsonb->>'from')::timestamp) - interval '72 hours'`,
       ),
     );
 

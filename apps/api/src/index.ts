@@ -230,6 +230,7 @@ new Cron("0 * * * *", async () => {
     );
   } catch (error) {
     console.error("[CRON] Error in auto-cancel job:", error);
+    console.error("[CRON] Stack:", error);
   }
 });
 
