@@ -20,11 +20,8 @@ async function getPendingReservationsOlderThan72Hours(): Promise<
   ReservationToCancel[]
 > {
   console.log(
-    "[AUTO-CANCEL] Searching for pending reservations older than 72 hours...",
+    "[AUTO-CANCEL] Searching for pending reservations with reserved date within 72 hours...",
   );
-
-  const now = new Date();
-  const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
 
   const reservations = await db
     .select({
@@ -47,12 +44,12 @@ async function getPendingReservationsOlderThan72Hours(): Promise<
         eq(reservationTable.status, "pending"),
         eq(reservationTable.paymentConfirmed, false),
         eq(eventRoomTable.allowsMultipleReservations, true),
-        sql`${reservationTable.createdAt} <= ${seventyTwoHoursAgo.toISOString()}`,
+        sql`NOW() >= (${reservationTable.dateRange}->>'from')::timestamp - interval '72 hours'`,
       ),
     );
 
   console.log(
-    `[AUTO-CANCEL] Found ${reservations.length} reservations to auto-cancel`,
+    `[AUTO-CANCEL] Found ${reservations.length} pending reservations with reserved date within 72 hours`,
   );
 
   return reservations;
@@ -62,7 +59,7 @@ async function cancelReservation(
   reservation: ReservationToCancel,
 ): Promise<void> {
   const cancellationReason =
-    "Auto-cancelled: Payment not received within 72 hours";
+    "Auto-cancelled: Reserved date within 72 hours without payment received";
 
   const [updated] = await db
     .update(reservationTable)
@@ -99,7 +96,7 @@ async function cancelReservation(
     const notificationContent =
       `Client: ${reservation.clientName}${companyPart}\n` +
       `Date: ${dateFormatted}\n` +
-      `Reason: Payment not received within 72 hours`;
+      "Reason: Reserved date within 72 hours without payment received";
 
     const notificationPromises = workspaceUsers.map(
       (user: { userId: string; userName: string | null; role: string; status: string }) =>
