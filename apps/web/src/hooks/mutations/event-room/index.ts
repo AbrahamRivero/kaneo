@@ -12,10 +12,11 @@ import {
   updateAgeGroupTariff,
   updateEventRoom,
   updatePaymentStatus,
-  updateReservation,
   updateRoomTariff,
   updateService,
+  type Reservation,
 } from "@/fetchers/event-room";
+import { client } from "@palcodesk/libs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -85,15 +86,56 @@ export function useCreateReservation() {
   });
 }
 
+type ExtendedUpdateReservationPayload = {
+  eventRoomId?: string;
+  title?: string;
+  clientName?: string;
+  companyName?: string;
+  phone?: string;
+  email?: string;
+  dateRange?: { from: string; to?: string };
+  notes?: string;
+  paymentConfirmed?: boolean;
+  roomTariffId?: string;
+  expectedPax?: number;
+  services?: Array<{
+    serviceId: string;
+    pax: number;
+    unitPrice: number;
+    totalPrice: number;
+  }>;
+  dayTariffs?: Array<{
+    date: string;
+    roomTariffId?: string;
+    price: number;
+  }>;
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
+  ageBreakdown?: { adults: number; children: number; infants: number };
+  cancellationReason?: string;
+  cancelledBy?: string;
+};
+
 export function useUpdateReservation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       payload,
-    }: { id: string; payload: Parameters<typeof updateReservation>[1] }) =>
-      updateReservation(id, payload),
+    }: {
+      id: string;
+      payload: ExtendedUpdateReservationPayload;
+    }): Promise<Reservation> => {
+      const response = await client["event-room"].reservations[":id"].$put({
+        param: { id },
+        json: payload,
+      });
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+      return response.json() as Promise<Reservation>;
+    },
     onSuccess: (_data, variables) => {
       toast.success("Reservation updated successfully");
       queryClient.invalidateQueries({ queryKey: ["reservations"] });

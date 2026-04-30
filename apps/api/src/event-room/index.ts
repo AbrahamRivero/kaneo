@@ -89,12 +89,14 @@ const eventRoom = new Hono<{
     const startDate = c.req.query("startDate");
     const endDate = c.req.query("endDate");
     const eventRoomId = c.req.query("eventRoomId");
+    const status = c.req.query("status") as "pending" | "confirmed" | "completed" | "cancelled" | undefined;
 
     const reservations = await reservationController.getReservations(
       workspaceId,
       startDate,
       endDate,
       eventRoomId,
+      status,
     );
     return c.json(reservations);
   })
@@ -131,7 +133,7 @@ const eventRoom = new Hono<{
             })
             .optional(),
           paymentConfirmed: z.boolean().optional(),
-          status: z.enum(["pending", "confirmed", "completed"]).optional(),
+          status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
           services: z
             .array(
               z.object({
@@ -271,7 +273,9 @@ const eventRoom = new Hono<{
               }),
             )
             .optional(),
-          status: z.enum(["pending", "confirmed", "completed"]).optional(),
+          status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+          cancellationReason: z.string().optional(),
+          cancelledBy: z.string().optional(),
         })
         .superRefine(async (data, ctx) => {
           if (!data.eventRoomId) return;

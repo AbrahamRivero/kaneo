@@ -16,7 +16,7 @@ export function RoomPaxIndicator({
   reservations,
 }: RoomPaxIndicatorProps) {
   const roomReservations = reservations.filter(
-    (res) => res.eventRoomId === room.id,
+    (res) => res.eventRoomId === room.id && res.status !== "cancelled",
   );
 
   const totalPax = roomReservations.reduce((sum, res) => {

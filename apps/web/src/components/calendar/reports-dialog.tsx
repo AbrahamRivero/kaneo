@@ -1,10 +1,16 @@
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,7 +34,7 @@ import {
   startOfQuarter,
   startOfWeek,
 } from "date-fns";
-import { FileDown, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, FileDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export type ReportPeriod =
@@ -38,7 +44,8 @@ export type ReportPeriod =
   | "monthly"
   | "quarterly"
   | "next_month"
-  | "last_month";
+  | "last_month"
+  | "specific_date";
 
 function parseDateRange(dateRangeStr: string): DateRange {
   try {
@@ -55,7 +62,7 @@ interface ReportsDialogProps {
   eventRooms: EventRoom[];
 }
 
-function getDateRange(period: ReportPeriod): {
+function getDateRange(period: ReportPeriod, specificDate?: Date): {
   startDate: string;
   endDate: string;
   label: string;
@@ -114,6 +121,14 @@ function getDateRange(period: ReportPeriod): {
         label: format(nextMonth, "MMMM yyyy"),
       };
     }
+    case "specific_date": {
+      const date = specificDate || today;
+      return {
+        startDate: format(date, "yyyy-MM-dd"),
+        endDate: format(date, "yyyy-MM-dd"),
+        label: format(date, "MMMM dd, yyyy"),
+      };
+    }
   }
 }
 
@@ -137,6 +152,8 @@ function formatStatus(status: string | null): string {
       return "Pending";
     case "completed":
       return "Completed";
+    case "cancelled":
+      return "Cancelled";
     default:
       return "Pending";
   }
@@ -159,6 +176,7 @@ function formatDateRange(dateRange: DateRange): string {
 }
 
 export type PaymentFilter = "all" | "paid" | "not_paid";
+export type StatusFilter = "all" | "pending" | "confirmed" | "completed" | "cancelled";
 
 export function ReportsDialog({
   open,
@@ -169,9 +187,11 @@ export function ReportsDialog({
   const [period, setPeriod] = useState<ReportPeriod>("monthly");
   const [selectedRoomId, setSelectedRoomId] = useState<string>("all");
   const [paymentStatus, setPaymentStatus] = useState<PaymentFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [specificDate, setSpecificDate] = useState<Date>(new Date());
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { startDate, endDate, label } = getDateRange(period);
+  const { startDate, endDate, label } = getDateRange(period, specificDate);
 
   const generateReport = async () => {
     setIsGenerating(true);
@@ -185,8 +205,14 @@ export function ReportsDialog({
 
       let filteredReservations = reservations;
 
+      if (statusFilter !== "all") {
+        filteredReservations = filteredReservations.filter(
+          (res) => res.status === statusFilter,
+        );
+      }
+
       if (paymentStatus !== "all") {
-        filteredReservations = reservations.filter((res) => {
+        filteredReservations = filteredReservations.filter((res) => {
           if (paymentStatus === "paid") return res.paymentConfirmed === true;
           if (paymentStatus === "not_paid")
             return res.paymentConfirmed === false;
@@ -322,6 +348,7 @@ export function ReportsDialog({
             .status-confirmed { background-color: #d1fae5; color: #065f46; }
             .status-pending { background-color: #fef3c7; color: #92400e; }
             .status-completed { background-color: #e0e7ff; color: #3730a3; }
+            .status-cancelled { background-color: #fee2e2; color: #991b1b; }
             .yes { color: #059669; font-weight: 600; }
             .no { color: #dc2626; font-weight: 600; }
             .footer {
@@ -341,6 +368,7 @@ export function ReportsDialog({
         </head>
         <body>
           <div class="header">
+            <img src="/HOTEL PALCO.jpeg" alt="Hotel Palco" style="max-width: 150px; margin-bottom: 15px;" />
             <h1>Reservations Report</h1>
             <div class="subtitle">Generated on ${format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}</div>
           </div>
@@ -381,11 +409,12 @@ export function ReportsDialog({
           <table>
             <thead>
               <tr>
-                <th style="width: 25%">Event / Client / Company</th>
-                <th style="width: 12%">Date</th>
-                <th style="width: 18%">Room</th>
-                ${hasMultipleReservationRooms ? '<th style="width: 10%">Guests</th>' : ""}
-                <th style="width: 12%">Status</th>
+                <th style="width: 22%">Event / Client / Company</th>
+                <th style="width: 10%">Date</th>
+                <th style="width: 15%">Room</th>
+                ${hasMultipleReservationRooms ? '<th style="width: 8%">Guests</th>' : ""}
+                <th style="width: 12%">Phone</th>
+                <th style="width: 10%">Status</th>
                 <th style="width: 8%">Payment</th>
               </tr>
             </thead>
@@ -394,7 +423,7 @@ export function ReportsDialog({
                 reservationsWithRoom.length === 0
                   ? `
                 <tr>
-                  <td colspan="${hasMultipleReservationRooms ? 7 : 5}" style="text-align: center; padding: 30px; color: #888;">
+                  <td colspan="${hasMultipleReservationRooms ? 7 : 6}" style="text-align: center; padding: 30px; color: #888;">
                     No reservations found for this period
                   </td>
                 </tr>
@@ -425,6 +454,7 @@ export function ReportsDialog({
                         }</td>`
                       : ""
                   }
+                  <td>${res.phone ? "+53 " + res.phone : "-"}</td>
                   <td><span class="status status-${res.status || "pending"}">${formatStatus(res.status)}</span></td>
                   <td class="${res.paymentConfirmed ? "yes" : "no"}">${formatPayment(res.paymentConfirmed)}</td>
                 </tr>
@@ -496,8 +526,33 @@ export function ReportsDialog({
               <SelectItem value="last_month">Last Month</SelectItem>
               <SelectItem value="next_month">Next Month</SelectItem>
               <SelectItem value="quarterly">This Quarter</SelectItem>
+              <SelectItem value="specific_date">Specific Date</SelectItem>
             </SelectContent>
           </Select>
+
+          {period === "specific_date" && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full h-8 text-sm justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 size-4" />
+                  {specificDate ? format(specificDate, "P") : "Select date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={specificDate}
+                  onSelect={(date) => {
+                    if (date) setSpecificDate(date);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          )}
 
           <Select value={selectedRoomId} onValueChange={setSelectedRoomId}>
             <SelectTrigger className="w-full h-8 text-sm">
@@ -524,6 +579,22 @@ export function ReportsDialog({
               <SelectItem value="all">All Payments</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="not_paid">Not Paid</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+          >
+            <SelectTrigger className="w-full h-8 text-sm">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
 

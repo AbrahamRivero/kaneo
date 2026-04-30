@@ -1,6 +1,6 @@
 import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { format } from "date-fns";
-import { Banknote, CheckCheck, CheckCircle, Clock, Users } from "lucide-react";
+import { Banknote, CheckCheck, CheckCircle, Clock, Users, XCircle } from "lucide-react";
 
 interface EventCardProps {
   event: Reservation;
@@ -17,6 +17,8 @@ function getStatusIcon(status?: string) {
       return <Clock className="size-3 text-amber-500" />;
     case "completed":
       return <CheckCheck className="size-3 text-blue-500" />;
+    case "cancelled":
+      return <XCircle className="size-3 text-red-500" />;
     default:
       return null;
   }
@@ -46,7 +48,11 @@ export function EventCard({
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
     <div
-      className="relative bg-card border border-border rounded-lg p-2 z-10 cursor-pointer hover:bg-muted transition-colors w-full"
+      className={`relative bg-card border rounded-lg p-2 z-10 cursor-pointer transition-colors w-full ${
+        event.status === "cancelled"
+          ? "bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-800 opacity-75"
+          : "border-border hover:bg-muted"
+      }`}
       style={style}
       onClick={onClick}
     >

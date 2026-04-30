@@ -11,6 +11,15 @@ import {
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Sheet,
   SheetClose,
   SheetContent,
@@ -21,8 +30,11 @@ import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import {
   useDeleteReservation,
   useUpdatePaymentStatus,
+  useUpdateReservation,
 } from "@/hooks/mutations/event-room";
 import { useGetAgeGroupTariffs } from "@/hooks/queries/event-room";
+import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
+import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import queryClient from "@/query-client";
 import { useNavigate } from "@tanstack/react-router";
 import { differenceInDays, format } from "date-fns";
@@ -30,6 +42,7 @@ import {
   Bell,
   Calendar as CalendarIcon,
   CheckCircle2,
+  Clock,
   CreditCard,
   DollarSign,
   FileDown,
@@ -39,6 +52,7 @@ import {
   Trash2,
   Users,
   X,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -172,6 +186,8 @@ function getStatusColor(status?: string): string {
       return "bg-amber-500/20 text-amber-600 dark:text-amber-400";
     case "completed":
       return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
+    case "cancelled":
+      return "bg-red-500/20 text-red-600 dark:text-red-400";
     default:
       return "bg-muted text-muted-foreground";
   }
@@ -185,6 +201,8 @@ function getStatusLabel(status?: string): string {
       return "Pending";
     case "completed":
       return "Completed";
+    case "cancelled":
+      return "Cancelled";
     default:
       return "Unknown";
   }
@@ -194,6 +212,8 @@ function getStatusIcon(status?: string): React.ReactNode {
   switch (status) {
     case "confirmed":
       return <CheckCircle2 className="size-3 text-green-500" />;
+    case "cancelled":
+      return <XCircle className="size-3 text-red-500" />;
     default:
       return null;
   }
@@ -258,6 +278,11 @@ function SingleReservationSection({
 
   const deleteReservation = useDeleteReservation();
   const updatePaymentStatus = useUpdatePaymentStatus();
+  const updateReservation = useUpdateReservation();
+  const { user } = useAuth();
+  const { isViewer } = useWorkspacePermission();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
 
   const { dateRange, dateRangeStr, days } = getReservationDateMeta(reservation);
   const eventRoom = eventRooms.find((r) => r.id === reservation.eventRoomId);
@@ -335,6 +360,68 @@ function SingleReservationSection({
       }
     } catch {
       toast.error("Failed to update payment status");
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!user?.id) {
+      toast.error("You must be logged in to cancel a reservation");
+      return;
+    }
+    try {
+      await updateReservation.mutateAsync({
+        id: reservation.id,
+        payload: {
+          cancellationReason,
+          cancelledBy: user.id,
+          status: "cancelled",
+        },
+      } as Parameters<typeof updateReservation.mutateAsync>[0]);
+      toast.success("Reservation cancelled successfully");
+      setCancelDialogOpen(false);
+      setCancellationReason("");
+      const updatedReservation: Reservation = {
+        ...reservation,
+        status: "cancelled",
+        cancellationReason,
+        cancelledBy: user.id,
+        updatedAt: new Date().toISOString(),
+      };
+      if (onReservationUpdate) {
+        onReservationUpdate(updatedReservation);
+      }
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch {
+      toast.error("Failed to cancel reservation");
+    }
+  };
+
+  const handleReactivate = async () => {
+    try {
+      await updateReservation.mutateAsync({
+        id: reservation.id,
+        payload: {
+          cancellationReason: undefined,
+          cancelledBy: undefined,
+          status: "pending",
+        },
+      } as Parameters<typeof updateReservation.mutateAsync>[0]);
+      toast.success("Reservation reactivated successfully");
+      const updatedReservation: Reservation = {
+        ...reservation,
+        status: "pending",
+        cancellationReason: null,
+        cancelledBy: null,
+        updatedAt: new Date().toISOString(),
+      };
+      if (onReservationUpdate) {
+        onReservationUpdate(updatedReservation);
+      }
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch {
+      toast.error("Failed to reactivate reservation");
     }
   };
 
@@ -424,6 +511,10 @@ function SingleReservationSection({
           tr:nth-child(even) { background-color: #f8f9fa; }
           .total-row { font-weight: 600; background-color: #e8f0fe; }
           .notes { background-color: #f8f9fa; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; }
+          .cancellation { background-color: #fee2e2; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; }
+          .cancellation-title { font-weight: 600; color: #991b1b; margin-bottom: 8px; }
+          .cancellation-label { color: #666; font-size: 10px; text-transform: uppercase; }
+          .cancellation-value { font-weight: 500; color: #333; }
           .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
           .no-print { margin-top: 20px; text-align: center; }
           .no-print button { background: #4472c4; color: white; border: none; padding: 10px 20px; font-size: 14px; cursor: pointer; border-radius: 5px; margin-right: 10px; }
@@ -433,6 +524,7 @@ function SingleReservationSection({
       </head>
       <body>
         <div class="header">
+          <img src="/HOTEL PALCO.jpeg" alt="Hotel Palco" style="max-width: 150px; margin-bottom: 15px;" />
           <h1>Reservation Report</h1>
           <div class="subtitle">Generated on ${format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}</div>
         </div>
@@ -473,11 +565,9 @@ function SingleReservationSection({
               <span class="info-label">Guests</span>
               <span class="info-value">${
                 reservation.ageBreakdown &&
-                (
-                  reservation.ageBreakdown.adults > 0 ||
-                    reservation.ageBreakdown.children > 0 ||
-                    reservation.ageBreakdown.infants > 0
-                )
+                (reservation.ageBreakdown.adults > 0 ||
+                  reservation.ageBreakdown.children > 0 ||
+                  reservation.ageBreakdown.infants > 0)
                   ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
                   : reservation.expectedPax && reservation.expectedPax > 0
                     ? `${reservation.expectedPax} Pax`
@@ -493,6 +583,10 @@ function SingleReservationSection({
             <div class="info-item">
               <span class="info-label">Date Range</span>
               <span class="info-value">${dateRangeStr}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Created</span>
+              <span class="info-value">${reservation.createdAt ? format(new Date(reservation.createdAt), "MMM dd, yyyy 'at' HH:mm") : "-"}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Duration</span>
@@ -669,6 +763,33 @@ function SingleReservationSection({
             : ""
         }
 
+        ${
+          reservation.status === "cancelled" && reservation.cancellationReason
+            ? `
+        <div class="section">
+          <div class="section-title">Cancellation Details</div>
+          <div class="cancellation">
+            <div class="cancellation-title">Reason</div>
+            <div>
+              <span class="cancellation-label">Reason: </span>
+              <span class="cancellation-value">${reservation.cancellationReason}</span>
+            </div>
+            ${
+              reservation.updatedAt
+                ? `
+            <div>
+              <span class="cancellation-label">Cancelled on: </span>
+              <span class="cancellation-value">${format(new Date(reservation.updatedAt), "MMM dd, yyyy 'at' HH:mm")}</span>
+            </div>
+            `
+                : ""
+            }
+          </div>
+        </div>
+        `
+            : ""
+        }
+
         <div class="footer">
           <span>PalcoDesk - Event Room Management</span>
           <span>Page 1</span>
@@ -708,6 +829,41 @@ function SingleReservationSection({
         </AlertDialogContent>
       </AlertDialog>
 
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Reservation</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for cancelling this reservation for{" "}
+              <strong>{reservation.title || reservation.clientName}</strong> on{" "}
+              {dateStr}. This will release the room immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Enter cancellation reason..."
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              Keep Reservation
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleCancel}
+              disabled={!cancellationReason.trim()}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Cancel Reservation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div
         className={`${
           index > 0 && index < total ? "border-t border-border pt-4 mt-4" : ""
@@ -727,8 +883,9 @@ function SingleReservationSection({
               className="size-7 hover:bg-muted"
               onClick={handleEdit}
               title="Edit reservation"
+              disabled={isViewer || reservation.status === "cancelled"}
             >
-              <Pen className="size-3.5 text-muted-foreground" />
+              <Pen className={`size-3.5 ${reservation.status === "cancelled" ? "text-muted-foreground/50" : "text-muted-foreground"}`} />
             </Button>
             <Button
               variant="ghost"
@@ -742,26 +899,55 @@ function SingleReservationSection({
             <Button
               variant="ghost"
               size="icon"
-              className={`size-7 hover:bg-muted ${
-                reservation.paymentConfirmed
-                  ? "text-green-500 hover:text-green-600"
-                  : "text-amber-500 hover:text-amber-600"
+              className={`size-7 ${
+                reservation.status === "cancelled"
+                  ? "text-muted-foreground/30 cursor-not-allowed"
+                  : reservation.paymentConfirmed
+                    ? "text-green-500 hover:text-green-600"
+                    : "text-amber-500 hover:text-amber-600"
               }`}
               onClick={handleTogglePayment}
               title={
-                reservation.paymentConfirmed
-                  ? "Mark as pending"
-                  : "Mark as paid"
+                reservation.status === "cancelled"
+                  ? "Cannot change payment for cancelled reservations"
+                  : reservation.paymentConfirmed
+                    ? "Mark as pending"
+                    : "Mark as paid"
               }
+              disabled={isViewer || reservation.status === "cancelled"}
             >
               <CreditCard className="size-3.5" />
             </Button>
+            {reservation.status === "cancelled" ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 hover:bg-green-500/10"
+                onClick={handleReactivate}
+                title="Reactivate reservation"
+                disabled={isViewer}
+              >
+                <XCircle className="size-3.5 text-green-500" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 hover:bg-orange-500/10"
+                onClick={() => setCancelDialogOpen(true)}
+                title="Cancel reservation"
+                disabled={isViewer}
+              >
+                <XCircle className="size-3.5 text-orange-500" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
               className="size-7 hover:bg-red-500/10"
               onClick={() => setDeleteAlertOpen(true)}
               title="Delete reservation"
+              disabled={isViewer}
             >
               <Trash2 className="size-3.5 text-red-500" />
             </Button>
@@ -809,6 +995,18 @@ function SingleReservationSection({
                 <CalendarIcon className="size-4" />
               </div>
               <span>{dateRangeStr}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="p-1">
+                <Clock className="size-4" />
+              </div>
+              <span>
+                Created:{" "}
+                {format(
+                  new Date(reservation.createdAt),
+                  "MMM dd, yyyy 'at' HH:mm",
+                )}
+              </span>
             </div>
             {reservation.companyName && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -945,6 +1143,29 @@ function SingleReservationSection({
               <p className="text-xs text-muted-foreground leading-[1.6] bg-muted/50 p-3 rounded-lg">
                 {reservation.notes}
               </p>
+            </div>
+          )}
+
+          {reservation.status === "cancelled" && reservation.cancellationReason && (
+            <div className="pt-2 border-t border-red-200 dark:border-red-800">
+              <div className="flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
+                <XCircle className="size-4" />
+                <span>Cancellation Details</span>
+              </div>
+              <div className="text-xs bg-red-50 dark:bg-red-950/30 p-3 rounded-lg space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Reason:</span>
+                  <span className="text-foreground font-medium">{reservation.cancellationReason}</span>
+                </div>
+                {reservation.updatedAt && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cancelled on:</span>
+                    <span className="text-foreground">
+                      {format(new Date(reservation.updatedAt), "MMM dd, yyyy 'at' HH:mm")}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

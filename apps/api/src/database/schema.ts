@@ -403,6 +403,10 @@ export const reservationTable = pgTable("reservation", {
     infants: number;
   }>(),
   status: text("status").notNull().default("pending"),
+  cancellationReason: text("cancellation_reason"),
+  cancelledBy: text("cancelled_by").references(() => userTable.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });

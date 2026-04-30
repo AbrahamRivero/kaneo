@@ -8,7 +8,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/cn";
 import { useCalendarStore } from "@/store/calendar-store";
 import { format } from "date-fns";
@@ -19,6 +18,7 @@ import {
   CheckCircle,
   CircleDashed,
   Clock,
+  DollarSign,
   DoorOpen,
   FileText,
   Plus,
@@ -206,130 +206,28 @@ export function CalendarControls({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="p-2 w-[200px]! min-w-[200px]!" align="end">
-            <div className="space-y-2">
-              <div>
-                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
-                  Status
-                </h4>
-                <div className="space-y-0.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-7 px-2 text-xs"
-                    onClick={() => handleAddStatusFilter("pending")}
-                  >
-                    <div className="flex items-center">
-                      <Clock className="size-3 mr-1.5 text-muted-foreground" />
-                      Pending
-                    </div>
-                    {reservationStatusFilter === "pending" && (
-                      <Check className="size-3 text-primary" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-7 px-2 text-xs"
-                    onClick={() => handleAddStatusFilter("confirmed")}
-                  >
-                    <div className="flex items-center">
-                      <CheckCircle className="size-3 mr-1.5 text-green-500" />
-                      Confirmed
-                    </div>
-                    {reservationStatusFilter === "confirmed" && (
-                      <Check className="size-3 text-primary" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-7 px-2 text-xs"
-                    onClick={() => handleAddStatusFilter("completed")}
-                  >
-                    <div className="flex items-center">
-                      <CheckCheck className="size-3 mr-1.5 text-muted-foreground" />
-                      Completed
-                    </div>
-                    {reservationStatusFilter === "completed" && (
-                      <Check className="size-3 text-primary" />
-                    )}
-                  </Button>
+          <PopoverContent
+            className="p-0 w-[320px] sm:w-[400px] md:w-[520px] lg:w-[640px] max-h-[80vh] overflow-hidden bg-background/95 backdrop-blur-sm border border-border/60 shadow-xl rounded-xl"
+            align="start"
+            side="bottom"
+          >
+            <div className="flex flex-col max-h-[80vh]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">
+                    Filters
+                  </span>
+                  {activeFilterCount > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-medium bg-primary text-primary-foreground rounded-full">
+                      {activeFilterCount}
+                    </span>
+                  )}
                 </div>
-              </div>
-
-              <Separator className="my-1" />
-
-              <div>
-                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
-                  Space
-                </h4>
-                <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                  {eventRooms.map((room) => (
-                    <Button
-                      key={room.id}
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-between h-7 px-2 text-xs"
-                      onClick={() => handleAddSpaceFilter(room.id)}
-                    >
-                      <div className="flex items-center min-w-0">
-                        <DoorOpen className="size-3 mr-1.5 text-muted-foreground shrink-0" />
-                        <span className="truncate">{room.name}</span>
-                      </div>
-                      {eventRoomFilter === room.id && (
-                        <Check className="size-3 text-primary shrink-0" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <Separator className="my-1" />
-
-              <div>
-                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
-                  Payment
-                </h4>
-                <div className="space-y-0.5">
+                {hasActiveFilters && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-between h-7 px-2 text-xs"
-                    onClick={() => handleAddPaymentFilter("confirmed")}
-                  >
-                    <div className="flex items-center">
-                      <CheckCircle className="size-3 mr-1.5 text-green-500" />
-                      Confirmed
-                    </div>
-                    {paymentConfirmedFilter === "confirmed" && (
-                      <Check className="size-3 text-primary" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-7 px-2 text-xs"
-                    onClick={() => handleAddPaymentFilter("not_confirmed")}
-                  >
-                    <div className="flex items-center">
-                      <Clock className="size-3 mr-1.5 text-muted-foreground" />
-                      Not confirmed
-                    </div>
-                    {paymentConfirmedFilter === "not_confirmed" && (
-                      <Check className="size-3 text-primary" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {hasActiveFilters && (
-                <>
-                  <Separator className="my-1" />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start h-7 px-2 text-xs text-muted-foreground"
+                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
                     onClick={() => {
                       setReservationStatusFilter("all");
                       setEventRoomFilter(null);
@@ -337,11 +235,170 @@ export function CalendarControls({
                       setFilterPopoverOpen(false);
                     }}
                   >
-                    <X className="size-3 mr-1.5" />
-                    Clear all filters
+                    <X className="size-3 mr-1" />
+                    Clear all
                   </Button>
-                </>
-              )}
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+                        <CircleDashed className="size-4 text-amber-500" />
+                        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                          Status
+                        </h4>
+                      </div>
+                      <div className="space-y-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-between h-8 px-3 text-xs rounded-lg transition-all",
+                            reservationStatusFilter === "pending"
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                          )}
+                          onClick={() => handleAddStatusFilter("pending")}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Clock className="size-3.5 text-amber-500" />
+                            <span className="font-medium">Pending</span>
+                          </div>
+                          {reservationStatusFilter === "pending" && (
+                            <Check className="size-4 text-amber-500" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-between h-8 px-3 text-xs rounded-lg transition-all",
+                            reservationStatusFilter === "confirmed"
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                          )}
+                          onClick={() => handleAddStatusFilter("confirmed")}
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="size-3.5 text-green-500" />
+                            <span className="font-medium">Confirmed</span>
+                          </div>
+                          {reservationStatusFilter === "confirmed" && (
+                            <Check className="size-4 text-green-500" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-between h-8 px-3 text-xs rounded-lg transition-all",
+                            reservationStatusFilter === "completed"
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                          )}
+                          onClick={() => handleAddStatusFilter("completed")}
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCheck className="size-3.5 text-blue-500" />
+                            <span className="font-medium">Completed</span>
+                          </div>
+                          {reservationStatusFilter === "completed" && (
+                            <Check className="size-4 text-blue-500" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+                        <DollarSign className="size-4 text-emerald-500" />
+                        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                          Payment
+                        </h4>
+                      </div>
+                      <div className="space-y-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-between h-8 px-3 text-xs rounded-lg transition-all",
+                            paymentConfirmedFilter === "confirmed"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                          )}
+                          onClick={() => handleAddPaymentFilter("confirmed")}
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="size-3.5 text-emerald-500" />
+                            <span className="font-medium">Confirmed</span>
+                          </div>
+                          {paymentConfirmedFilter === "confirmed" && (
+                            <Check className="size-4 text-emerald-500" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-between h-8 px-3 text-xs rounded-lg transition-all",
+                            paymentConfirmedFilter === "not_confirmed"
+                              ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                          )}
+                          onClick={() =>
+                            handleAddPaymentFilter("not_confirmed")
+                          }
+                        >
+                          <div className="flex items-center gap-2">
+                            <Clock className="size-3.5 text-orange-500" />
+                            <span className="font-medium">Not confirmed</span>
+                          </div>
+                          {paymentConfirmedFilter === "not_confirmed" && (
+                            <Check className="size-4 text-orange-500" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="my-4 border-gray-300 dark:border-gray-600" />
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+                    <DoorOpen className="size-4 text-violet-500" />
+                    <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                      Space
+                    </h4>
+                    {eventRoomFilter && (
+                      <span className="text-[10px] text-violet-500 font-medium">
+                        (
+                        {eventRooms.find((r) => r.id === eventRoomFilter)?.name}
+                        )
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {eventRooms.map((room) => (
+                      <Button
+                        key={room.id}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-7 px-3 text-xs rounded-full transition-all border",
+                          eventRoomFilter === room.id
+                            ? "border-violet-500 bg-violet-500/15 text-violet-600 dark:text-violet-300"
+                            : "border-transparent bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                        onClick={() => handleAddSpaceFilter(room.id)}
+                      >
+                        <DoorOpen className="size-3 mr-1.5 text-violet-500" />
+                        <span>{room.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </PopoverContent>
         </Popover>
