@@ -643,6 +643,7 @@ async function getReservations(
       id: reservationTable.id,
       workspaceId: reservationTable.workspaceId,
       eventRoomId: reservationTable.eventRoomId,
+      userId: reservationTable.userId,
       title: reservationTable.title,
       clientName: reservationTable.clientName,
       companyName: reservationTable.companyName,
@@ -1336,7 +1337,7 @@ async function updateReservation(
     notificationContent =
       `User "${userName}" cancelled a reservation\n` +
       `${reservationInfo}\n` +
-      `- Status: Cancelled\n` +
+      "- Status: Cancelled\n" +
       `- Reason: ${updated.cancellationReason || "Not specified"}`;
   } else if (payload.status === "pending" && reservation.status === "cancelled") {
     notificationTitle = `Reservation Reactivated: ${updated.title || updated.clientName}`;
@@ -1344,7 +1345,7 @@ async function updateReservation(
     notificationContent =
       `User "${userName}" reactivated a cancelled reservation\n` +
       `${reservationInfo}\n` +
-      `- Status: Pending (reactivated from cancelled)`;
+      "- Status: Pending (reactivated from cancelled)";
   } else {
     const changedFields = payload
       ? Object.keys(payload)

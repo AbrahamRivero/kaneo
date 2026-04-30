@@ -1,9 +1,28 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import changePassword from "./controllers/change-password";
+import changePassword from "./controllers/change-password.js";
+import { getUserName } from "../event-room/utils/get-user-name.js";
 
 const user = new Hono();
+
+user.get("/:id/name", async (c) => {
+  const userId = c.req.param("id");
+
+  if (!userId) {
+    return c.json({ message: "User ID required" }, 400);
+  }
+
+  try {
+    const name = await getUserName(userId);
+    return c.json({ name });
+  } catch (error) {
+    return c.json(
+      { message: error instanceof Error ? error.message : "Error fetching user" },
+      400,
+    );
+  }
+});
 
 user.put(
   "/password",
@@ -15,6 +34,7 @@ user.put(
     }),
   ),
   async (c) => {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const user = (c as any).get("user") as any;
     const userId = user?.id as string | undefined;
 

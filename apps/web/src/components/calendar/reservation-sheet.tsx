@@ -33,6 +33,7 @@ import {
   useUpdateReservation,
 } from "@/hooks/mutations/event-room";
 import { useGetAgeGroupTariffs } from "@/hooks/queries/event-room";
+import { useGetUserName } from "@/hooks/queries/user/use-get-user-name";
 import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import queryClient from "@/query-client";
@@ -293,6 +294,14 @@ function SingleReservationSection({
     hasAgeBasedPricing ? reservation.eventRoomId : undefined,
   );
   const ageTariffs = ageTariffsData?.data ?? [];
+  const { data: creatorName } = useGetUserName(reservation.userId);
+  const { data: cancellerName } = useGetUserName(reservation.cancelledBy);
+
+  const getDisplayName = (name: string | null | undefined, id: string | null | undefined, fallback: string) => {
+    if (name) return name;
+    if (id) return fallback;
+    return "";
+  };
 
   const getAgePrice = (name: "adult" | "child" | "infant", date: string) => {
     const validTariff = ageTariffs.find(
@@ -1006,6 +1015,9 @@ function SingleReservationSection({
                   new Date(reservation.createdAt),
                   "MMM dd, yyyy 'at' HH:mm",
                 )}
+                {reservation.userId && (
+                  <> by {getDisplayName(creatorName, reservation.userId, "Loading...")}</>
+                )}
               </span>
             </div>
             {reservation.companyName && (
@@ -1157,6 +1169,14 @@ function SingleReservationSection({
                   <span className="text-muted-foreground">Reason:</span>
                   <span className="text-foreground font-medium">{reservation.cancellationReason}</span>
                 </div>
+                {reservation.cancelledBy && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cancelled by:</span>
+                    <span className="text-foreground">
+                      {getDisplayName(cancellerName, reservation.cancelledBy, "Loading...")}
+                    </span>
+                  </div>
+                )}
                 {reservation.updatedAt && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Cancelled on:</span>

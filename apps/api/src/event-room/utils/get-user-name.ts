@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import db from "../../database";
-import { userTable } from "../../database/schema";
+import db from "../../database/index.js";
+import { userTable } from "../../database/schema.js";
 
 export async function getUserName(userId: string): Promise<string> {
   const [user] = await db

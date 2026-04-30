@@ -101,6 +101,7 @@ export type Reservation = {
   id: string;
   workspaceId: string;
   eventRoomId: string;
+  userId?: string | null;
   title?: string | null;
   clientName: string;
   companyName?: string | null;

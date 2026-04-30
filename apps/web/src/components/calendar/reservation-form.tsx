@@ -194,6 +194,7 @@ interface ReservationFormProps {
     ageBreakdown?: { adults: number; children: number; infants: number } | null;
     status?: string | null;
     cancellationReason?: string | null;
+    userId?: string | null;
   } | null;
   initialDateRange?: DateRange;
   onSuccess?: () => void;
