@@ -9,7 +9,7 @@ interface ReservationWithRoomName extends Reservation {
 interface CalendarState {
   currentWeekStart: Date;
   searchQuery: string;
-  reservationStatusFilter: "all" | "pending" | "confirmed" | "completed";
+  reservationStatusFilter: "all" | "pending" | "confirmed" | "completed" | "cancelled";
   eventRoomFilter: string | null;
   paymentConfirmedFilter: "all" | "confirmed" | "not_confirmed";
   goToNextWeek: () => void;
@@ -18,7 +18,7 @@ interface CalendarState {
   goToDate: (date: Date) => void;
   setSearchQuery: (query: string) => void;
   setReservationStatusFilter: (
-    filter: "all" | "pending" | "confirmed" | "completed",
+    filter: "all" | "pending" | "confirmed" | "completed" | "cancelled",
   ) => void;
   setEventRoomFilter: (filter: string | null) => void;
   setPaymentConfirmedFilter: (
@@ -89,7 +89,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
 
   setSearchQuery: (query: string) => set({ searchQuery: query }),
   setReservationStatusFilter: (
-    filter: "all" | "pending" | "confirmed" | "completed",
+    filter: "all" | "pending" | "confirmed" | "completed" | "cancelled",
   ) => set({ reservationStatusFilter: filter }),
   setEventRoomFilter: (filter: string | null) =>
     set({ eventRoomFilter: filter }),
@@ -127,6 +127,10 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     } else if (state.reservationStatusFilter === "completed") {
       filterWeekReservations = filterWeekReservations.filter(
         (event) => event.status === "completed",
+      );
+    } else if (state.reservationStatusFilter === "cancelled") {
+      filterWeekReservations = filterWeekReservations.filter(
+        (event) => event.status === "cancelled",
       );
     }
 

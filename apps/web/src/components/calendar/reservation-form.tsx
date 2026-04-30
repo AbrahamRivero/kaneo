@@ -112,7 +112,8 @@ export type ReservationFormValues = {
   }[];
   expectedPax?: number;
   ageBreakdown?: AgeBreakdown;
-  status?: "all" | "pending" | "confirmed" | "completed";
+  status?: "all" | "pending" | "confirmed" | "completed" | "cancelled";
+  cancellationReason?: string;
 };
 
 const reservationSchema = z
@@ -159,7 +160,8 @@ const reservationSchema = z
         infants: z.number(),
       })
       .optional(),
-    status: z.enum(["all", "pending", "confirmed", "completed"]).default("all"),
+    status: z.enum(["all", "pending", "confirmed", "completed", "cancelled"]).default("all"),
+    cancellationReason: z.string().optional(),
   })
   .refine(
     () => {
@@ -191,6 +193,8 @@ interface ReservationFormProps {
     expectedPax?: number | null;
     ageBreakdown?: { adults: number; children: number; infants: number } | null;
     status?: string | null;
+    cancellationReason?: string | null;
+    userId?: string | null;
   } | null;
   initialDateRange?: DateRange;
   onSuccess?: () => void;
@@ -289,7 +293,7 @@ export function ReservationForm({
       dateRange: dateRange,
       notes: initialData?.notes || "",
       status:
-        (initialData?.status as "pending" | "confirmed" | "completed") ||
+        (initialData?.status as "pending" | "confirmed" | "completed" | "cancelled") ||
         "pending",
       paymentConfirmed: initialData?.paymentConfirmed || false,
       roomTariffId: initialData?.roomTariffId || undefined,
@@ -301,6 +305,7 @@ export function ReservationForm({
         children: 0,
         infants: 0,
       },
+      cancellationReason: initialData?.cancellationReason || "",
     },
   });
 
@@ -360,7 +365,7 @@ export function ReservationForm({
         dateRange: parsedDateRange,
         notes: initialData.notes || "",
         status:
-          (initialData.status as "pending" | "confirmed" | "completed") ||
+          (initialData.status as "pending" | "confirmed" | "completed" | "cancelled") ||
           "pending",
         paymentConfirmed: initialData.paymentConfirmed || false,
         roomTariffId: initialData.roomTariffId || undefined,
@@ -372,6 +377,7 @@ export function ReservationForm({
           children: 0,
           infants: 0,
         },
+        cancellationReason: initialData.cancellationReason || "",
       });
     }
   }, [initialData, form.reset]);
@@ -452,6 +458,7 @@ export function ReservationForm({
     try {
       const {
         status,
+        cancellationReason,
         dateRange: formDateRange,
         services: formServices,
         dayTariffs: formDayTariffs,
@@ -521,6 +528,9 @@ export function ReservationForm({
             children: 0,
             infants: 0,
           },
+        }),
+        ...(status === "cancelled" && {
+          cancellationReason: cancellationReason || undefined,
         }),
       };
 
@@ -772,7 +782,7 @@ export function ReservationForm({
                 onValueChange={(value) =>
                   form.setValue(
                     "status",
-                    value as "pending" | "confirmed" | "completed",
+                    value as "pending" | "confirmed" | "completed" | "cancelled",
                   )
                 }
               >
@@ -783,6 +793,7 @@ export function ReservationForm({
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1262,6 +1273,17 @@ export function ReservationForm({
                 {...form.register("notes")}
               />
             </div>
+            {form.watch("status") === "cancelled" && (
+              <div className="grid gap-2">
+                <Label htmlFor="cancellationReason">Cancellation Reason</Label>
+                <Textarea
+                  id="cancellationReason"
+                  placeholder="Reason for cancelling this reservation..."
+                  className="min-h-[100px]"
+                  {...form.register("cancellationReason")}
+                />
+              </div>
+            )}
           </div>
         </SectionCard>
       </Collapsible>
