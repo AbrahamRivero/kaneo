@@ -221,7 +221,7 @@ new Cron("0 16 * * *", async () => {
   }
 });
 
-new Cron("0 * * * *", async () => {
+new Cron("0 0 * * *", async () => {
   console.log("[CRON] Auto-cancelling pending reservations older than 72 hours...");
   try {
     const result = await autoCancelPendingReservations();
