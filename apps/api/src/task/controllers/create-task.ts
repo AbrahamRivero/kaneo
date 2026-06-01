@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../../database";
-import { projectTable, taskTable, userTable } from "../../database/schema";
-import { publishEvent } from "../../events";
-import { requireAtLeastMember } from "../../utils/permissions";
-import getNextTaskNumber from "./get-next-task-number";
-import type { Priority, Status } from "./update-task";
+import db from "../../database/index.js";
+import { projectTable, taskTable, userTable } from "../../database/schema.js";
+import { requireAtLeastMember } from "../../utils/permissions.js";
+import getNextTaskNumber from "./get-next-task-number.js";
+import { Priority, Status } from "./update-task.js";
+import { publishEvent } from "../../events/index.js";
 
 async function createTask({
   userId,
@@ -34,7 +34,11 @@ async function createTask({
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId!, project.workspaceId, "create_tasks");
+  if (!userId) {
+    throw new HTTPException(401, { message: "Unauthorized" });
+  }
+
+  await requireAtLeastMember(userId, project.workspaceId, "create_tasks");
 
   const nextTaskNumber = await getNextTaskNumber(projectId);
 

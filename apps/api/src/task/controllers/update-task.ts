@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../../database";
-import { projectTable, taskTable } from "../../database/schema";
-import { publishEvent } from "../../events";
-import { requireAtLeastMember } from "../../utils/permissions";
+import db from "../../database/index.js";
+import { projectTable, taskTable } from "../../database/schema.js";
+import { requireAtLeastMember } from "../../utils/permissions.js";
+import { publishEvent } from "../../events/index.js";
+
 
 export type Status =
   | "backlog"
@@ -46,7 +47,11 @@ async function updateTask(
     throw new HTTPException(404, { message: "Project not found" });
   }
 
-  await requireAtLeastMember(userId!, project.workspaceId, "edit_tasks");
+  if (!userId) {
+    throw new HTTPException(401, { message: "Unauthorized" });
+  }
+
+  await requireAtLeastMember(userId, project.workspaceId, "edit_tasks");
 
   const currentStatus = status as Status;
   const currentPriority = priority as Priority;

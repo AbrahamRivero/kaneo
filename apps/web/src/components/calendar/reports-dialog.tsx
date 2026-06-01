@@ -62,7 +62,10 @@ interface ReportsDialogProps {
   eventRooms: EventRoom[];
 }
 
-function getDateRange(period: ReportPeriod, specificDate?: Date): {
+function getDateRange(
+  period: ReportPeriod,
+  specificDate?: Date,
+): {
   startDate: string;
   endDate: string;
   label: string;
@@ -176,7 +179,12 @@ function formatDateRange(dateRange: DateRange): string {
 }
 
 export type PaymentFilter = "all" | "paid" | "not_paid";
-export type StatusFilter = "all" | "pending" | "confirmed" | "completed" | "cancelled";
+export type StatusFilter =
+  | "all"
+  | "pending"
+  | "confirmed"
+  | "completed"
+  | "cancelled";
 
 export function ReportsDialog({
   open,

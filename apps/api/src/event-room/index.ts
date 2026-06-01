@@ -89,7 +89,12 @@ const eventRoom = new Hono<{
     const startDate = c.req.query("startDate");
     const endDate = c.req.query("endDate");
     const eventRoomId = c.req.query("eventRoomId");
-    const status = c.req.query("status") as "pending" | "confirmed" | "completed" | "cancelled" | undefined;
+    const status = c.req.query("status") as
+      | "pending"
+      | "confirmed"
+      | "completed"
+      | "cancelled"
+      | undefined;
 
     const reservations = await reservationController.getReservations(
       workspaceId,
@@ -133,7 +138,9 @@ const eventRoom = new Hono<{
             })
             .optional(),
           paymentConfirmed: z.boolean().optional(),
-          status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+          status: z
+            .enum(["pending", "confirmed", "completed", "cancelled"])
+            .optional(),
           services: z
             .array(
               z.object({
@@ -193,7 +200,9 @@ const eventRoom = new Hono<{
           } else if (
             room?.allowsMultipleReservations &&
             !room?.hasAgeBasedPricing &&
-            !data.expectedPax
+            (data.expectedPax === undefined ||
+              data.expectedPax === null ||
+              data.expectedPax === 0)
           ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
@@ -273,7 +282,9 @@ const eventRoom = new Hono<{
               }),
             )
             .optional(),
-          status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+          status: z
+            .enum(["pending", "confirmed", "completed", "cancelled"])
+            .optional(),
           cancellationReason: z.string().optional(),
           cancelledBy: z.string().optional(),
         })
@@ -312,7 +323,9 @@ const eventRoom = new Hono<{
           } else if (
             room?.allowsMultipleReservations &&
             !room?.hasAgeBasedPricing &&
-            !data.expectedPax
+            (data.expectedPax === undefined ||
+              data.expectedPax === null ||
+              data.expectedPax === 0)
           ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,

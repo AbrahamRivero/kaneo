@@ -9,7 +9,12 @@ interface ReservationWithRoomName extends Reservation {
 interface CalendarState {
   currentWeekStart: Date;
   searchQuery: string;
-  reservationStatusFilter: "all" | "pending" | "confirmed" | "completed" | "cancelled";
+  reservationStatusFilter:
+    | "all"
+    | "pending"
+    | "confirmed"
+    | "completed"
+    | "cancelled";
   eventRoomFilter: string | null;
   paymentConfirmedFilter: "all" | "confirmed" | "not_confirmed";
   goToNextWeek: () => void;
