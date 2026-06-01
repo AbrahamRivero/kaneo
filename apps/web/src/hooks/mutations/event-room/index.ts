@@ -1,4 +1,5 @@
 import {
+  type Reservation,
   createAgeGroupTariff,
   createEventRoom,
   createReservation,
@@ -14,7 +15,6 @@ import {
   updatePaymentStatus,
   updateRoomTariff,
   updateService,
-  type Reservation,
 } from "@/fetchers/event-room";
 import { client } from "@palcodesk/libs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

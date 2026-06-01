@@ -1,3 +1,4 @@
+import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetClose,
@@ -26,6 +26,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
 import {
   useDeleteReservation,
@@ -34,7 +35,6 @@ import {
 } from "@/hooks/mutations/event-room";
 import { useGetAgeGroupTariffs } from "@/hooks/queries/event-room";
 import { useGetUserName } from "@/hooks/queries/user/use-get-user-name";
-import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { useWorkspacePermission } from "@/hooks/useWorkspacePermission";
 import queryClient from "@/query-client";
 import { useNavigate } from "@tanstack/react-router";
@@ -297,7 +297,11 @@ function SingleReservationSection({
   const { data: creatorName } = useGetUserName(reservation.userId);
   const { data: cancellerName } = useGetUserName(reservation.cancelledBy);
 
-  const getDisplayName = (name: string | null | undefined, id: string | null | undefined, fallback: string) => {
+  const getDisplayName = (
+    name: string | null | undefined,
+    id: string | null | undefined,
+    fallback: string,
+  ) => {
     if (name) return name;
     if (id) return fallback;
     return "";
@@ -574,9 +578,11 @@ function SingleReservationSection({
               <span class="info-label">Guests</span>
               <span class="info-value">${
                 reservation.ageBreakdown &&
-                (reservation.ageBreakdown.adults > 0 ||
-                  reservation.ageBreakdown.children > 0 ||
-                  reservation.ageBreakdown.infants > 0)
+                (
+                  reservation.ageBreakdown.adults > 0 ||
+                    reservation.ageBreakdown.children > 0 ||
+                    reservation.ageBreakdown.infants > 0
+                )
                   ? `${reservation.ageBreakdown.adults} adults, ${reservation.ageBreakdown.children} children, ${reservation.ageBreakdown.infants} infants`
                   : reservation.expectedPax && reservation.expectedPax > 0
                     ? `${reservation.expectedPax} Pax`
@@ -858,7 +864,10 @@ function SingleReservationSection({
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+            >
               Keep Reservation
             </Button>
             <Button
@@ -894,7 +903,9 @@ function SingleReservationSection({
               title="Edit reservation"
               disabled={isViewer || reservation.status === "cancelled"}
             >
-              <Pen className={`size-3.5 ${reservation.status === "cancelled" ? "text-muted-foreground/50" : "text-muted-foreground"}`} />
+              <Pen
+                className={`size-3.5 ${reservation.status === "cancelled" ? "text-muted-foreground/50" : "text-muted-foreground"}`}
+              />
             </Button>
             <Button
               variant="ghost"
@@ -1016,7 +1027,15 @@ function SingleReservationSection({
                   "MMM dd, yyyy 'at' HH:mm",
                 )}
                 {reservation.userId && (
-                  <> by {getDisplayName(creatorName, reservation.userId, "Loading...")}</>
+                  <>
+                    {" "}
+                    by{" "}
+                    {getDisplayName(
+                      creatorName,
+                      reservation.userId,
+                      "Loading...",
+                    )}
+                  </>
                 )}
               </span>
             </div>
@@ -1158,36 +1177,50 @@ function SingleReservationSection({
             </div>
           )}
 
-          {reservation.status === "cancelled" && reservation.cancellationReason && (
-            <div className="pt-2 border-t border-red-200 dark:border-red-800">
-              <div className="flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
-                <XCircle className="size-4" />
-                <span>Cancellation Details</span>
-              </div>
-              <div className="text-xs bg-red-50 dark:bg-red-950/30 p-3 rounded-lg space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Reason:</span>
-                  <span className="text-foreground font-medium">{reservation.cancellationReason}</span>
+          {reservation.status === "cancelled" &&
+            reservation.cancellationReason && (
+              <div className="pt-2 border-t border-red-200 dark:border-red-800">
+                <div className="flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
+                  <XCircle className="size-4" />
+                  <span>Cancellation Details</span>
                 </div>
-                {reservation.cancelledBy && (
+                <div className="text-xs bg-red-50 dark:bg-red-950/30 p-3 rounded-lg space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cancelled by:</span>
-                    <span className="text-foreground">
-                      {getDisplayName(cancellerName, reservation.cancelledBy, "Loading...")}
+                    <span className="text-muted-foreground">Reason:</span>
+                    <span className="text-foreground font-medium">
+                      {reservation.cancellationReason}
                     </span>
                   </div>
-                )}
-                {reservation.updatedAt && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cancelled on:</span>
-                    <span className="text-foreground">
-                      {format(new Date(reservation.updatedAt), "MMM dd, yyyy 'at' HH:mm")}
-                    </span>
-                  </div>
-                )}
+                  {reservation.cancelledBy && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Cancelled by:
+                      </span>
+                      <span className="text-foreground">
+                        {getDisplayName(
+                          cancellerName,
+                          reservation.cancelledBy,
+                          "Loading...",
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {reservation.updatedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Cancelled on:
+                      </span>
+                      <span className="text-foreground">
+                        {format(
+                          new Date(reservation.updatedAt),
+                          "MMM dd, yyyy 'at' HH:mm",
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </>

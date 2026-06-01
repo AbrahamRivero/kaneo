@@ -175,10 +175,7 @@ export function RoomForm({
         </div>
         <div className="flex items-center justify-between py-2">
           <div className="flex flex-col gap-1">
-            <Label
-              htmlFor="hasAgeBasedPricing"
-              className="text-sm font-medium"
-            >
+            <Label htmlFor="hasAgeBasedPricing" className="text-sm font-medium">
               Age-based pricing
             </Label>
             <span className="text-xs text-muted-foreground">

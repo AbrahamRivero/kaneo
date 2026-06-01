@@ -1,6 +1,13 @@
 import type { DateRange, Reservation } from "@/fetchers/event-room";
 import { format } from "date-fns";
-import { Banknote, CheckCheck, CheckCircle, Clock, Users, XCircle } from "lucide-react";
+import {
+  Banknote,
+  CheckCheck,
+  CheckCircle,
+  Clock,
+  Users,
+  XCircle,
+} from "lucide-react";
 
 interface EventCardProps {
   event: Reservation;
@@ -95,14 +102,24 @@ export function EventCard({
         <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
           {dateStr}
         </p>
-        {allowsMultipleReservations && ((event.ageBreakdown && (event.ageBreakdown.adults > 0 || event.ageBreakdown.children > 0 || event.ageBreakdown.infants > 0)) || (event.expectedPax ?? 0) > 0) && (
-          <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-            <Users className="size-3" />
-            <span>{event.ageBreakdown && (event.ageBreakdown.adults > 0 || event.ageBreakdown.children > 0 || event.ageBreakdown.infants > 0)
-              ? `${event.ageBreakdown.adults}A, ${event.ageBreakdown.children}C, ${event.ageBreakdown.infants}I`
-              : event.expectedPax}</span>
-          </div>
-        )}
+        {allowsMultipleReservations &&
+          ((event.ageBreakdown &&
+            (event.ageBreakdown.adults > 0 ||
+              event.ageBreakdown.children > 0 ||
+              event.ageBreakdown.infants > 0)) ||
+            (event.expectedPax ?? 0) > 0) && (
+            <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+              <Users className="size-3" />
+              <span>
+                {event.ageBreakdown &&
+                (event.ageBreakdown.adults > 0 ||
+                  event.ageBreakdown.children > 0 ||
+                  event.ageBreakdown.infants > 0)
+                  ? `${event.ageBreakdown.adults}A, ${event.ageBreakdown.children}C, ${event.ageBreakdown.infants}I`
+                  : event.expectedPax}
+              </span>
+            </div>
+          )}
       </div>
     </div>
   );

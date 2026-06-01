@@ -1,7 +1,7 @@
 import {
-  getAllServices,
   getAgeGroupTariffById,
   getAgeGroupTariffs,
+  getAllServices,
   getEventRoomById,
   getEventRooms,
   getReservation,

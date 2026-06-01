@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Combobox,
   ComboboxContent,
@@ -7,22 +8,21 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   useCreateAgeGroupTariff,
   useUpdateAgeGroupTariff,
 } from "@/hooks/mutations/event-room";
 import { useGetEventRooms } from "@/hooks/queries/event-room";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Controller, useForm } from "react-hook-form";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 const ageGroupTariffSchema = z.object({
@@ -184,7 +184,9 @@ export function AgeGroupTariffForm({
                 value: room.id,
                 label: room.name,
               }));
-              const selectedRoom = roomItems.find((r) => r.value === field.value);
+              const selectedRoom = roomItems.find(
+                (r) => r.value === field.value,
+              );
               return (
                 <Combobox
                   value={selectedRoom ?? null}
@@ -219,10 +221,14 @@ export function AgeGroupTariffForm({
           <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-sm font-medium">
             {(() => {
               const minAge = Number(form.watch("minAge")) || 0;
-              const maxAge = form.watch("maxAge") ? Number(form.watch("maxAge")) : null;
+              const maxAge = form.watch("maxAge")
+                ? Number(form.watch("maxAge"))
+                : null;
               if (minAge >= 13) return "Adult";
-              if (minAge >= 5 && (maxAge === null || maxAge <= 12)) return "Child";
-              if (minAge >= 0 && (maxAge === null || maxAge <= 4)) return "Infant";
+              if (minAge >= 5 && (maxAge === null || maxAge <= 12))
+                return "Child";
+              if (minAge >= 0 && (maxAge === null || maxAge <= 4))
+                return "Infant";
               return maxAge !== null ? `${minAge}-${maxAge}` : `${minAge}+`;
             })()}
           </div>
@@ -302,7 +308,9 @@ export function AgeGroupTariffForm({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value ? parseDateString(field.value) : undefined}
+                      selected={
+                        field.value ? parseDateString(field.value) : undefined
+                      }
                       onSelect={(date) =>
                         field.onChange(date ? toDateInputString(date) : "")
                       }
@@ -341,7 +349,9 @@ export function AgeGroupTariffForm({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value ? parseDateString(field.value) : undefined}
+                      selected={
+                        field.value ? parseDateString(field.value) : undefined
+                      }
                       onSelect={(date) =>
                         field.onChange(date ? toDateInputString(date) : "")
                       }

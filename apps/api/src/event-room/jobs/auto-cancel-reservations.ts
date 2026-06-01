@@ -1,9 +1,8 @@
 import { and, eq, sql } from "drizzle-orm";
 import db from "../../database/index.js";
 import { eventRoomTable, reservationTable } from "../../database/schema.js";
-import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
 import createNotification from "../../notification/controllers/create-notification.js";
-
+import getActiveWorkspaceUsers from "../../workspace-user/controllers/get-active-workspace-users.js";
 
 interface ReservationToCancel {
   id: string;
@@ -84,22 +83,24 @@ async function cancelReservation(
         ? dateRange.from
         : `${dateRange.from} - ${dateRange.to}`;
 
-    const titlePrefix = reservation.title
-      ? reservation.title + " - "
-      : "";
+    const titlePrefix = reservation.title ? reservation.title + " - " : "";
     const companyPart = reservation.companyName
       ? ` (${reservation.companyName})`
       : "";
 
-    const notificationTitle =
-      `Reservation cancelled: ${titlePrefix}Payment not received`;
+    const notificationTitle = `Reservation cancelled: ${titlePrefix}Payment not received`;
     const notificationContent =
       `Client: ${reservation.clientName}${companyPart}\n` +
       `Date: ${dateFormatted}\n` +
       "Reason: Reserved date within 72 hours without payment received";
 
     const notificationPromises = workspaceUsers.map(
-      (user: { userId: string; userName: string | null; role: string; status: string }) =>
+      (user: {
+        userId: string;
+        userName: string | null;
+        role: string;
+        status: string;
+      }) =>
         createNotification({
           userId: user.userId,
           title: notificationTitle,

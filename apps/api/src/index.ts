@@ -5,30 +5,30 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
-import getSettings from "./utils/get-settings.js";
-import config from "./config/index.js";
-import githubIntegration from "./github-integration/index.js";
-import { getPublicProject } from "./project/controllers/get-public-project.js";
-import { auth } from "./auth.js";
-import { publishEvent } from "./events/index.js";
-import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users.js";
-import { errorHandler } from "./middleware/error-handler.js";
-import purgeDemoData from "./utils/purge-demo-data.js";
-import { notifyUnpaidReservations } from "./event-room/services/check-unpaid-reservations.js";
-import { autoCancelPendingReservations } from "./event-room/jobs/auto-cancel-reservations.js";
-import workspace from "./workspace/index.js";
-import workspaceUser from "./workspace-user/index.js";
-import user from "./user/index.js";
-import project from "./project/index.js";
-import task from "./task/index.js";
 import activity from "./activity/index.js";
-import timeEntry from "./time-entry/index.js";
-import label from "./label/index.js";
-import notification from "./notification/index.js";
-import search from "./search/index.js";
 import analytics from "./analytics/route.js";
+import { auth } from "./auth.js";
+import config from "./config/index.js";
 import db from "./database/index.js";
 import eventRoom from "./event-room/index.js";
+import { autoCancelPendingReservations } from "./event-room/jobs/auto-cancel-reservations.js";
+import { notifyUnpaidReservations } from "./event-room/services/check-unpaid-reservations.js";
+import { publishEvent } from "./events/index.js";
+import githubIntegration from "./github-integration/index.js";
+import label from "./label/index.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import notification from "./notification/index.js";
+import { getPublicProject } from "./project/controllers/get-public-project.js";
+import project from "./project/index.js";
+import search from "./search/index.js";
+import task from "./task/index.js";
+import timeEntry from "./time-entry/index.js";
+import user from "./user/index.js";
+import getSettings from "./utils/get-settings.js";
+import purgeDemoData from "./utils/purge-demo-data.js";
+import activatePendingWorkspaceUsers from "./workspace-user/controllers/activate-pending-workspace-users.js";
+import workspaceUser from "./workspace-user/index.js";
+import workspace from "./workspace/index.js";
 
 const app = new Hono<{
   Variables: {
@@ -222,7 +222,9 @@ new Cron("0 16 * * *", async () => {
 });
 
 new Cron("0 0 * * *", async () => {
-  console.log("[CRON] Auto-cancelling pending reservations older than 72 hours...");
+  console.log(
+    "[CRON] Auto-cancelling pending reservations older than 72 hours...",
+  );
   try {
     const result = await autoCancelPendingReservations();
     console.log(

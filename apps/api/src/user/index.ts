@@ -1,8 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import changePassword from "./controllers/change-password.js";
 import { getUserName } from "../event-room/utils/get-user-name.js";
+import changePassword from "./controllers/change-password.js";
 
 const user = new Hono();
 
@@ -18,7 +18,9 @@ user.get("/:id/name", async (c) => {
     return c.json({ name });
   } catch (error) {
     return c.json(
-      { message: error instanceof Error ? error.message : "Error fetching user" },
+      {
+        message: error instanceof Error ? error.message : "Error fetching user",
+      },
       400,
     );
   }

@@ -1,6 +1,6 @@
-import Hero from "@/components/hero";
-import Footer from "@/components/footer";
 import Features from "@/components/features";
+import Footer from "@/components/footer";
+import Hero from "@/components/hero";
 import StructuredData from "@/components/structured-data";
 
 export default function HomePage() {

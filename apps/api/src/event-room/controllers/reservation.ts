@@ -314,7 +314,9 @@ async function createReservation(
   if (
     room.allowsMultipleReservations &&
     !room.hasAgeBasedPricing &&
-    !payload.expectedPax
+    (payload.expectedPax === undefined ||
+      payload.expectedPax === null ||
+      payload.expectedPax === 0)
   ) {
     throw new HTTPException(400, {
       message:
@@ -361,10 +363,12 @@ async function createReservation(
         ageBreakdown: reservationTable.ageBreakdown,
       })
       .from(reservationTable)
-      .where(and(
-        eq(reservationTable.eventRoomId, payload.eventRoomId),
-        ne(reservationTable.status, "cancelled")
-      ));
+      .where(
+        and(
+          eq(reservationTable.eventRoomId, payload.eventRoomId),
+          ne(reservationTable.status, "cancelled"),
+        ),
+      );
 
     const paxByDate: Record<string, number> = {};
     for (const date of dates) {
@@ -1113,9 +1117,12 @@ async function updateReservation(
   }
 
   if (
+    "expectedPax" in payload &&
     room.allowsMultipleReservations &&
     !room.hasAgeBasedPricing &&
-    !payload.expectedPax
+    (payload.expectedPax === undefined ||
+      payload.expectedPax === null ||
+      payload.expectedPax === 0)
   ) {
     throw new HTTPException(400, {
       message:
@@ -1185,7 +1192,9 @@ async function updateReservation(
             cancelledBy: userId,
           }
         : {}),
-      ...(payload.status && payload.status !== "cancelled" && reservation.status === "cancelled"
+      ...(payload.status &&
+      payload.status !== "cancelled" &&
+      reservation.status === "cancelled"
         ? {
             cancellationReason: null,
             cancelledBy: null,
@@ -1339,7 +1348,10 @@ async function updateReservation(
       `${reservationInfo}\n` +
       "- Status: Cancelled\n" +
       `- Reason: ${updated.cancellationReason || "Not specified"}`;
-  } else if (payload.status === "pending" && reservation.status === "cancelled") {
+  } else if (
+    payload.status === "pending" &&
+    reservation.status === "cancelled"
+  ) {
     notificationTitle = `Reservation Reactivated: ${updated.title || updated.clientName}`;
     notificationType = "reservation_reactivated";
     notificationContent =

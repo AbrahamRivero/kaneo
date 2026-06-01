@@ -143,9 +143,7 @@ export function AgeGroupTariffsTable({
                   </span>
                 </TableCell>
                 <TableCell className="px-4 py-3.5">
-                  <span className="text-muted-foreground">
-                    {tariff.name}
-                  </span>
+                  <span className="text-muted-foreground">{tariff.name}</span>
                 </TableCell>
                 <TableCell className="px-4 py-3.5">
                   <span className="text-muted-foreground">
@@ -163,7 +161,8 @@ export function AgeGroupTariffsTable({
                   <div className="text-xs text-muted-foreground">
                     {tariff.validFrom && tariff.validTo ? (
                       <span>
-                        {formatDateForDisplay(tariff.validFrom)} - {formatDateForDisplay(tariff.validTo)}
+                        {formatDateForDisplay(tariff.validFrom)} -{" "}
+                        {formatDateForDisplay(tariff.validTo)}
                       </span>
                     ) : tariff.validFrom ? (
                       <span>From {formatDateForDisplay(tariff.validFrom)}</span>

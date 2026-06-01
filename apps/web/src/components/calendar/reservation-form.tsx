@@ -160,7 +160,9 @@ const reservationSchema = z
         infants: z.number(),
       })
       .optional(),
-    status: z.enum(["all", "pending", "confirmed", "completed", "cancelled"]).default("all"),
+    status: z
+      .enum(["all", "pending", "confirmed", "completed", "cancelled"])
+      .default("all"),
     cancellationReason: z.string().optional(),
   })
   .refine(
@@ -293,8 +295,11 @@ export function ReservationForm({
       dateRange: dateRange,
       notes: initialData?.notes || "",
       status:
-        (initialData?.status as "pending" | "confirmed" | "completed" | "cancelled") ||
-        "pending",
+        (initialData?.status as
+          | "pending"
+          | "confirmed"
+          | "completed"
+          | "cancelled") || "pending",
       paymentConfirmed: initialData?.paymentConfirmed || false,
       roomTariffId: initialData?.roomTariffId || undefined,
       services: initialData?.services || [],
@@ -365,8 +370,11 @@ export function ReservationForm({
         dateRange: parsedDateRange,
         notes: initialData.notes || "",
         status:
-          (initialData.status as "pending" | "confirmed" | "completed" | "cancelled") ||
-          "pending",
+          (initialData.status as
+            | "pending"
+            | "confirmed"
+            | "completed"
+            | "cancelled") || "pending",
         paymentConfirmed: initialData.paymentConfirmed || false,
         roomTariffId: initialData.roomTariffId || undefined,
         services: initialData.services || [],
@@ -521,7 +529,7 @@ export function ReservationForm({
         dateRange: dateRangePayload,
         services: servicesPayload.length > 0 ? servicesPayload : undefined,
         dayTariffs: dayTariffsPayload,
-        expectedPax: restFormData.expectedPax || 0,
+        expectedPax: restFormData.expectedPax ?? 0,
         ...(hasAgeBasedPricing && {
           ageBreakdown: restFormData.ageBreakdown || {
             adults: 0,
@@ -549,7 +557,9 @@ export function ReservationForm({
       } else if (
         allowsMultipleReservations &&
         !hasAgeBasedPricing &&
-        !payload.expectedPax
+        (payload.expectedPax === undefined ||
+          payload.expectedPax === null ||
+          payload.expectedPax === 0)
       ) {
         toast.error("Expected Pax is required for this room");
         return;
@@ -782,7 +792,11 @@ export function ReservationForm({
                 onValueChange={(value) =>
                   form.setValue(
                     "status",
-                    value as "pending" | "confirmed" | "completed" | "cancelled",
+                    value as
+                      | "pending"
+                      | "confirmed"
+                      | "completed"
+                      | "cancelled",
                   )
                 }
               >

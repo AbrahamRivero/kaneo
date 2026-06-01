@@ -1,10 +1,10 @@
-import { useNavigate } from "@tanstack/react-router";
-import { AgeGroupTariffForm } from "@/components/event-room/age-tariff-form";
-import { useGetAgeGroupTariffById } from "@/hooks/queries/event-room";
-import { createFileRoute } from "@tanstack/react-router";
-import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
 import WorkspaceLayout from "@/components/common/workspace-layout";
+import { AgeGroupTariffForm } from "@/components/event-room/age-tariff-form";
 import { Button } from "@/components/ui/button";
+import { useGetAgeGroupTariffById } from "@/hooks/queries/event-room";
+import useGetWorkspace from "@/hooks/queries/workspace/use-get-workspace";
+import { useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute(
