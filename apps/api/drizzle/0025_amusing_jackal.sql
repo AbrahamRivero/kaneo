@@ -1,1 +1,1 @@
-ALTER TABLE "survey" ADD COLUMN "date" text NOT NULL;
+ALTER TABLE "survey" ADD COLUMN IF NOT EXISTS "date" text NOT NULL;
