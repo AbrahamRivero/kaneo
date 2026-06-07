@@ -4,6 +4,7 @@ import {
   Calendar,
   CalendarDays,
   ChevronDown,
+  ClipboardList,
   LayoutDashboard,
   LayoutGrid,
   Phone,
@@ -94,6 +95,8 @@ export function NavMain() {
       isDisabled: false,
     },
   ];
+
+  const surveysActive = window.location.pathname.includes("/surveys");
 
   const handleNavClick = (url: string) => {
     navigate({ to: url });
@@ -302,6 +305,70 @@ export function NavMain() {
               </DropdownMenu>
             </SidebarMenuItem>
           )}
+
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full flex items-center gap-2 justify-between",
+                    surveysActive && "bg-accent",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>Surveys</span>
+                  </div>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleNavClick(
+                      `/dashboard/workspace/${workspace.id}/surveys`,
+                    )
+                  }
+                  className={cn(
+                    "cursor-pointer",
+                    window.location.pathname ===
+                      `/dashboard/workspace/${workspace.id}/surveys` &&
+                      "bg-accent",
+                  )}
+                >
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Survey List</span>
+                    <span className="text-xs text-muted-foreground">
+                      View and manage surveys
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleNavClick(
+                      `/dashboard/workspace/${workspace.id}/surveys/categories`,
+                    )
+                  }
+                  className={cn(
+                    "cursor-pointer",
+                    window.location.pathname.includes("/surveys/categories") &&
+                      "bg-accent",
+                  )}
+                >
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Categories</span>
+                    <span className="text-xs text-muted-foreground">
+                      Configure rating categories
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
 
           {isInProject && (
             <SidebarMenuItem>

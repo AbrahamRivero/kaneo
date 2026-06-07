@@ -21,6 +21,7 @@ import notification from "./notification/index.js";
 import { getPublicProject } from "./project/controllers/get-public-project.js";
 import project from "./project/index.js";
 import search from "./search/index.js";
+import survey from "./survey/index.js";
 import task from "./task/index.js";
 import timeEntry from "./time-entry/index.js";
 import user from "./user/index.js";
@@ -248,6 +249,7 @@ const notificationRoute = app.route("/notification", notification);
 const searchRoute = app.route("/search", search);
 const analyticsRoute = app.route("/analytics", analytics);
 const eventRoomRoute = app.route("/event-room", eventRoom);
+const surveyRoute = app.route("/survey", survey);
 
 try {
   console.log("Migrating database...");
@@ -283,6 +285,7 @@ export type AppType =
   | typeof configRoute
   | typeof userRoute
   | typeof analyticsRoute
-  | typeof eventRoomRoute;
+  | typeof eventRoomRoute
+  | typeof surveyRoute;
 
 export default app;

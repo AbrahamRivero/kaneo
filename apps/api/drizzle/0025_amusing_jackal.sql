@@ -1,0 +1,1 @@
+ALTER TABLE "survey" ADD COLUMN "date" text NOT NULL;
