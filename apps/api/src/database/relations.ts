@@ -16,6 +16,10 @@ import {
   scheduledPermissionTable,
   serviceTable,
   sessionTable,
+  surveyCategoryConfigTable,
+  surveyRatingTable,
+  surveySuggestionTable,
+  surveyTable,
   taskTable,
   timeEntryTable,
   userTable,
@@ -279,6 +283,54 @@ export const scheduledPermissionTableRelations = relations(
     user: one(userTable, {
       fields: [scheduledPermissionTable.userId],
       references: [userTable.id],
+    }),
+  }),
+);
+
+export const surveyCategoryConfigTableRelations = relations(
+  surveyCategoryConfigTable,
+  ({ one, many }) => ({
+    workspace: one(workspaceTable, {
+      fields: [surveyCategoryConfigTable.workspaceId],
+      references: [workspaceTable.id],
+    }),
+    ratings: many(surveyRatingTable),
+  }),
+);
+
+export const surveyTableRelations = relations(surveyTable, ({ one, many }) => ({
+  workspace: one(workspaceTable, {
+    fields: [surveyTable.workspaceId],
+    references: [workspaceTable.id],
+  }),
+  creator: one(userTable, {
+    fields: [surveyTable.createdBy],
+    references: [userTable.id],
+  }),
+  ratings: many(surveyRatingTable),
+  suggestions: many(surveySuggestionTable),
+}));
+
+export const surveyRatingTableRelations = relations(
+  surveyRatingTable,
+  ({ one }) => ({
+    survey: one(surveyTable, {
+      fields: [surveyRatingTable.surveyId],
+      references: [surveyTable.id],
+    }),
+    categoryConfig: one(surveyCategoryConfigTable, {
+      fields: [surveyRatingTable.categoryConfigId],
+      references: [surveyCategoryConfigTable.id],
+    }),
+  }),
+);
+
+export const surveySuggestionTableRelations = relations(
+  surveySuggestionTable,
+  ({ one }) => ({
+    survey: one(surveyTable, {
+      fields: [surveySuggestionTable.surveyId],
+      references: [surveyTable.id],
     }),
   }),
 );

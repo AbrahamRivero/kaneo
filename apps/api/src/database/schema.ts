@@ -491,6 +491,84 @@ export type ScheduledPermission = typeof scheduledPermissionTable.$inferSelect;
 export type NewScheduledPermission =
   typeof scheduledPermissionTable.$inferInsert;
 
+export const surveyCategoryConfigTable = pgTable("survey_category_config", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  name: text("name").notNull(),
+  displayOrder: integer("display_order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const surveyTable = pgTable("survey", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+    }),
+  date: text("date").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  totalApplied: integer("total_applied").default(0).notNull(),
+  totalAnswered: integer("total_answered").default(0).notNull(),
+  overallVeryGood: integer("overall_very_good").default(0).notNull(),
+  overallGood: integer("overall_good").default(0).notNull(),
+  overallNoAnswer: integer("overall_no_answer").default(0).notNull(),
+  createdBy: text("created_by").references(() => userTable.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const surveyRatingTable = pgTable("survey_rating", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  surveyId: text("survey_id")
+    .notNull()
+    .references(() => surveyTable.id, {
+      onDelete: "cascade",
+    }),
+  categoryConfigId: text("category_config_id")
+    .notNull()
+    .references(() => surveyCategoryConfigTable.id, {
+      onDelete: "cascade",
+    }),
+  excellent: integer("excellent").default(0).notNull(),
+  good: integer("good").default(0).notNull(),
+  average: integer("average").default(0).notNull(),
+  bad: integer("bad").default(0).notNull(),
+  empty: integer("empty").default(0).notNull(),
+  applied: integer("applied").default(0).notNull(),
+  answered: integer("answered").default(0).notNull(),
+  score: integer("score").default(0).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const surveySuggestionTable = pgTable("survey_suggestion", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  surveyId: text("survey_id")
+    .notNull()
+    .references(() => surveyTable.id, {
+      onDelete: "cascade",
+    }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 export const reservationDayTariffTable = pgTable("reservation_day_tariff", {
   id: text("id")
     .$defaultFn(() => createId())
