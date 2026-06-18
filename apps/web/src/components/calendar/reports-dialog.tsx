@@ -229,6 +229,15 @@ export function ReportsDialog({
       }
 
       const sortedReservations = [...filteredReservations].sort((a, b) => {
+        const statusOrder: Record<string, number> = {
+          pending: 0,
+          confirmed: 1,
+          completed: 2,
+          cancelled: 3,
+        };
+        const statusDiff =
+          (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+        if (statusDiff !== 0) return statusDiff;
         const dateA = parseDateRange(a.dateRange).from || "";
         const dateB = parseDateRange(b.dateRange).from || "";
         return dateA.localeCompare(dateB);
