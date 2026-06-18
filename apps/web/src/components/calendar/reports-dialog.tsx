@@ -249,18 +249,27 @@ export function ReportsDialog({
       }));
 
       const totalPax = filteredReservations.reduce((sum, res) => {
-        if (
-          res.ageBreakdown &&
-          (res.ageBreakdown.adults > 0 ||
-            res.ageBreakdown.children > 0 ||
-            res.ageBreakdown.infants > 0)
-        ) {
-          return (
-            sum +
-            res.ageBreakdown.adults +
-            res.ageBreakdown.children +
-            res.ageBreakdown.infants
-          );
+        if (res.status === "cancelled") return sum;
+        if (res.ageBreakdown) {
+          const adults = res.ageBreakdown.adults || 0;
+          const children = res.ageBreakdown.children || 0;
+          const infants = res.ageBreakdown.infants || 0;
+          if (adults > 0 || children > 0 || infants > 0) {
+            return sum + adults + children + infants;
+          }
+        }
+        return sum + (res.expectedPax || 0);
+      }, 0);
+
+      const cancelledPax = filteredReservations.reduce((sum, res) => {
+        if (res.status !== "cancelled") return sum;
+        if (res.ageBreakdown) {
+          const adults = res.ageBreakdown.adults || 0;
+          const children = res.ageBreakdown.children || 0;
+          const infants = res.ageBreakdown.infants || 0;
+          if (adults > 0 || children > 0 || infants > 0) {
+            return sum + adults + children + infants;
+          }
         }
         return sum + (res.expectedPax || 0);
       }, 0);
@@ -417,7 +426,15 @@ export function ReportsDialog({
             <div class="meta-item">
               <span class="meta-label">Total Pax</span>
               <span class="meta-value">${totalPax}</span>
-            </div>
+            </div>${
+                  cancelledPax > 0
+                    ? `
+            <div class="meta-item">
+              <span class="meta-label">Cancelled Pax</span>
+              <span class="meta-value">${cancelledPax}</span>
+            </div>`
+                    : ""
+                }
             `
                 : ""
             }
