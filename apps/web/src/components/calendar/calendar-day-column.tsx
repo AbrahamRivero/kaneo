@@ -1,6 +1,7 @@
-import type { DateRange, EventRoom, Reservation } from "@/fetchers/event-room";
+import type { EventRoom, Reservation } from "@/fetchers/event-room";
 import { EventCard } from "./event-card";
 import { RoomPaxIndicator } from "./room-pax-indicator";
+import { parseDateRange } from '@/lib/parse-date-range';
 
 interface CalendarDayColumnProps {
   reservations: Reservation[];
@@ -8,16 +9,17 @@ interface CalendarDayColumnProps {
   eventRooms: EventRoom[];
 }
 
-function parseDateRange(dateRangeStr: string): DateRange {
-  try {
-    return JSON.parse(dateRangeStr) as DateRange;
-  } catch {
-    return { from: "", to: "" };
-  }
-}
-
 function sortReservations(reservations: Reservation[]) {
+  const statusOrder: Record<string, number> = {
+    pending: 0,
+    confirmed: 1,
+    completed: 2,
+    cancelled: 3,
+  };
   return [...reservations].sort((a, b) => {
+    const statusDiff =
+      (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+    if (statusDiff !== 0) return statusDiff;
     const dateRangeA = parseDateRange(a.dateRange);
     const dateRangeB = parseDateRange(b.dateRange);
     const dateDiff = dateRangeA.from.localeCompare(dateRangeB.from);
